@@ -1,6 +1,82 @@
 [project]
 name = "sse-demo"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI Server-Sent Events demo"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi>=0.165.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "httpx-sse>=0.4.3",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
+    "pytest-timeout>=2.4.0",
+    "ruff>=0.17.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+timeout = 30
+addopts = "-m 'not perf'"
+markers = [
+    "e2e: starts a real uvicorn server",
+    "perf: performance acceptance (R19)",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "N",        # pep8-naming
+    "UP",       # pyupgrade (modern syntax: X | None, list[str])
+    "B",        # bugbear
+    "A",        # shadowing builtins
+    "C4",       # comprehensions
+    "SIM",      # simplify
+    "RET",      # return consistency
+    "PT",       # pytest style
+    "ASYNC",    # blocking calls inside async def
+    "FAST",     # FastAPI rules (Annotated, redundant response_model)
+    "ANN",      # missing type annotations
+    "T20",      # print (R21)
+    "ERA",      # commented-out code
+    "PERF",     # performance anti-patterns
+    "RUF",      # ruff-specific
+]
+ignore = [
+    "ANN401",   # Any is policed by mypy (disallow_any_explicit) instead
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["T20", "ANN"]
+"contracts/*.pyi" = ["N", "ANN"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["app"]
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+disallow_any_explicit = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool", "possibly-undefined"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
