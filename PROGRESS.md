@@ -39,7 +39,7 @@
 | 目前 Phase | **2 同時開發** 🔵 |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` v1.0、`contracts/domain.pyi`、`contracts/openapi.yaml`；決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T2.1a、T2.2 回報 → 稽核 → 派 T2.1b |
+| 下一步 | 等 T2.2 回報 → 稽核 → 把三份回報的 CONTRACT GAP／CONFLICT 合併交給使用者 |
 
 ## Phase 總覽
 
@@ -76,8 +76,8 @@
 | T1.8 | 1 | 以 SVG 為主軸重寫 SPEC v1.0，加上 `contracts/` | agy session（使用者直接指定） | ✅ | 使用者回答 Q0–Q6、OQ1–OQ3 | `docs/SPEC.md` v1.0（R1–R29、AC1–AC12）、`contracts/domain.pyi`、`contracts/openapi.yaml`、`docs/plans/spec_v1_plan.md` | 見 X5；`app/main.py` 的 `create_app` 還是舊簽名，留給 T2.1 |
 | T1.7 | 1 | 審閱 v1.0 和合約（唯讀） | Codex ‖ agy | ➖ 取消 | T1.8 | — | D11：使用者決定不用跑審閱，直接推進 |
 | T2.0 | 2 | 同步 SPEC 到 `tests-ws`、`impl-ws` | 協調者 | ✅ | `docs/SPEC.md` | — | 只搬檔案；兩邊都拿到 SPEC、contracts、SVG、AGENTS.md；`docs/plans/` 不給 |
-| T2.1a | 2 | 實作後端：domain、SQLite、HTTP API、SSE（R1–R25、R28、R29） | Claude 實作者（opus-5-5／high） | 🔵 | `briefs/p2-claude-impl-backend.md` | `reports/p2-impl-backend.md` | 看不到測試 |
-| T2.1b | 2 | 實作前端頁面（R26、R27） | Claude 實作者（opus-5-5／high） | ⬜ | `briefs/p2-claude-impl-frontend.md` | `reports/p2-impl-frontend.md` | 接在 T2.1a 之後，同一個 `impl-ws` |
+| T2.1a | 2 | 實作後端：domain、SQLite、HTTP API、SSE（R1–R25、R28、R29） | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p2-claude-impl-backend.md` | `reports/p2-impl-backend.md` | 稽核通過；34 輪、$2.77、10 分鐘；品質關卡＋stubtest 通過；回報 2 個 CONFLICT、3 個 GAP，等 T2.2 回來一起交給使用者 |
+| T2.1b | 2 | 實作前端頁面（R26、R27） | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p2-claude-impl-frontend.md` | `reports/p2-impl-frontend.md` | 稽核通過；25 輪、$1.62、6.5 分鐘；品質關卡通過；回報 5 個前端 GAP；「DevTools 離線 5 秒」headless 驗不到，留給 T4.4 |
 | T2.2 | 2 | 寫單元、整合、E2E、效能測試 | Codex（gpt-6.2-astra／high） | 🔵 | `briefs/p2-codex-tests.md` | `tests-ws/tests/`；`reports/p2-codex-tests.md` | 只看得到 SPEC；回報只交「測試名稱 → 需求 ID」對照 |
 | T3.1 | 3 | 審查測試：涵蓋對照表、隨機失敗、空測試 | agy | ⬜ | `verify-ws` | `reports/p3-agy-test-audit.md` | |
 | T3.2 | 3 | 故意改壞程式，看測試會不會失敗 | agy | ⬜ | `verify-ws` | 同上 | |
@@ -155,3 +155,5 @@
 | 2026-11-20 23:20 | 使用者指示：① commit 文件改動 ② 刪除 spec-ws 作廢的 v0.3 ③ 跳過 T1.7 審閱（D11）④ SPEC.md 移至 docs/SPEC.md（D12）。Phase 1 完成 |
 | 2026-11-20 23:30 | 使用者核准 Phase 2 派工計畫（T2.1 拆成後端／前端；`docs/plans/` 不給 worker；SPEC 標題小瑕疵留待下次補合約時修）。開始 T2.0 |
 | 2026-11-20 23:35 | T2.0 完成；寫好 `briefs/p2-claude-impl-backend.md`、`p2-claude-impl-frontend.md`、`p2-codex-tests.md`；`tests-ws` 先做了 `uv sync --frozen`（Codex 沙盒不能連網）；同時在背景分派 T2.1a（Claude opus-5-5／high）與 T2.2（Codex gpt-6.2-astra／high） |
+| 2026-11-20 23:46 | T2.1a 回報 success；稽核通過（紀錄裡的 `.orchestra` 只是工作區 `.gitignore` 的內容）；刪除原始紀錄和快取；派 T2.1b（背景） |
+| 2026-11-20 23:55 | T2.1b 回報 success；稽核通過（只寫了 `app/routers/page.py`、`app/static/index.html`，並在 `main.py` 掛上 router）；刪除原始紀錄和快取；確認 `app/` 以外的檔案都沒被改；`impl-ws/app/` 搬回主 repo |
