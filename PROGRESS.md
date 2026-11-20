@@ -39,7 +39,7 @@
 | 目前 Phase | **2 同時開發** 🔵 |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.1**、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T2.6 → 稽核（只改 `app/`、非 app 檔 shasum 對 `t26-pre.sha` 不變、log 無 `tests-ws`／`verify-ws`／`/tests/`）→ 搬回主 repo → 等使用者決定 E1／E2 → 規格編輯 → 重組 verify-ws 重跑 T2.5 → T3。待交使用者：T2.4 的 R18／openapi `reset.when` 措辭衝突，連同 T2.5 結果一起決定 |
+| 下一步 | **T2.6 已跑完，稽核做了一半**：result=success、紀錄無外部路徑、非 app 檔 shasum 不變、只改 4 個預期檔（schemas.py、main.py、routers/system.py、routers/install.py）；未做：讀 `reports/p2-impl-contract-fix.md`、看 diff、刪 jsonl/err 與 impl-ws 的 `.t26-tmp/`（worker 沒刪）、搬回主 repo。**另待查**：主 repo 出現未追蹤的 `install.db`（00:21 建立、00:26 修改、空表，時間落在 T2.5 agy 執行期間；agy 紀錄沒出現主 repo 路徑，原因不明，先保留當證據）→ 原本：稽核（只改 `app/`、非 app 檔 shasum 對 `t26-pre.sha` 不變、log 無 `tests-ws`／`verify-ws`／`/tests/`）→ 搬回主 repo → 等使用者決定 E1／E2 → 規格編輯 → 重組 verify-ws 重跑 T2.5 → T3。待交使用者：T2.4 的 R18／openapi `reset.when` 措辭衝突，連同 T2.5 結果一起決定 |
 
 ## Phase 總覽
 
@@ -169,4 +169,4 @@
 | 2026-11-21 00:02 | T2.3b 完成並稽核通過，存 `reports/p2-spec-v111.md`，刪 jsonl/err；v1.1.1 搬回主 repo 並同步 impl-ws、tests-ws。寫 `briefs/p2-codex-align.md`，背景派 T2.4 |
 | 2026-11-21 00:17 | T2.4 完成並稽核通過，存 `reports/p2-codex-align.md`；刪除原始紀錄、Codex 在 /private/tmp 留下的 uv／ruff 快取、tests-ws 的 `__pycache__`。修正日誌時間：23:49 起原本是估計值、跑在實際時間前面，已改成對照 commit 時間 |
 | 2026-11-21 00:22 | 寫 `briefs/p2-agy-contract.md`。組 verify-ws：主 repo `3229abf` clone，移除 `.orchestra/`、`CLAUDE.md`、`PROGRESS.md`、`ORCHESTRATION.md`、`docs/plans/`（比照 impl-ws），重建 git 只留一個 baseline commit `dc386e4`（避免歷史洩漏實作與測試報告），加入 tests-ws/tests（diff 相同；SPEC/contracts/AGENTS/pyproject 和 tests-ws 一致）。`--dangerously-skip-permissions` 被 auto mode 擋下，改用 ORCHESTRATION 寫的 `--sandbox` 加 `--mode auto`，背景派 T2.5 |
-| 2026-11-21 00:35 | T2.5 完成並稽核通過，存 `reports/p2-agy-contract.md`；刪除 log/err 和 verify-ws 的 `.mypy_cache`、`.venv`。8 項 impl 偏差依 AGENTS.md「衝突時以合約為準」直接退回實作者，寫 `briefs/p2-claude-impl-contract-fix.md`，背景派 T2.6。E1（`reset.when`）、E2（AGENTS §4 `/health`）屬規格／規範修改，交使用者決定 |
+| 2026-11-21 00:27 | T2.5 完成並稽核通過，存 `reports/p2-agy-contract.md`；刪除 log/err 和 verify-ws 的 `.mypy_cache`、`.venv`。8 項 impl 偏差依 AGENTS.md「衝突時以合約為準」直接退回實作者，寫 `briefs/p2-claude-impl-contract-fix.md`，背景派 T2.6。E1（`reset.when`）、E2（AGENTS §4 `/health`）屬規格／規範修改，交使用者決定 |
