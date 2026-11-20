@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **0.6 Python／FastAPI 環境**（T0.6 執行中）；T1.6 規格編輯同時在背景跑 |
-| 規格版本 | `SPEC.md` v0.2（commit `d3b469d`）；v0.3 加合約檔的工作已在 `spec-ws` 進行中 |
-| 阻塞中 | 無（等 T1.6 回報） |
-| 下一步 | T0.6 回報後：稽核 → 把 `pyproject.toml`、`uv.lock`、`app/`、`README.md` 搬回主 repo → commit。T1.6 回報後：稽核 → 搬回 → 分派 T1.7 |
+| 目前 Phase | **1 規格**（Phase 0.6 已完成） |
+| 規格版本 | 主 repo 是 `SPEC.md` v0.2（`d3b469d`）；v0.3 和 `contracts/` 已在 `spec-ws` 完成，尚未搬回 |
+| 阻塞中 | 無 |
+| 下一步 | ① `ORCHESTRATION.md` 補上 `AGENTS.md`（同步到每個工作區、任務說明寫「先讀 `AGENTS.md`」）② 把 T1.6 的 `SPEC.md` v0.3、`contracts/` 搬回主 repo → commit ③ 分派 T1.7，順便把 T1.6 列出的 10 個模糊處交給審閱者和使用者 |
 
 ## Phase 總覽
 
@@ -47,8 +47,8 @@
 |---|---|---|---|
 | 0 | 準備 | ✅ 完成 | — |
 | 0.5 | Agent 環境搭建（角色、隔離、合約機制、權限、模型） | ✅ 完成（使用者決定不跑冒煙測試） | — |
-| 0.6 | Python／FastAPI 環境 | 🔵 進行中 | 環境驗證通過 |
-| 1 | 規格 | 🔵 進行中（T1.6） | **使用者核准** |
+| 0.6 | Python／FastAPI 環境 | ✅ 完成（`667f7b2`） | 環境驗證通過 |
+| 1 | 規格 | 🔵 進行中（T1.6 已回報，待搬回；下一個是 T1.7） | **使用者核准** |
 | 2 | 同時開發（實作 ‖ 測試） | ⬜ 未開始 | — |
 | 3 | 驗證測試、處理失敗 | ⬜ 未開始 | 測試全部通過 |
 | 4 | AI 自己跑 E2E | ⬜ 未開始 | E2E 全部通過 |
@@ -69,9 +69,10 @@
 | T0.3 | 0.5 | 隔離方式和合約機制寫進 `ORCHESTRATION.md` | 協調者 | ✅ | D3、D4 | `ORCHESTRATION.md` | |
 | T0.4 | 0.5 | 權限、模型政策、時間上限寫進 `ORCHESTRATION.md` | 協調者 | ✅ | D2、D5、D6、D8 | `ORCHESTRATION.md` | |
 | T0.5 | 0.5 | 環境冒煙測試 | — | ➖ 取消 | — | — | D7：使用者決定直接開始 |
-| T0.6 | 0.6 | uv 依賴套件、pytest／ruff／mypy 設定、只有 `/health` 的骨架、README | Claude 實作者（sonnet-5-5／medium） | 🔵 | `briefs/p0-claude-python-env.md` | `impl-ws/`；log 在 `reports/p0-python-env.jsonl` | 開發用套件也要寫進 Codex 的任務說明，讓它知道可以用哪些 |
+| T0.6 | 0.6 | uv 依賴套件、pytest／ruff／mypy 設定、只有 `/health` 的骨架、README | Claude 實作者（sonnet-5-5／medium） | ✅ | `briefs/p0-claude-python-env.md` | `reports/p0-python-env.md`；已搬回主 repo（`667f7b2`） | 開發用套件也要寫進 Codex 的任務說明，讓它知道可以用哪些 |
+| T0.7 | 0.6 | `AGENTS.md` 程式規範，加嚴 ruff／mypy 設定 | 協調者（使用者指示） | ✅ | 網路查證的最佳實務 | commit `667f7b2`；已複製到 `impl-ws` | 見 X3；ruff format、ruff check、mypy 全部通過 |
 | T1.5 | 1 | 使用者核准 SPEC | 使用者 | ⬜ | `SPEC.md` v0.3 | — | 改成核准 v0.3 |
-| T1.6 | 1 | SPEC v0.3：`contracts/openapi.yaml`、`domain.pyi`、領域介面 | Claude 規格編輯（opus-5-5／high） | 🔵 | `briefs/p1-claude-spec-editor-v03.md` | `spec-ws/`；log 在 `reports/p1-spec-editor.jsonl` | |
+| T1.6 | 1 | SPEC v0.3：`contracts/openapi.yaml`、`domain.pyi`、領域介面 | Claude 規格編輯（opus-5-5／high） | 🟡 已回報，待搬回 | `briefs/p1-claude-spec-editor-v03.md` | `spec-ws/`；`reports/p1-spec-editor.md` | 越界稽核通過（log 裡沒有其他工作區的路徑）；新增 R23–R28；列出 10 個沒修的模糊處（R3、R4、R9、R11、R12、R16） |
 | T1.7 | 1 | 審閱 v0.3 和合約（唯讀） | Codex ‖ agy | ⬜ | T1.6 | `reports/p1-*-v03-review.md` | |
 | T2.0 | 2 | 同步 SPEC 到 `tests-ws`、`impl-ws` | 協調者 | ⬜ | `SPEC.md` | — | 只搬檔案 |
 | T2.1 | 2 | 實作 `app/` | Claude worker | ⬜ | SPEC | `impl-ws/app/` → 搬回主 repo | 看不到測試；需要先決定 D2 |
@@ -112,6 +113,8 @@
 | ID | 內容 | 處置 |
 |---|---|---|
 | X1 | T0.1、T1.1、T1.4 是協調者在「協調者只管理」這條規則定案之前親自做的 | 保留成果；從 Phase 2 開始嚴格遵守管理者規則 |
+| X3 | T0.7（`AGENTS.md`、`pyproject.toml` 設定、把 T0.6 搬回主 repo）是使用者指示由協調者親自做，沒有派 worker | 使用者核准，保留成果 |
+| X4 | 22:33 有另一個協調者 session 同時在跑（commit `c36be5f`：刪除原始 log、新增回報）。T0.6 的原始 log 因此被刪掉，沒能做越界稽核 | 已通知使用者停掉另一個 session；T0.6 只產出骨架，風險低，保留成果 |
 | X2 | 主 repo 裡不明來源的 `install-progress-sequence.svg`（跟這個專案無關）被 `git add -A` 一起 commit 進 `a1724b5` | 不刪除，排除在 worker 工作區之外；等使用者決定怎麼處理。之後只 `git add` 指定的路徑 |
 
 ## 工作區
@@ -119,8 +122,8 @@
 | 名稱 | 路徑 | 裡面有什麼 | 給誰用 |
 |---|---|---|---|
 | 主 repo | `~/Desktop/projects/SSE/` | SPEC、app、管理文件 | 協調者（只做管理動作） |
-| impl-ws | `~/.local/share/sse-orchestra/impl-ws/` | 主 repo 的副本，**排除** `tests/`、`.orchestra/`、`CLAUDE.md` | Claude worker |
-| tests-ws | `~/.local/share/sse-orchestra/tests-ws/` | 只有 `SPEC.md` 和 `tests/` | Codex |
+| impl-ws | `~/.local/share/sse-orchestra/impl-ws/` | 主 repo 的副本（含 `AGENTS.md`），**排除** `tests/`、`.orchestra/`、`CLAUDE.md` | Claude worker |
+| tests-ws | `~/.local/share/sse-orchestra/tests-ws/` | 只有 `SPEC.md`、`contracts/`、`AGENTS.md`、`pyproject.toml` 和 `tests/` | Codex |
 | verify-ws | `~/.local/share/sse-orchestra/verify-ws/` | 每次重新組裝：clean clone 加上 tests | agy |
 
 ## 工作日誌
@@ -135,3 +138,6 @@
 | 2026-11-20 22:15 | D3、D4 決定；`ORCHESTRATION.md` 新增合約和隔離章節；備妥 T1.6 的任務說明和 `spec-ws`（未分派）；使用者確認目前仍在環境搭建階段，新增 Phase 0.5 |
 | 2026-11-20 22:30 | D2、D5–D8 決定；查證模型強弱並寫入模型政策；Phase 0.5 完成；分派 T1.6（Claude 規格編輯，opus-5-5／high，背景執行） |
 | 2026-11-20 22:40 | 使用者要求先搭好 Python／FastAPI 環境；確認環境設定已在 `dda5a75` commit；分派 T0.6（背景執行）；發現 X2 |
+| 2026-11-20 22:45 | T1.6 回報（v0.3、合約檔、10 個模糊處），越界稽核通過；T0.6 回報，驗證全部通過 |
+| 2026-11-20 22:50 | 使用者要求查證 FastAPI 最佳實務並規劃程式規範；發現另一個協調者 session（X4） |
+| 2026-11-20 22:55 | 依使用者指示由協調者親自做 T0.7：T0.6 搬回主 repo，新增 `AGENTS.md`，加嚴 ruff／mypy（`667f7b2`，X3）；Phase 0.6 完成 |
