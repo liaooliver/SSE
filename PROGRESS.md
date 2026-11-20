@@ -36,17 +36,18 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **1 規格：等待使用者核准** |
-| 規格版本 | `SPEC.md` v0.2（commit `d3b469d`） |
-| 阻塞中 | ⛔ 使用者核准 SPEC v0.2；⛔ D2 實作 worker 的權限 |
-| 下一步 | 使用者核准之後：同步 SPEC 到 `tests-ws`，然後同時分派 T2.1（實作）和 T2.2（測試） |
+| 目前 Phase | **0.5 Agent 環境搭建**（Phase 1 暫停，SPEC v0.2 還沒核准） |
+| 規格版本 | `SPEC.md` v0.2（commit `d3b469d`）；v0.3 加合約檔的任務說明已備妥，**尚未分派** |
+| 阻塞中 | ⛔ D2、D5–D8（環境設定的決定） |
+| 下一步 | 使用者做完環境決定 → 寫入設定 → 跑環境冒煙測試 T0.5 → 回到 Phase 1，分派 T1.6 |
 
 ## Phase 總覽
 
 | Phase | 名稱 | 狀態 | 關卡 |
 |---|---|---|---|
 | 0 | 準備 | ✅ 完成 | — |
-| 1 | 規格 | 🟡 等待關卡 | **使用者核准** |
+| 0.5 | Agent 環境搭建（角色、隔離、合約機制、權限、模型、冒煙測試） | 🔵 進行中 | 冒煙測試通過 |
+| 1 | 規格（暫停） | 🟡 等 0.5 完成 | **使用者核准** |
 | 2 | 同時開發（實作 ‖ 測試） | ⬜ 未開始 | — |
 | 3 | 驗證測試、處理失敗 | ⬜ 未開始 | 測試全部通過 |
 | 4 | AI 自己跑 E2E | ⬜ 未開始 | E2E 全部通過 |
@@ -63,7 +64,13 @@
 | T1.2 | 1 | 規格審閱（從測試的角度） | Codex | ✅ | `p1-codex-spec-review.md` | `reports/p1-codex-spec-review.md` | 23 條意見，needs-changes |
 | T1.3 | 1 | 規格審閱（SSE 協定和 E2E 的角度） | agy | ✅ | `p1-agy-spec-review.md` | `reports/p1-agy-spec-review.md` | 15 條意見，needs-changes |
 | T1.4 | 1 | 合併成 v0.2 | 協調者 | ✅ | T1.2、T1.3 | commit `d3b469d` | 角色定案前由協調者執行（見 X1）；處理紀錄在 SPEC 附錄 |
-| T1.5 | 1 | 使用者核准 SPEC | 使用者 | 🟡 | `SPEC.md` v0.2 | — | 如果要再改，交給規格編輯 worker |
+| T0.2 | 0.5 | 協調者只做管理、進度表、`CLAUDE.md` 分流 | 協調者 | ✅ | — | commit `a1724b5` | |
+| T0.3 | 0.5 | 隔離方式和合約機制寫進 `ORCHESTRATION.md` | 協調者 | ✅ | D3、D4 | `ORCHESTRATION.md` | |
+| T0.4 | 0.5 | 每個 worker 的權限和模型設定檔（`.orchestra/settings/`） | 協調者 | ⬜ | D2、D5 | | |
+| T0.5 | 0.5 | 環境冒煙測試：每個 worker 跑一個簡單任務，並確認越界讀取會被擋下 | 各 worker | ⬜ | T0.4 | `reports/p0-smoke.md` | 看 D7 |
+| T1.5 | 1 | 使用者核准 SPEC | 使用者 | ⬜ | `SPEC.md` v0.3 | — | 改成核准 v0.3 |
+| T1.6 | 1 | SPEC v0.3：`contracts/openapi.yaml`、`domain.pyi`、領域介面 | Claude 規格編輯 | ⬜ | `briefs/p1-claude-spec-editor-v03.md` | `spec-ws/` | 工作區和任務說明都已備妥 |
+| T1.7 | 1 | 審閱 v0.3 和合約（唯讀） | Codex ‖ agy | ⬜ | T1.6 | `reports/p1-*-v03-review.md` | |
 | T2.0 | 2 | 同步 SPEC 到 `tests-ws`、`impl-ws` | 協調者 | ⬜ | `SPEC.md` | — | 只搬檔案 |
 | T2.1 | 2 | 實作 `app/` | Claude worker | ⬜ | SPEC | `impl-ws/app/` → 搬回主 repo | 看不到測試；需要先決定 D2 |
 | T2.2 | 2 | 寫單元、整合、E2E 測試 | Codex | ⬜ | SPEC | `tests-ws/tests/` | 只看得到 SPEC；回報只交「測試名稱 → 需求 ID」對照 |
@@ -88,8 +95,14 @@
 
 | ID | 問題 | 狀態 |
 |---|---|---|
-| D1 | 是否核准 SPEC v0.2 | 🟡 等待 |
-| D2 | 實作 worker（`claude -p`）在 `impl-ws` 裡要用 `--dangerously-skip-permissions` 自動核准，還是限制只能用 `acceptEdits` 加上 `uv` 指令 | 🟡 等待 |
+| D1 | 是否核准 SPEC（改成在 v0.3 做完後核准） | ⬜ 等 Phase 1 |
+| D2 | Claude 實作 worker 的權限：Bash 只開放白名單指令，或完全不設限 | 🟡 等待 |
+| D3 | 隔離強度 → **分開目錄 + 工具權限**（不用容器） | ✅ 2026-11-20 |
+| D4 | 合約範圍 → **`openapi.yaml` 和 `domain.pyi` 都要** | ✅ 2026-11-20 |
+| D5 | 每個 worker 用哪個模型 | 🟡 等待 |
+| D6 | 每次執行的時間上限 | 🟡 等待 |
+| D7 | 是否先跑環境冒煙測試 | 🟡 等待 |
+| D8 | 真瀏覽器 E2E（R18）由誰執行 | 🟡 等待 |
 
 ## 偏差紀錄
 
@@ -115,3 +128,4 @@
 | 2026-11-20 21:40 | 兩份審閱都回來了，都是 needs-changes；合併成 v0.2（`d3b469d`） |
 | 2026-11-20 21:41 | 使用者下令全部終止；確認沒有 worker 還在執行 |
 | 2026-11-20 21:45 | 使用者規定協調者只做管理；實作改由 Claude worker 負責；工作區從 session 暫存目錄搬到 `~/.local/share/sse-orchestra/`；建立本檔和 `CLAUDE.md` |
+| 2026-11-20 22:15 | D3、D4 決定；`ORCHESTRATION.md` 新增合約和隔離章節；備妥 T1.6 的任務說明和 `spec-ws`（未分派）；使用者確認目前仍在環境搭建階段，新增 Phase 0.5 |
