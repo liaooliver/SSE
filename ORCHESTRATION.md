@@ -119,3 +119,11 @@
 | agy 驗證／E2E／驗收 | `cd $W/verify-ws && T agy -p "$(cat brief)" --dangerously-skip-permissions --model gemini-4-neon-high > report` |
 
 每個 phase 結束都做一次 git commit，並更新 `PROGRESS.md`。
+
+## 檔案清理（使用者要求：確定不需要的就刪）
+
+- **保留**：`briefs/*.md`（任務說明）、`reports/*.md`（worker 的最終回報）。
+- **事後稽核通過後就刪**：原始執行紀錄（`*.jsonl`、`*.log`、`*.err`）。刪之前先把 `result` 抽出來存成 `reports/<task>.md`。稽核**不通過**時保留紀錄當證據，記進 `PROGRESS.md`，等事情處理完再刪。
+- **空檔案**直接刪。
+- 工作區的快取（`.mypy_cache`、`.pytest_cache`、`.ruff_cache`、`__pycache__`）不搬回主 repo，用完就刪。
+- 主 repo 的 `.gitignore` 要排除上面這些快取和原始紀錄。

@@ -2,3 +2,13 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# caches & raw worker logs (deleted after audit)
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+.venv/
+.orchestra/reports/*.jsonl
+.orchestra/reports/*.log
+.orchestra/reports/*.err
