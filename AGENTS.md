@@ -1,8 +1,8 @@
 # AGENTS.md — 程式碼規範（所有 AI worker 共用）
 
 本檔是**寫程式的規範**，適用於 Claude、Codex、agy 所有 worker。
-規格（要做什麼）看 `SPEC.md` 和 `contracts/`；本檔只管「怎麼寫」。
-兩者衝突時以 `SPEC.md`／`contracts/` 為準，並在回報中指出衝突。
+規格（要做什麼）看 `docs/SPEC.md` 和 `contracts/`；本檔只管「怎麼寫」。
+兩者衝突時以 `docs/SPEC.md`／`contracts/` 為準，並在回報中指出衝突。
 
 ## 1. 完成的定義（每次交付前必須全部通過，並把輸出貼進回報）
 
@@ -95,7 +95,7 @@ contracts/       # 合約檔（唯讀，只有規格編輯 worker 能改）
 
 ## 7. 測試（測試作者適用）
 
-- 只根據 `SPEC.md` 與 `contracts/` 寫；只能 import `create_app`、`app`、`domain.pyi` 列出的名稱。
+- 只根據 `docs/SPEC.md` 與 `contracts/` 寫；只能 import `create_app`、`app`、`domain.pyi` 列出的名稱。
 - 每個測試名稱或 docstring 標出需求 ID；回報附「測試名稱 → R-id」對照表。
 - HTTP 測試用 `httpx.AsyncClient(transport=ASGITransport(app=...))`；SSE 解析可用 `httpx-sse`。
 - 不用 `sleep` 猜時間；用 `create_app` 的參數縮短間隔，所有等待都要有逾時。

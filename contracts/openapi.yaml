@@ -1,0 +1,313 @@
+openapi: 3.1.0
+info:
+  title: Install progress streaming
+  version: 1.0.0
+  description: >
+    HTTP shapes for SPEC v1.0. Behaviour lives in docs/SPEC.md; SSE event payloads are
+    described in x-sse-events. 422 bodies are FastAPI defaults and are not part of the
+    contract (assert status codes only).
+paths:
+  /install/plan:
+    get:
+      operationId: getPlan
+      x-spec-refs: [R4, R11]
+      responses:
+        "200":
+          description: Fixed install plan.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Plan"}
+  /install/scenarios:
+    get:
+      operationId: listScenarios
+      x-spec-refs: [R5, R12]
+      responses:
+        "200":
+          description: Scenarios in R5 order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ScenarioInfo"}
+  /install:
+    get:
+      operationId: getSnapshot
+      x-spec-refs: [R10, R13]
+      responses:
+        "200":
+          description: Atomic snapshot of the current run.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Snapshot"}
+        "404": {description: No run has ever been started on this database.}
+    post:
+      operationId: startInstall
+      x-spec-refs: [R14]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scenario]
+              properties:
+                scenario: {type: string}
+      responses:
+        "202":
+          description: New run created; run_started already persisted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [run_id, scenario]
+                properties:
+                  run_id: {type: integer, minimum: 1}
+                  scenario: {type: string}
+        "409": {description: A run is already in progress.}
+        "422": {description: Invalid body or unknown scenario.}
+  /install/logs:
+    get:
+      operationId: getLogs
+      x-spec-refs: [R15]
+      parameters:
+        - {name: run_id, in: query, required: true, schema: {type: integer, minimum: 1}}
+        - {name: after, in: query, required: false, schema: {type: integer, minimum: 0, default: 0}}
+        - {name: until, in: query, required: false, schema: {type: integer, minimum: 0}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 1000, default: 500}}
+      responses:
+        "200":
+          description: One page of log events with after < seq <= until.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [run_id, items, next_after]
+                properties:
+                  run_id: {type: integer}
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/LogItem"}
+                  next_after: {type: [integer, "null"]}
+        "404": {description: No run exists.}
+        "409": {description: run_id is not the current run; client must resync.}
+        "422": {description: Invalid query parameter.}
+  /install/events:
+    get:
+      operationId: streamEvents
+      x-spec-refs: [R18, R19, R20, R21, R22, R23, R24]
+      parameters:
+        - name: last_event_id
+          in: query
+          required: false
+          description: Start point "<run_id>.<seq>" (R9). Used on first connect.
+          schema: {type: string, pattern: "^[0-9]+\\.[0-9]+$"}
+        - name: Last-Event-ID
+          in: header
+          required: false
+          description: Sent by EventSource on reconnect; takes precedence when valid.
+          schema: {type: string}
+      responses:
+        "200":
+          description: >
+            SSE stream. First block is "retry: 3000". Then data events (or a single
+            reset control event), interleaved with ": ping" comments when idle.
+          headers:
+            Cache-Control: {schema: {type: string}, description: contains no-cache and no-transform}
+            X-Accel-Buffering: {schema: {type: string, const: "no"}}
+          content:
+            text/event-stream:
+              schema: {type: string}
+        "204": {description: Run finished and the client already has the last event.}
+        "404": {description: No run exists.}
+        "422": {description: Malformed last_event_id query parameter.}
+  /stats:
+    get:
+      operationId: getStats
+      x-spec-refs: [R16]
+      responses:
+        "200":
+          description: Live connection counters.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [subscribers]
+                properties:
+                  subscribers: {type: integer, minimum: 0}
+  /health:
+    get:
+      operationId: health
+      x-spec-refs: [R17]
+      responses:
+        "200":
+          description: Liveness.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [status]
+                properties:
+                  status: {type: string, const: ok}
+  /:
+    get:
+      operationId: indexPage
+      x-spec-refs: [R26, R27]
+      x-html-element-ids: ["#scenario", "#install-btn", "#run-status", "#stage-list", "#task-list", "#follow-btn"]
+      responses:
+        "200":
+          description: Single self-contained HTML page.
+          content:
+            text/html:
+              schema: {type: string}
+components:
+  schemas:
+    Status:
+      type: string
+      enum: [pending, running, succeeded, failed]
+    Plan:
+      type: object
+      additionalProperties: false
+      required: [stages]
+      properties:
+        stages:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, name, tasks]
+            properties:
+              id: {type: string}
+              name: {type: string}
+              tasks:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [id, name]
+                  properties:
+                    id: {type: string}
+                    name: {type: string}
+    ScenarioInfo:
+      type: object
+      additionalProperties: false
+      required: [id, label, fail_task_id]
+      properties:
+        id: {type: string}
+        label: {type: string}
+        fail_task_id: {type: [string, "null"]}
+    TaskError:
+      type: object
+      additionalProperties: false
+      required: [error_code, message, hint]
+      properties:
+        error_code: {type: string, minLength: 1}
+        message: {type: string, minLength: 1}
+        hint: {type: string, minLength: 1}
+    Snapshot:
+      type: object
+      additionalProperties: false
+      required: [run_id, scenario, status, last_seq, stages]
+      properties:
+        run_id: {type: integer, minimum: 1}
+        scenario: {type: string}
+        status: {type: string, enum: [running, succeeded, failed]}
+        last_seq: {type: integer, minimum: 1}
+        stages:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, name, status, tasks]
+            properties:
+              id: {type: string}
+              name: {type: string}
+              status: {$ref: "#/components/schemas/Status"}
+              tasks:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [id, name, status, error]
+                  properties:
+                    id: {type: string}
+                    name: {type: string}
+                    status: {$ref: "#/components/schemas/Status"}
+                    error:
+                      oneOf:
+                        - {type: "null"}
+                        - {$ref: "#/components/schemas/TaskError"}
+    LogItem:
+      type: object
+      additionalProperties: false
+      required: [seq, stage_id, task_id, line_no, level, text, ts]
+      properties:
+        seq: {type: integer, minimum: 1}
+        stage_id: {type: string}
+        task_id: {type: string}
+        line_no: {type: integer, minimum: 1}
+        level: {type: string, enum: [info, error]}
+        text: {type: string}
+        ts: {type: string, format: date-time}
+x-sse-events:
+  description: >
+    SSE wire format for GET /install/events (R19). Data events carry
+    "id: <run_id>.<seq>", "event: <type>", "data: <one-line JSON>".
+    Control blocks are not persisted and do not consume a seq.
+  control:
+    retry: {wire: "retry: 3000\n\n", when: always the first block (R20)}
+    ping: {wire: ": ping\n\n", when: idle for heartbeat_interval seconds (R22)}
+    reset:
+      wire: "event: reset\ndata: {\"run_id\": <current run_id>}\n\n"
+      has_id: false
+      when: start point belongs to another run or is ahead of the run (R18)
+  events:
+    run_started:
+      type: object
+      additionalProperties: false
+      required: [run_id, scenario]
+      properties: {run_id: {type: integer}, scenario: {type: string}}
+    stage_started: {$ref: "#/x-sse-events/stage_payload"}
+    stage_succeeded: {$ref: "#/x-sse-events/stage_payload"}
+    stage_failed: {$ref: "#/x-sse-events/stage_payload"}
+    task_started: {$ref: "#/x-sse-events/task_payload"}
+    task_succeeded: {$ref: "#/x-sse-events/task_payload"}
+    task_failed:
+      type: object
+      additionalProperties: false
+      required: [stage_id, task_id, error_code, message, hint]
+      properties:
+        stage_id: {type: string}
+        task_id: {type: string}
+        error_code: {type: string, minLength: 1}
+        message: {type: string, minLength: 1}
+        hint: {type: string, minLength: 1}
+    log:
+      type: object
+      additionalProperties: false
+      required: [stage_id, task_id, line_no, level, text, ts]
+      properties:
+        stage_id: {type: string}
+        task_id: {type: string}
+        line_no: {type: integer, minimum: 1}
+        level: {type: string, enum: [info, error]}
+        text: {type: string}
+        ts: {type: string, format: date-time}
+    run_finished:
+      type: object
+      additionalProperties: false
+      required: [result]
+      properties: {result: {type: string, enum: [succeeded, failed]}}
+  stage_payload:
+    type: object
+    additionalProperties: false
+    required: [stage_id]
+    properties: {stage_id: {type: string}}
+  task_payload:
+    type: object
+    additionalProperties: false
+    required: [stage_id, task_id]
+    properties: {stage_id: {type: string}, task_id: {type: string}}

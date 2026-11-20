@@ -1,4 +1,4 @@
-# AI 協調計畫：FastAPI SSE Demo
+# AI 協調計畫：安裝進度即時串流
 
 > 進度和協調者的職責說明請看 `PROGRESS.md`。本檔只描述「規則」，不記錄狀態。
 
@@ -8,8 +8,8 @@
 |---|---|---|---|---|
 | **協調者（管理者）** | 使用者直接對話的 Claude Code session（不限定是哪一個 session） | 分派任務、追蹤進度、分配爭議、守關卡、維護 `PROGRESS.md` | 只能寫管理文件 | 測試原始碼 |
 | 實作者 | Claude Code worker（`claude -p`） | 依照 SPEC 實作 `app/`，並修 bug | `impl-ws` | 測試 |
-| 瀏覽器 E2E | Claude Code worker（`claude -p --chrome`，用使用者 Chrome 上的 Claude in Chrome 擴充功能） | R18 demo 頁面的真瀏覽器測試（Phase 4） | 回報 | 測試原始碼 |
-| 規格編輯 | Claude Code worker（`claude -p`） | 依照協調者的決定修改 `SPEC.md` 和 `contracts/` | `spec-ws` | — |
+| 瀏覽器 E2E | Claude Code worker（`claude -p --chrome`，用使用者 Chrome 上的 Claude in Chrome 擴充功能） | R26／R27 前端頁面的真瀏覽器測試（Phase 4） | 回報 | 測試原始碼 |
+| 規格編輯 | Claude Code worker（`claude -p`） | 依照協調者的決定修改 `docs/SPEC.md` 和 `contracts/` | `spec-ws` | — |
 | 測試作者 | Codex CLI | 只根據 SPEC 寫單元、整合、E2E 測試 | `tests-ws` | `app/`、主 repo |
 | 測試驗證、E2E、驗收 | agy（Gemini，依模型政策） | 審查測試、故意改壞程式抽查、跑 E2E、最終驗收 | `verify-ws`、回報 | — |
 
@@ -22,16 +22,16 @@
 | 工作區 | 位置 | 內容 | 誰用 |
 |---|---|---|---|
 | 主 repo | `~/Desktop/projects/SSE/` | SPEC、contracts、app、管理文件；`tests/` 到 Phase 5 才合併進來 | 協調者 |
-| spec-ws | `$W/spec-ws/` | 只有 `SPEC.md` 和 `contracts/` | Claude 規格編輯 |
+| spec-ws | `$W/spec-ws/` | 只有 `docs/SPEC.md` 和 `contracts/` | Claude 規格編輯 |
 | impl-ws | `$W/impl-ws/` | 用 `rsync` 從主 repo 複製，排除 `tests/`、`.orchestra/`、`CLAUDE.md`、`PROGRESS.md` | Claude 實作者 |
-| tests-ws | `$W/tests-ws/` | 只有 `SPEC.md`、`contracts/`、`tests/` | Codex |
+| tests-ws | `$W/tests-ws/` | 只有 `docs/SPEC.md`、`contracts/`、`tests/` | Codex |
 | verify-ws | `$W/verify-ws/` | 每次重新組裝：主 repo 的 clean clone 加上 `tests-ws/tests/` | agy |
 
 ## 合約（兩邊共同遵守的唯一依據）
 
 | 檔案 | 定義什麼 | 誰會用 |
 |---|---|---|
-| `SPEC.md` | **行為**：輸入要得到什麼結果、邊界情況、錯誤怎麼處理 | 兩邊 |
+| `docs/SPEC.md` | **行為**：輸入要得到什麼結果、邊界情況、錯誤怎麼處理 | 兩邊 |
 | `contracts/openapi.yaml` | **HTTP 的形狀**：網址、參數、狀態碼、JSON 結構（SSE 事件格式寫在 SPEC） | 兩邊 |
 | `contracts/domain.pyi` | **Python 的形狀**：測試可以直接 import 的商業邏輯函式，包含模組路徑、名稱、簽名 | 兩邊 |
 
