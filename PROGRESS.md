@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **1 規格** 完成，準備進入 **2 同時開發** |
+| 目前 Phase | **2 同時開發** 🔵 |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` v1.0、`contracts/domain.pyi`、`contracts/openapi.yaml`；決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | ① commit 這次的文件改動 ② T2.0 同步 `docs/SPEC.md`、`contracts/`、`AGENTS.md`、`install-progress-sequence.svg` 到 `impl-ws` 與 `tests-ws` ③ 同時在背景分派 T2.1（Claude 實作）與 T2.2（Codex 寫測試）|
+| 下一步 | 等 T2.1a、T2.2 回報 → 稽核 → 派 T2.1b |
 
 ## Phase 總覽
 
@@ -49,7 +49,7 @@
 | 0.5 | Agent 環境搭建（角色、隔離、合約機制、權限、模型） | ✅ 完成（使用者決定不跑冒煙測試） | — |
 | 0.6 | Python／FastAPI 環境 | ✅ 完成（`667f7b2`） | 環境驗證通過 |
 | 1 | 規格 | ✅ 完成（v1.0 定案，D1／D11） | **使用者核准** |
-| 2 | 同時開發（實作 ‖ 測試） | ⬜ 未開始 | — |
+| 2 | 同時開發（實作 ‖ 測試） | 🔵 進行中 | — |
 | 3 | 驗證測試、處理失敗 | ⬜ 未開始 | 測試全部通過 |
 | 4 | AI 自己跑 E2E | ⬜ 未開始 | E2E 全部通過 |
 | 5 | 驗收、交付 | ⬜ 未開始 | **交給使用者** |
@@ -75,9 +75,10 @@
 | T1.6 | 1 | SPEC v0.3：`contracts/openapi.yaml`、`domain.pyi`、領域介面 | Claude 規格編輯（opus-5-5／high） | ➖ 作廢 | `briefs/p1-claude-spec-editor-v03.md` | `spec-ws/`；`reports/p1-spec-editor.md` | 主軸改變（X2、X5），內容不再適用；`spec-ws` 的檔案已刪除 |
 | T1.8 | 1 | 以 SVG 為主軸重寫 SPEC v1.0，加上 `contracts/` | agy session（使用者直接指定） | ✅ | 使用者回答 Q0–Q6、OQ1–OQ3 | `docs/SPEC.md` v1.0（R1–R29、AC1–AC12）、`contracts/domain.pyi`、`contracts/openapi.yaml`、`docs/plans/spec_v1_plan.md` | 見 X5；`app/main.py` 的 `create_app` 還是舊簽名，留給 T2.1 |
 | T1.7 | 1 | 審閱 v1.0 和合約（唯讀） | Codex ‖ agy | ➖ 取消 | T1.8 | — | D11：使用者決定不用跑審閱，直接推進 |
-| T2.0 | 2 | 同步 SPEC 到 `tests-ws`、`impl-ws` | 協調者 | ⬜ | `docs/SPEC.md` | — | 只搬檔案 |
-| T2.1 | 2 | 實作 `app/` | Claude worker | ⬜ | SPEC v1.0 | `impl-ws/app/` → 搬回主 repo | 看不到測試；先把 `create_app` 改成 R2 的新簽名；`impl-ws`／`tests-ws` 裡的 SPEC 是舊版，要在 T2.0 重新同步 |
-| T2.2 | 2 | 寫單元、整合、E2E 測試 | Codex | ⬜ | SPEC | `tests-ws/tests/` | 只看得到 SPEC；回報只交「測試名稱 → 需求 ID」對照 |
+| T2.0 | 2 | 同步 SPEC 到 `tests-ws`、`impl-ws` | 協調者 | ✅ | `docs/SPEC.md` | — | 只搬檔案；兩邊都拿到 SPEC、contracts、SVG、AGENTS.md；`docs/plans/` 不給 |
+| T2.1a | 2 | 實作後端：domain、SQLite、HTTP API、SSE（R1–R25、R28、R29） | Claude 實作者（opus-5-5／high） | 🔵 | `briefs/p2-claude-impl-backend.md` | `reports/p2-impl-backend.md` | 看不到測試 |
+| T2.1b | 2 | 實作前端頁面（R26、R27） | Claude 實作者（opus-5-5／high） | ⬜ | `briefs/p2-claude-impl-frontend.md` | `reports/p2-impl-frontend.md` | 接在 T2.1a 之後，同一個 `impl-ws` |
+| T2.2 | 2 | 寫單元、整合、E2E、效能測試 | Codex（gpt-6.2-astra／high） | 🔵 | `briefs/p2-codex-tests.md` | `tests-ws/tests/`；`reports/p2-codex-tests.md` | 只看得到 SPEC；回報只交「測試名稱 → 需求 ID」對照 |
 | T3.1 | 3 | 審查測試：涵蓋對照表、隨機失敗、空測試 | agy | ⬜ | `verify-ws` | `reports/p3-agy-test-audit.md` | |
 | T3.2 | 3 | 故意改壞程式，看測試會不會失敗 | agy | ⬜ | `verify-ws` | 同上 | |
 | T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | ⬜ | `verify-ws` | `reports/p3-agy-run-N.md` | 用「需求 ID + 預期 + 實際」描述 |
@@ -152,3 +153,5 @@
 | 2026-11-20 23:15 | T1.8 完成：`SPEC.md` v1.0、`contracts/domain.pyi`、`contracts/openapi.yaml`、`docs/plans/spec_v1_plan.md`；`README.md`、`ORCHESTRATION.md` 的名稱和 R-id 一併更新 |
 | 2026-11-20 23:16 | 使用者指示「只整理文件，不開始執行」：還原 `app/main.py`、`pyproject.toml` 的改動；`spec-ws` 的 v0.3 暫時不刪；沒有 commit |
 | 2026-11-20 23:20 | 使用者指示：① commit 文件改動 ② 刪除 spec-ws 作廢的 v0.3 ③ 跳過 T1.7 審閱（D11）④ SPEC.md 移至 docs/SPEC.md（D12）。Phase 1 完成 |
+| 2026-11-20 23:30 | 使用者核准 Phase 2 派工計畫（T2.1 拆成後端／前端；`docs/plans/` 不給 worker；SPEC 標題小瑕疵留待下次補合約時修）。開始 T2.0 |
+| 2026-11-20 23:35 | T2.0 完成；寫好 `briefs/p2-claude-impl-backend.md`、`p2-claude-impl-frontend.md`、`p2-codex-tests.md`；`tests-ws` 先做了 `uv sync --frozen`（Codex 沙盒不能連網）；同時在背景分派 T2.1a（Claude opus-5-5／high）與 T2.2（Codex gpt-6.2-astra／high） |
