@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: Install progress streaming
-  version: 1.0.0
+  version: 1.1.0
   description: >
-    HTTP shapes for SPEC v1.0. Behaviour lives in docs/SPEC.md; SSE event payloads are
+    HTTP shapes for SPEC v1.1. Behaviour lives in docs/SPEC.md; SSE event payloads are
     described in x-sse-events. 422 bodies are FastAPI defaults and are not part of the
     contract (assert status codes only).
 paths:
@@ -47,11 +47,7 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [scenario]
-              properties:
-                scenario: {type: string}
+            schema: {$ref: "#/components/schemas/InstallRequest"}
       responses:
         "202":
           description: New run created; run_started already persisted.
@@ -73,7 +69,14 @@ paths:
       parameters:
         - {name: run_id, in: query, required: true, schema: {type: integer, minimum: 1}}
         - {name: after, in: query, required: false, schema: {type: integer, minimum: 0, default: 0}}
-        - {name: until, in: query, required: false, schema: {type: integer, minimum: 0}}
+        - name: until
+          in: query
+          required: false
+          description: Defaults to the run's last_seq at request time (R15); no fixed default.
+          schema:
+            anyOf:
+              - {type: integer, minimum: 0}
+              - {type: "null"}
         - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 1000, default: 500}}
       responses:
         "200":
@@ -101,12 +104,17 @@ paths:
         - name: last_event_id
           in: query
           required: false
-          description: Start point "<run_id>.<seq>" (R9). Used on first connect.
-          schema: {type: string, pattern: "^[0-9]+\\.[0-9]+$"}
+          description: >
+            Start point "<run_id>.<seq>". Used on first connect. Parsed per R9: leading and
+            trailing whitespace is stripped first, then the value must match
+            ^[0-9]+\.[0-9]+$; otherwise 422 (R18).
+          schema: {type: string}
         - name: Last-Event-ID
           in: header
           required: false
-          description: Sent by EventSource on reconnect; takes precedence when valid.
+          description: >
+            Sent by EventSource on reconnect; takes precedence when valid. Parsed per R9
+            (whitespace stripped first); an invalid value is treated as absent (R18).
           schema: {type: string}
       responses:
         "200":
@@ -168,6 +176,11 @@ components:
     Status:
       type: string
       enum: [pending, running, succeeded, failed]
+    InstallRequest:
+      type: object
+      required: [scenario]
+      properties:
+        scenario: {type: string}
     Plan:
       type: object
       additionalProperties: false

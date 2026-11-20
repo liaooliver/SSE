@@ -74,6 +74,9 @@ app/
   main.py        # create_app、lifespan、掛 router；不放商業邏輯
   domain.py      # 純邏輯：不 import fastapi、不做 I/O（依 contracts/domain.pyi）
   routers/       # 只處理 HTTP：解析輸入 → 呼叫 domain/服務 → 組回應
+    page.py      # GET /（R26）：回傳 app/static/index.html
+  static/
+    index.html   # R26 的前端頁面（單一 HTML，不依賴外部資源）
   schemas.py     # Pydantic request/response model
   broker.py      # 執行期狀態（訂閱者、歷史）等有狀態元件
 tests/           # 由測試作者負責；實作者不得建立或讀取

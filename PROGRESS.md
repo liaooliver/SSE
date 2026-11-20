@@ -39,7 +39,7 @@
 | 目前 Phase | **2 同時開發** 🔵 |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` v1.0、`contracts/domain.pyi`、`contracts/openapi.yaml`；決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 把三份回報的 CONTRACT GAP／CONFLICT 合併成決策清單交給使用者 → 使用者決定後寫規格編輯 brief（spec-ws）→ 同步合約 → 視需要重派 impl／Codex → T2.5 |
+| 下一步 | 使用者決定 T2.3 回報的 4 個缺陷（是否出 v1.1.1）→ 派 T2.4（Codex 對齊）→ T2.5 |
 
 ## Phase 總覽
 
@@ -79,6 +79,8 @@
 | T2.1a | 2 | 實作後端：domain、SQLite、HTTP API、SSE（R1–R25、R28、R29） | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p2-claude-impl-backend.md` | `reports/p2-impl-backend.md` | 稽核通過；34 輪、$2.77、10 分鐘；品質關卡＋stubtest 通過；回報 2 個 CONFLICT、3 個 GAP，等 T2.2 回來一起交給使用者 |
 | T2.1b | 2 | 實作前端頁面（R26、R27） | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p2-claude-impl-frontend.md` | `reports/p2-impl-frontend.md` | 稽核通過；25 輪、$1.62、6.5 分鐘；品質關卡通過；回報 5 個前端 GAP；「DevTools 離線 5 秒」headless 驗不到，留給 T4.4 |
 | T2.2 | 2 | 寫單元、整合、E2E、效能測試 | Codex（gpt-6.2-astra／high） | ✅ | `briefs/p2-codex-tests.md` | `tests-ws/tests/`；`reports/p2-codex-tests.md` | 稽核通過；約 28 分鐘；54 個測試節點（47 一般、6 e2e、1 perf）；三項離線檢查通過；回報 3 個 CONFLICT、3 個 GAP；R27/R28/AC12 未涵蓋（留給瀏覽器驗收與 T2.5） |
+| T2.3 | 2 | SPEC v1.0 → v1.1：寫入使用者對 A1–C5 的決定 | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p2-claude-spec-v11.md` | `docs/SPEC.md`、`contracts/`、`AGENTS.md`；`reports/p2-spec-v11.md` | 稽核通過（只用 Read/Edit、只改 4 個檔、無外部路徑）；約 3 分鐘；diff 逐項符合 brief。已搬回主 repo 並同步 impl-ws／tests-ws。worker 另報 4 個未修缺陷（R10 task 與 stage 配對、run_started 內容不符、執行順序、R20 與 A4 的 /stats），待使用者決定 |
+| T2.4 | 2 | Codex 依 v1.1 變更對齊測試（A1、A3、A4 可能受影響） | Codex（gpt-6.2-astra／high） | ⬜ | T2.3 | `tests-ws/tests/`；`reports/p2-codex-align.md` | 只給變更紀錄和新版合約 |
 | T3.1 | 3 | 審查測試：涵蓋對照表、隨機失敗、空測試 | agy | ⬜ | `verify-ws` | `reports/p3-agy-test-audit.md` | |
 | T3.2 | 3 | 故意改壞程式，看測試會不會失敗 | agy | ⬜ | `verify-ws` | 同上 | |
 | T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | ⬜ | `verify-ws` | `reports/p3-agy-run-N.md` | 用「需求 ID + 預期 + 實際」描述 |
@@ -158,3 +160,5 @@
 | 2026-11-20 23:46 | T2.1a 回報 success；稽核通過（紀錄裡的 `.orchestra` 只是工作區 `.gitignore` 的內容）；刪除原始紀錄和快取；派 T2.1b（背景） |
 | 2026-11-20 23:55 | T2.1b 回報 success；稽核通過（只寫了 `app/routers/page.py`、`app/static/index.html`，並在 `main.py` 掛上 router）；刪除原始紀錄和快取；確認 `app/` 以外的檔案都沒被改；`impl-ws/app/` 搬回主 repo |
 | 2026-11-21 00:00 | T2.2 回報 success（exit 0）；稽核通過：紀錄沒出現其他工作區或主 repo 路徑，只新增 `tests/` 下 13 個檔，合約與設定檔和主 repo 完全相同，沒有 `app/`；刪除原始紀錄；協調者只讀回報、沒讀測試原始碼 |
+| 2026-11-21 00:10 | 合併決策清單交給使用者：A1–A4、B1–B6、C2–C5 全照建議；C1 維持現狀。寫 `briefs/p2-claude-spec-v11.md`，spec-ws 放入 SPEC、contracts、AGENTS.md，背景派 T2.3 |
+| 2026-11-21 00:20 | T2.3 完成並稽核通過；結果存為 `reports/p2-spec-v11.md`，刪除 jsonl/err。v1.1 的 SPEC、contracts、AGENTS.md 搬回主 repo，並同步到 impl-ws、tests-ws（覆蓋前先確認它們仍是 v1.0）。worker 回報 4 個未修缺陷，交使用者決定 |

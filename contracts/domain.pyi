@@ -1,11 +1,11 @@
-"""Contract for ``app/domain.py`` (SPEC v1.0).
+"""Contract for ``app/domain.py`` (SPEC v1.1).
 
 Pure logic only: no FastAPI imports, no I/O. Tests may import exactly the names in ``__all__``.
 """
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Final, Literal
+from typing import Final, Literal, TypeAlias
 
 __all__ = [
     "PING_COMMENT",
@@ -34,8 +34,10 @@ __all__ = [
     "script_for",
 ]
 
-type JsonValue = str | int | float | bool | list[JsonValue] | dict[str, JsonValue] | None
-type EventType = Literal[
+JsonValue: TypeAlias = (
+    str | int | float | bool | list["JsonValue"] | dict[str, "JsonValue"] | None
+)
+EventType: TypeAlias = Literal[
     "run_started",
     "stage_started",
     "stage_succeeded",
@@ -46,9 +48,9 @@ type EventType = Literal[
     "log",
     "run_finished",
 ]
-type Status = Literal["pending", "running", "succeeded", "failed"]
-type RunStatus = Literal["running", "succeeded", "failed"]
-type LogLevel = Literal["info", "error"]
+Status: TypeAlias = Literal["pending", "running", "succeeded", "failed"]
+RunStatus: TypeAlias = Literal["running", "succeeded", "failed"]
+LogLevel: TypeAlias = Literal["info", "error"]
 
 @dataclass(frozen=True, slots=True)
 class TaskDef:
@@ -80,7 +82,10 @@ class Scenario:
 
 @dataclass(frozen=True, slots=True)
 class ScriptStep:
-    """R6: one scripted event, without ``seq`` and without the log ``ts``."""
+    """R6: one scripted event, without ``seq``, without the log ``ts`` and without ``run_id``.
+
+    The ``run_started`` step's ``data`` is ``{"scenario": <id>}`` only.
+    """
 
     type: EventType
     data: Mapping[str, JsonValue]
@@ -155,6 +160,10 @@ def parse_event_id(raw: str | None) -> tuple[int, int] | None:
 def script_for(scenario_id: str) -> tuple[ScriptStep, ...]:
     """R6: the full deterministic event script of a scenario.
 
+    The script has no run id: the first step is ``run_started`` with ``data`` equal to
+    ``{"scenario": scenario_id}``. The persisted/streamed ``run_started`` event additionally
+    carries ``run_id`` (R8), added when the run is written.
+
     Raises KeyError for an unknown scenario id.
     """
 
@@ -168,7 +177,12 @@ def apply_event(state: Snapshot, event: Event) -> Snapshot:
     """R10: return the new snapshot after applying one event; ``state`` is not modified.
 
     Raises ValueError if ``event.run_id != state.run_id``, ``event.seq != state.last_seq + 1``,
-    or the transition is not allowed by the state machine.
+    the transition is not allowed by the state machine, or any other case listed in SPEC R10:
+    the first event is not ``run_started`` or ``run_started`` appears later; any event after
+    ``run_finished``; an unknown stage/task id; a ``task_*``/``log`` event whose stage is not
+    ``running``; a ``log`` event whose task is not ``running``; ``data`` missing a field or
+    having a field of the wrong type. Checking that all tasks of a stage are finished when the
+    stage finishes is not required (tests must not assert either way).
     """
 
 def format_event(event: Event) -> str:
