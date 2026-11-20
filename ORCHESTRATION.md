@@ -8,9 +8,10 @@
 |---|---|---|---|---|
 | **協調者（管理者）** | 使用者直接對話的 Claude Code session（不限定是哪一個 session） | 分派任務、追蹤進度、分配爭議、守關卡、維護 `PROGRESS.md` | 只能寫管理文件 | 測試原始碼 |
 | 實作者 | Claude Code worker（`claude -p`） | 依照 SPEC 實作 `app/`，並修 bug | `impl-ws` | 測試 |
+| 瀏覽器 E2E | Claude Code worker（`claude -p --chrome`，用使用者 Chrome 上的 Claude in Chrome 擴充功能） | R18 demo 頁面的真瀏覽器測試（Phase 4） | 回報 | 測試原始碼 |
 | 規格編輯 | Claude Code worker（`claude -p`） | 依照協調者的決定修改 `SPEC.md` 和 `contracts/` | `spec-ws` | — |
 | 測試作者 | Codex CLI | 只根據 SPEC 寫單元、整合、E2E 測試 | `tests-ws` | `app/`、主 repo |
-| 測試驗證、E2E、驗收 | agy（Gemini 4 Neon High） | 審查測試、故意改壞程式抽查、跑 E2E、最終驗收 | `verify-ws`、回報 | — |
+| 測試驗證、E2E、驗收 | agy（Gemini，依模型政策） | 審查測試、故意改壞程式抽查、跑 E2E、最終驗收 | `verify-ws`、回報 | — |
 
 協調者能做和不能做的事，以 `PROGRESS.md` 最上方的說明為準。
 
@@ -43,12 +44,13 @@
 | 層 | 作法 |
 |---|---|
 | 分開目錄 | 每個 worker 只拿到自己的工作區，也不告訴它其他工作區的路徑 |
-| 工具權限：Claude worker | `--settings` 拒絕讀取和編輯其他工作區及主 repo，Bash 只開放白名單內的指令；在 `-p` 模式下，白名單以外的指令會直接被拒絕 |
+| 工具權限：Claude 實作者 | **不設限**（`--dangerously-skip-permissions`，使用者決定 D2）。⚠️ 工具層沒有隔離，只能靠分開目錄、不告訴它路徑、事後稽核 |
+| 工具權限：Claude 規格編輯 | `acceptEdits`，並禁用 Bash 和網路工具 |
 | 工具權限：Codex | `-s workspace-write` 只限制寫入。⚠️ **讀取無法從技術上阻擋**，只能靠不告訴它路徑，再加上事後稽核 |
 | 工具權限：agy | agy 負責驗證，本來就可以看到全部；加上 `--sandbox` 限制它的終端機 |
 | 事後稽核 | worker 跑完後，搜尋它的執行紀錄，看有沒有出現其他工作區的路徑（Codex 看 log，Claude 看 `--output-format stream-json`）。有就判定越界、作廢這次產出 |
 
-- 已知漏洞：Claude worker 如果被允許執行 `uv run python`，還是可以用 Python 讀檔，這只能靠事後稽核抓到。
+- 已知漏洞：Claude 實作者和 Codex 在技術上都讀得到其他工作區。所以每次跑完都**必須**做事後稽核（搜尋執行紀錄裡有沒有出現 `tests-ws`、`verify-ws`、`/tests/`），稽核不通過的產出一律作廢。
 - 協調者看到的測試資訊只有兩種：(a) Codex 的「測試名稱 → 需求 ID」清單；(b) agy 用「需求 ID + 預期行為 + 實際行為」描述的失敗報告。退回給實作者時，也只轉交 (b)。
 - 每個 worker 跑完，協調者都用 `git status`／`diff --stat` 做越界檢查，越界就還原。
 
@@ -74,17 +76,46 @@
 
 同一個問題最多來回 3 輪，之後交給使用者決定。輪數記在 `PROGRESS.md`。
 
+## 模型政策（使用者決定 D5）
+
+協調者依照每個任務的難度挑模型，但**不得低於下限**，推理強度也一律**不低於 medium**。
+
+| Worker | 下限 | 可以用的（由弱到強） | 不可以用的 |
+|---|---|---|---|
+| Claude（`claude -p`） | Sonnet 5.5 | `claude-sonnet-5-5` → `claude-opus-5-5` → `claude-fable-5-2` | Haiku |
+| Codex | GPT-6.2 Sol | `gpt-6.2-sol` → `gpt-6.2-astra` | Luna、Terra、Reserve、舊世代 |
+| agy | Gemini 4 Hydrogen | `gemini-4-hydrogen-{medium,high,xhigh}` → `gemini-4-neon-{medium,high,xhigh}` | Argon、3.8 Flash、gpt-oss、所有 `-low`；為了保持三家模型不同，agy 也不用 Claude 模型 |
+
+強弱的依據：Gemini 4 是 Neon > Hydrogen > Argon（[Respan](https://www.respan.ai/articles/gemini-model-comparison)、[Valyu](https://www.valyu.ai/blogs/gemini-4-neon-vs-carbon-vs-hydrogen-vs-argon)）；GPT-6.2 是 Astra > Sol（[OpenAI](https://openai.com/index/introducing-gpt-6-2-astra-sol)；Codex 本機的 `~/.codex/models_cache.json`）。
+
+預設怎麼挑（協調者可以依情況調高）：
+
+| 任務 | 模型 | 推理強度 |
+|---|---|---|
+| 規格編輯、產出合約檔 | `claude-opus-5-5` | high |
+| 實作，以及第一次修 bug | `claude-opus-5-5` | high；第 2 輪以後調到 xhigh |
+| Codex 寫測試 | `gpt-6.2-astra` | high |
+| Codex 審閱 | `gpt-6.2-sol` | high |
+| agy 審查測試、故意改壞程式抽查、E2E、驗收 | `gemini-4-neon-high` | high |
+| agy 單純重跑測試 | `gemini-4-hydrogen-medium` | medium |
+| 瀏覽器 E2E | `claude-sonnet-5-5` | high |
+
+## 執行時間上限（D6）
+
+每次執行最多 30 分鐘，超過就終止，並在 `PROGRESS.md` 記一筆。macOS 沒有內建 `timeout` 指令，所以改用 `perl -e 'alarm 1800; exec @ARGV' -- <cmd>`。
+
 ## 怎麼呼叫 worker
 
-任務說明放 `.orchestra/briefs/<phase>-<worker>-<task>.md`，回報放 `.orchestra/reports/`。能同時跑的就放到背景同時跑。
+任務說明放 `.orchestra/briefs/<phase>-<worker>-<task>.md`，回報放 `.orchestra/reports/`。能同時跑的就放到背景同時跑。下面的 `T` 代表 `perl -e 'alarm 1800; exec @ARGV' --`。
 
 | Worker | 指令 |
 |---|---|
-| Claude 實作者 | `cd $W/impl-ws && claude -p "$(cat brief)" --append-system-prompt "You are a worker. Follow the brief only." <權限見 D2> > report` |
-| Claude 規格編輯 | `cd $W/spec-ws && claude -p "$(cat brief)" --permission-mode acceptEdits --allowedTools "Read,Edit,Write,Glob,Grep" --disallowedTools "Bash,WebFetch,WebSearch" --output-format stream-json --verbose > log` |
-| Codex 審閱 | `codex exec -s read-only -C $W/tests-ws --skip-git-repo-check -o report - < brief` |
-| Codex 寫測試 | `codex exec -s workspace-write -C $W/tests-ws --skip-git-repo-check -o report - < brief` |
-| agy 審閱 | `agy -p "$(cat brief)" --mode plan --model gemini-4-neon-high > report` |
-| agy 驗證／E2E／驗收 | `cd $W/verify-ws && agy -p "$(cat brief)" --dangerously-skip-permissions --model gemini-4-neon-high > report` |
+| Claude 實作者 | `cd $W/impl-ws && T claude -p "$(cat brief)" --model claude-opus-5-5 --effort high --dangerously-skip-permissions --append-system-prompt "You are a worker. Follow the brief only." --output-format stream-json --verbose > log` |
+| Claude 規格編輯 | `cd $W/spec-ws && T claude -p "$(cat brief)" --model claude-opus-5-5 --effort high --permission-mode acceptEdits --allowedTools "Read,Edit,Write,Glob,Grep" --disallowedTools "Bash,WebFetch,WebSearch" --output-format stream-json --verbose > log` |
+| Claude 瀏覽器 E2E | `T claude -p "$(cat brief)" --chrome --model claude-sonnet-5-5 --effort high --dangerously-skip-permissions --output-format stream-json --verbose > log`（任務說明裡限定只能開 `http://127.0.0.1:<port>`，而且要開新分頁） |
+| Codex 審閱 | `T codex exec -m gpt-6.2-sol -c model_reasoning_effort=high -s read-only -C $W/tests-ws --skip-git-repo-check -o report - < brief` |
+| Codex 寫測試 | `T codex exec -m gpt-6.2-astra -c model_reasoning_effort=high -s workspace-write -C $W/tests-ws --skip-git-repo-check -o report - < brief` |
+| agy 審閱 | `T agy -p "$(cat brief)" --mode plan --model gemini-4-neon-high > report` |
+| agy 驗證／E2E／驗收 | `cd $W/verify-ws && T agy -p "$(cat brief)" --dangerously-skip-permissions --model gemini-4-neon-high > report` |
 
 每個 phase 結束都做一次 git commit，並更新 `PROGRESS.md`。

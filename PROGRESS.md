@@ -36,18 +36,18 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **0.5 Agent 環境搭建**（Phase 1 暫停，SPEC v0.2 還沒核准） |
-| 規格版本 | `SPEC.md` v0.2（commit `d3b469d`）；v0.3 加合約檔的任務說明已備妥，**尚未分派** |
-| 阻塞中 | ⛔ D2、D5–D8（環境設定的決定） |
-| 下一步 | 使用者做完環境決定 → 寫入設定 → 跑環境冒煙測試 T0.5 → 回到 Phase 1，分派 T1.6 |
+| 目前 Phase | **1 規格**：T1.6 規格編輯 worker 執行中 |
+| 規格版本 | `SPEC.md` v0.2（commit `d3b469d`）；v0.3 加合約檔的工作已在 `spec-ws` 進行中 |
+| 阻塞中 | 無（等 T1.6 回報） |
+| 下一步 | T1.6 回報後：稽核 → 搬回主 repo → 同時分派 T1.7（Codex ‖ agy 審閱 v0.3） |
 
 ## Phase 總覽
 
 | Phase | 名稱 | 狀態 | 關卡 |
 |---|---|---|---|
 | 0 | 準備 | ✅ 完成 | — |
-| 0.5 | Agent 環境搭建（角色、隔離、合約機制、權限、模型、冒煙測試） | 🔵 進行中 | 冒煙測試通過 |
-| 1 | 規格（暫停） | 🟡 等 0.5 完成 | **使用者核准** |
+| 0.5 | Agent 環境搭建（角色、隔離、合約機制、權限、模型） | ✅ 完成（使用者決定不跑冒煙測試） | — |
+| 1 | 規格 | 🔵 進行中 | **使用者核准** |
 | 2 | 同時開發（實作 ‖ 測試） | ⬜ 未開始 | — |
 | 3 | 驗證測試、處理失敗 | ⬜ 未開始 | 測試全部通過 |
 | 4 | AI 自己跑 E2E | ⬜ 未開始 | E2E 全部通過 |
@@ -66,10 +66,10 @@
 | T1.4 | 1 | 合併成 v0.2 | 協調者 | ✅ | T1.2、T1.3 | commit `d3b469d` | 角色定案前由協調者執行（見 X1）；處理紀錄在 SPEC 附錄 |
 | T0.2 | 0.5 | 協調者只做管理、進度表、`CLAUDE.md` 分流 | 協調者 | ✅ | — | commit `a1724b5` | |
 | T0.3 | 0.5 | 隔離方式和合約機制寫進 `ORCHESTRATION.md` | 協調者 | ✅ | D3、D4 | `ORCHESTRATION.md` | |
-| T0.4 | 0.5 | 每個 worker 的權限和模型設定檔（`.orchestra/settings/`） | 協調者 | ⬜ | D2、D5 | | |
-| T0.5 | 0.5 | 環境冒煙測試：每個 worker 跑一個簡單任務，並確認越界讀取會被擋下 | 各 worker | ⬜ | T0.4 | `reports/p0-smoke.md` | 看 D7 |
+| T0.4 | 0.5 | 權限、模型政策、時間上限寫進 `ORCHESTRATION.md` | 協調者 | ✅ | D2、D5、D6、D8 | `ORCHESTRATION.md` | |
+| T0.5 | 0.5 | 環境冒煙測試 | — | ➖ 取消 | — | — | D7：使用者決定直接開始 |
 | T1.5 | 1 | 使用者核准 SPEC | 使用者 | ⬜ | `SPEC.md` v0.3 | — | 改成核准 v0.3 |
-| T1.6 | 1 | SPEC v0.3：`contracts/openapi.yaml`、`domain.pyi`、領域介面 | Claude 規格編輯 | ⬜ | `briefs/p1-claude-spec-editor-v03.md` | `spec-ws/` | 工作區和任務說明都已備妥 |
+| T1.6 | 1 | SPEC v0.3：`contracts/openapi.yaml`、`domain.pyi`、領域介面 | Claude 規格編輯（opus-5-5／high） | 🔵 | `briefs/p1-claude-spec-editor-v03.md` | `spec-ws/`；log 在 `reports/p1-spec-editor.jsonl` | |
 | T1.7 | 1 | 審閱 v0.3 和合約（唯讀） | Codex ‖ agy | ⬜ | T1.6 | `reports/p1-*-v03-review.md` | |
 | T2.0 | 2 | 同步 SPEC 到 `tests-ws`、`impl-ws` | 協調者 | ⬜ | `SPEC.md` | — | 只搬檔案 |
 | T2.1 | 2 | 實作 `app/` | Claude worker | ⬜ | SPEC | `impl-ws/app/` → 搬回主 repo | 看不到測試；需要先決定 D2 |
@@ -79,7 +79,8 @@
 | T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | ⬜ | `verify-ws` | `reports/p3-agy-run-N.md` | 用「需求 ID + 預期 + 實際」描述 |
 | T3.4 | 3 | 把失敗分給對的人（最多 3 輪） | 協調者 | ⬜ | T3.3 | 退回 T2.1／T2.2，或問使用者 | 看「重試計數」 |
 | T4.1 | 4 | 對真的 uvicorn 跑自動化 E2E | agy | ⬜ | 全新的 `verify-ws` | `reports/p4-agy-e2e.md` | pytest `-m e2e` |
-| T4.2 | 4 | 探索式 E2E：curl -N、多個客戶端、斷線重連、關機、真瀏覽器 | agy | ⬜ | 同上 | 同上 | 瀏覽器部分如果 agy 做不到，交給 Claude worker 用 Chrome 做 |
+| T4.2 | 4 | 探索式 E2E：curl -N、多個客戶端、斷線重連、關機 | agy | ⬜ | 同上 | 同上 | |
+| T4.4 | 4 | 真瀏覽器 E2E（R18） | Claude 瀏覽器 worker（`--chrome`） | ⬜ | 同上，伺服器由 agy 或任務說明啟動 | `reports/p4-claude-browser.md` | D8 |
 | T4.3 | 4 | 效能驗收（R19，`-m perf`） | agy | ⬜ | 同上 | 同上 | |
 | T5.1 | 5 | 從 clean clone 開始，uv sync 之後跑全部測試 | agy | ⬜ | git clone | `reports/p5-agy-acceptance.md` | |
 | T5.2 | 5 | 把 `tests/` 合併進主 repo，並 commit | 協調者 | ⬜ | T5.1 通過 | commit | 只搬檔案，不讀內容 |
@@ -96,13 +97,13 @@
 | ID | 問題 | 狀態 |
 |---|---|---|
 | D1 | 是否核准 SPEC（改成在 v0.3 做完後核准） | ⬜ 等 Phase 1 |
-| D2 | Claude 實作 worker 的權限：Bash 只開放白名單指令，或完全不設限 | 🟡 等待 |
+| D2 | Claude 實作 worker 的權限 → **完全不設限**（風險：工具層沒有隔離，必須靠事後稽核） | ✅ 2026-11-20 |
 | D3 | 隔離強度 → **分開目錄 + 工具權限**（不用容器） | ✅ 2026-11-20 |
 | D4 | 合約範圍 → **`openapi.yaml` 和 `domain.pyi` 都要** | ✅ 2026-11-20 |
-| D5 | 每個 worker 用哪個模型 | 🟡 等待 |
-| D6 | 每次執行的時間上限 | 🟡 等待 |
-| D7 | 是否先跑環境冒煙測試 | 🟡 等待 |
-| D8 | 真瀏覽器 E2E（R18）由誰執行 | 🟡 等待 |
+| D5 | 模型 → 協調者依任務挑選；下限是 Claude Sonnet 5.5、agy Gemini 4 Hydrogen、Codex GPT-6.2 Sol；推理強度不低於 medium（詳見 `ORCHESTRATION.md`） | ✅ 2026-11-20 |
+| D6 | 每次執行的時間上限 → 30 分鐘（預設值，使用者沒有異議） | ✅ 2026-11-20 |
+| D7 | 環境冒煙測試 → **不跑，直接開始** | ✅ 2026-11-20 |
+| D8 | 真瀏覽器 E2E → **Claude Code worker 用 Claude in Chrome 擴充功能** | ✅ 2026-11-20 |
 
 ## 偏差紀錄
 
@@ -129,3 +130,4 @@
 | 2026-11-20 21:41 | 使用者下令全部終止；確認沒有 worker 還在執行 |
 | 2026-11-20 21:45 | 使用者規定協調者只做管理；實作改由 Claude worker 負責；工作區從 session 暫存目錄搬到 `~/.local/share/sse-orchestra/`；建立本檔和 `CLAUDE.md` |
 | 2026-11-20 22:15 | D3、D4 決定；`ORCHESTRATION.md` 新增合約和隔離章節；備妥 T1.6 的任務說明和 `spec-ws`（未分派）；使用者確認目前仍在環境搭建階段，新增 Phase 0.5 |
+| 2026-11-20 22:30 | D2、D5–D8 決定；查證模型強弱並寫入模型政策；Phase 0.5 完成；分派 T1.6（Claude 規格編輯，opus-5-5／high，背景執行） |
