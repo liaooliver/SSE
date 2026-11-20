@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **1 規格**：T1.6 規格編輯 worker 執行中 |
+| 目前 Phase | **0.6 Python／FastAPI 環境**（T0.6 執行中）；T1.6 規格編輯同時在背景跑 |
 | 規格版本 | `SPEC.md` v0.2（commit `d3b469d`）；v0.3 加合約檔的工作已在 `spec-ws` 進行中 |
 | 阻塞中 | 無（等 T1.6 回報） |
-| 下一步 | T1.6 回報後：稽核 → 搬回主 repo → 同時分派 T1.7（Codex ‖ agy 審閱 v0.3） |
+| 下一步 | T0.6 回報後：稽核 → 把 `pyproject.toml`、`uv.lock`、`app/`、`README.md` 搬回主 repo → commit。T1.6 回報後：稽核 → 搬回 → 分派 T1.7 |
 
 ## Phase 總覽
 
@@ -47,7 +47,8 @@
 |---|---|---|---|
 | 0 | 準備 | ✅ 完成 | — |
 | 0.5 | Agent 環境搭建（角色、隔離、合約機制、權限、模型） | ✅ 完成（使用者決定不跑冒煙測試） | — |
-| 1 | 規格 | 🔵 進行中 | **使用者核准** |
+| 0.6 | Python／FastAPI 環境 | 🔵 進行中 | 環境驗證通過 |
+| 1 | 規格 | 🔵 進行中（T1.6） | **使用者核准** |
 | 2 | 同時開發（實作 ‖ 測試） | ⬜ 未開始 | — |
 | 3 | 驗證測試、處理失敗 | ⬜ 未開始 | 測試全部通過 |
 | 4 | AI 自己跑 E2E | ⬜ 未開始 | E2E 全部通過 |
@@ -68,6 +69,7 @@
 | T0.3 | 0.5 | 隔離方式和合約機制寫進 `ORCHESTRATION.md` | 協調者 | ✅ | D3、D4 | `ORCHESTRATION.md` | |
 | T0.4 | 0.5 | 權限、模型政策、時間上限寫進 `ORCHESTRATION.md` | 協調者 | ✅ | D2、D5、D6、D8 | `ORCHESTRATION.md` | |
 | T0.5 | 0.5 | 環境冒煙測試 | — | ➖ 取消 | — | — | D7：使用者決定直接開始 |
+| T0.6 | 0.6 | uv 依賴套件、pytest／ruff／mypy 設定、只有 `/health` 的骨架、README | Claude 實作者（sonnet-5-5／medium） | 🔵 | `briefs/p0-claude-python-env.md` | `impl-ws/`；log 在 `reports/p0-python-env.jsonl` | 開發用套件也要寫進 Codex 的任務說明，讓它知道可以用哪些 |
 | T1.5 | 1 | 使用者核准 SPEC | 使用者 | ⬜ | `SPEC.md` v0.3 | — | 改成核准 v0.3 |
 | T1.6 | 1 | SPEC v0.3：`contracts/openapi.yaml`、`domain.pyi`、領域介面 | Claude 規格編輯（opus-5-5／high） | 🔵 | `briefs/p1-claude-spec-editor-v03.md` | `spec-ws/`；log 在 `reports/p1-spec-editor.jsonl` | |
 | T1.7 | 1 | 審閱 v0.3 和合約（唯讀） | Codex ‖ agy | ⬜ | T1.6 | `reports/p1-*-v03-review.md` | |
@@ -110,6 +112,7 @@
 | ID | 內容 | 處置 |
 |---|---|---|
 | X1 | T0.1、T1.1、T1.4 是協調者在「協調者只管理」這條規則定案之前親自做的 | 保留成果；從 Phase 2 開始嚴格遵守管理者規則 |
+| X2 | 主 repo 裡不明來源的 `install-progress-sequence.svg`（跟這個專案無關）被 `git add -A` 一起 commit 進 `a1724b5` | 不刪除，排除在 worker 工作區之外；等使用者決定怎麼處理。之後只 `git add` 指定的路徑 |
 
 ## 工作區
 
@@ -131,3 +134,4 @@
 | 2026-11-20 21:45 | 使用者規定協調者只做管理；實作改由 Claude worker 負責；工作區從 session 暫存目錄搬到 `~/.local/share/sse-orchestra/`；建立本檔和 `CLAUDE.md` |
 | 2026-11-20 22:15 | D3、D4 決定；`ORCHESTRATION.md` 新增合約和隔離章節；備妥 T1.6 的任務說明和 `spec-ws`（未分派）；使用者確認目前仍在環境搭建階段，新增 Phase 0.5 |
 | 2026-11-20 22:30 | D2、D5–D8 決定；查證模型強弱並寫入模型政策；Phase 0.5 完成；分派 T1.6（Claude 規格編輯，opus-5-5／high，背景執行） |
+| 2026-11-20 22:40 | 使用者要求先搭好 Python／FastAPI 環境；確認環境設定已在 `dda5a75` commit；分派 T0.6（背景執行）；發現 X2 |
