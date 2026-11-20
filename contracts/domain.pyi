@@ -1,4 +1,4 @@
-"""Contract for ``app/domain.py`` (SPEC v1.1).
+"""Contract for ``app/domain.py`` (SPEC v1.1.1).
 
 Pure logic only: no FastAPI imports, no I/O. Tests may import exactly the names in ``__all__``.
 """
@@ -179,10 +179,16 @@ def apply_event(state: Snapshot, event: Event) -> Snapshot:
     Raises ValueError if ``event.run_id != state.run_id``, ``event.seq != state.last_seq + 1``,
     the transition is not allowed by the state machine, or any other case listed in SPEC R10:
     the first event is not ``run_started`` or ``run_started`` appears later; any event after
-    ``run_finished``; an unknown stage/task id; a ``task_*``/``log`` event whose stage is not
-    ``running``; a ``log`` event whose task is not ``running``; ``data`` missing a field or
-    having a field of the wrong type. Checking that all tasks of a stage are finished when the
-    stage finishes is not required (tests must not assert either way).
+    ``run_finished``; an unknown stage id; a ``task_*``/``log`` event whose
+    ``(stage_id, task_id)`` pair is not in the plan (R4), including a task id that exists but
+    belongs to a different stage; a ``task_*``/``log`` event whose stage is not ``running``; a
+    ``log`` event whose task is not ``running``; ``data`` missing a field or having a field of
+    the wrong type.
+
+    Not required (tests must not assert either way): checking that all tasks of a stage are
+    finished when the stage finishes; checking that ``run_started``'s ``data.run_id`` or
+    ``data.scenario`` matches the snapshot or ``event.run_id``; enforcing that stages/tasks
+    start in plan order, or that only one stage/task is ``running`` at a time.
     """
 
 def format_event(event: Event) -> str:

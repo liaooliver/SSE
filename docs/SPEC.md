@@ -1,4 +1,4 @@
-# SPEC：安裝進度即時串流（v1.1）
+# SPEC：安裝進度即時串流（v1.1.1）
 
 依據 `install-progress-sequence.svg`（專案根目錄），用 FastAPI + SSE 實作「安裝卡住或失敗時，畫面能立刻看出是哪一個步驟、為什麼失敗」的服務：
 
@@ -99,12 +99,16 @@
   3. `run_id` 和快照的 `run_id` 不符。
   4. 一輪的第一筆事件不是 `run_started`，或 `run_started` 出現在第一筆以外的位置。
   5. 這一輪已經結束（已經套用過 `run_finished`）之後，還有任何事件。
-  6. `stage_started`／`stage_succeeded`／`stage_failed` 指向不存在的 stage id；`task_*` 或 `log` 事件指向不存在的 stage id 或 task id。
+  6. `stage_started`／`stage_succeeded`／`stage_failed` 指向不存在的 stage id；`task_*` 或 `log` 事件的 `(stage_id, task_id)` 組合不在計畫（R4）中——包含 stage id 或 task id 不存在，以及 task id 存在但屬於另一個 stage。
   7. `task_*` 或 `log` 事件所屬的 stage 不是 `running`。
   8. `log` 事件所屬的 task 不是 `running`。
   9. `data` 缺少欄位，或欄位的型別不對（依 R8）。
 
   stage 結束（`stage_succeeded`／`stage_failed`）時，`apply_event` **不需要**檢查該 stage 的所有 task 是否都已經結束；測試不可以對這一點做任何斷言（拋出或不拋出都可以）。
+
+  `apply_event` 也**不需要**檢查 `run_started` 的 `data.run_id` 或 `data.scenario` 是否和快照或事件本身的 `run_id` 相符（事件本身的 `run_id` 已經由第 3 項檢查）；測試不可以對這一點做任何斷言（拋出或不拋出都可以）。
+
+  `apply_event` 也**不需要**強制 stage／task 依照計畫順序開始，也不需要檢查同一時間只有一個 stage／task 是 `running`；測試不可以對這一點做任何斷言（拋出或不拋出都可以）。
 
 ## 4. HTTP API
 
@@ -144,7 +148,7 @@
     | 其他 | 送出 `seq > n` 的事件 |
 
 - **R19** **回應格式**：成功時回 `200`，header 包含：`Content-Type` 以 `text/event-stream` 開頭、`Cache-Control` 同時包含 `no-cache` 和 `no-transform`、`X-Accel-Buffering: no`，而且不壓縮。每筆事件的格式是 `id: <run_id>.<seq>`、`event: <type>`、`data: <單行 JSON>`，以 `\n\n` 結尾（`domain.format_event`）；欄位順序不保證，測試要用 SSE 解析器解析。
-- **R20** **就緒與重播**：伺服器先完成訂閱登記（開始緩衝即時事件），再從 SQLite 讀出要重播的事件，更新 `/stats`，然後才送出第一個區塊。第一個區塊一定是單獨的 `retry: 3000\n\n`（`domain.RETRY_BLOCK`），立即送出。接著依序送出重播的事件，再接即時事件。重播和即時之間**不可漏、也不可重複**（緩衝中 `seq` ≤ 已送最大值的事件直接丟棄）。
+- **R20** **就緒與重播**：伺服器先完成訂閱登記（開始緩衝即時事件），再從 SQLite 讀出要重播的事件，更新 `/stats`，然後才送出第一個區塊。第一個區塊一定是單獨的 `retry: 3000\n\n`（`domain.RETRY_BLOCK`），立即送出。接著依序送出重播的事件，再接即時事件。重播和即時之間**不可漏、也不可重複**（緩衝中 `seq` ≤ 已送最大值的事件直接丟棄）。依 R16 不計入的回應（`404`、`204`，以及送出 `retry` 和 `reset` 後就關閉的回應）不更新 `/stats`。
 - **R21** **結束**：送出 `run_finished` 之後，伺服器正常結束這個回應。
 - **R22** **Heartbeat**：每次輸出任何內容後重新計時；連續 `heartbeat_interval` 秒沒有輸出時送出 `: ping\n\n`（`domain.PING_COMMENT`），閒置期間週期性重複。資料事件和 heartbeat 同時到期時，只送資料事件。
 - **R23** **慢速訂閱者**：廣播時一律用不阻塞的方式把事件放進各訂閱者的佇列。某個佇列滿了（超過 `subscriber_queue_size`）時，伺服器主動結束該連線並更新 `/stats`；其他訂閱者不受影響。被踢掉的客戶端用 `Last-Event-ID` 重連後，可以從 SQLite 補回全部事件。
@@ -233,6 +237,7 @@
 | v0.1–v0.3 | FastAPI SSE Demo（Clock 串流 + 聊天廣播）。**已全部作廢**：使用者在 2026-11-20 決定改以 `install-progress-sequence.svg` 為主軸。v0.3（T1.6）從來沒有搬回主 repo |
 | v1.0 | 依 SVG 重寫：Stage／Task／Log 模型、7 種模擬情境、單一事件序列加上 SQLite、快照／補讀／SSE 三段同步、`<run_id>.<seq>` 事件 id 和 `reset`。決策紀錄見 `docs/plans/spec_v1_plan.md` |
 | v1.1 | 使用者核准。依實作者與測試作者回報的缺口和衝突修正合約（T2.3），明細見下表 |
+| v1.1.1 | 使用者決定。釐清 `apply_event` 的檢查範圍與 `/stats` 的更新條件（T2.3b），明細見下表 |
 
 ### v1.0 → v1.1 變更明細
 
@@ -251,3 +256,12 @@
 | C3 | 點目前顯示的 stage 不會停止自動跟隨；只有 `#follow-btn` 能恢復自動跟隨（按下安裝不會） | R27 |
 | C4 | 網路錯誤、同步時遇到非 `409` 錯誤、執行中 `EventSource` 變成 `CLOSED`：在 `#run-status` 顯示錯誤，3 秒後重跑同步流程 | R27 |
 | C5 | `AGENTS.md` §5 的專案結構加上 `app/static/index.html`（R26 頁面）和 `routers/page.py` | R26、R29；`AGENTS.md` |
+
+### v1.1 → v1.1.1 變更明細
+
+| 項目 | 變更 | 影響的 R／AC 與檔案 |
+|---|---|---|
+| D1 | R10 第 6 項改為：`task_*` 或 `log` 事件的 `(stage_id, task_id)` 組合不在計畫（R4）中就拋出 `ValueError`，包含 task id 存在但屬於另一個 stage | R10；`domain.pyi` `apply_event` |
+| D2 | `apply_event` 不需要檢查 `run_started` 的 `data.run_id`／`data.scenario` 是否相符；測試不可斷言 | R10；`domain.pyi` `apply_event` |
+| D3 | `apply_event` 不需要強制 stage／task 依計畫順序開始，也不需要檢查同時只有一個 `running`；測試不可斷言 | R10；`domain.pyi` `apply_event` |
+| D4 | R20 補一句：依 R16 不計入的回應（`404`、`204`、`retry`+`reset` 後關閉）不更新 `/stats`；意義依 R16，不變 | R16、R20 |
