@@ -8,10 +8,10 @@
 |---|---|---|---|---|
 | **協調者（管理者）** | 使用者直接對話的 Claude Code session（不限定是哪一個 session） | 分派任務、追蹤進度、分配爭議、守關卡、維護 `PROGRESS.md` | 只能寫管理文件 | 測試原始碼 |
 | 實作者 | Claude Code worker（`claude -p`） | 依照 SPEC 實作 `app/`，並修 bug | `impl-ws` | 測試 |
-| 瀏覽器 E2E | Claude Code worker（`claude -p --chrome`，用使用者 Chrome 上的 Claude in Chrome 擴充功能） | R26／R27 前端頁面的真瀏覽器測試（Phase 4） | 回報 | 測試原始碼 |
+| 瀏覽器 E2E | Claude Code worker（`claude -p --chrome`，用使用者 Chrome 上的 Claude in Chrome 擴充功能） | **所有畫面上看得到的 E2E**（Phase 4）：頁面行為、斷線與恢復、伺服器重啟、多分頁同時看；每項檢查都要留截圖（見「E2E 證據規則」） | 回報、`.orchestra/evidence/<任務>/` | 測試原始碼 |
 | 規格編輯 | Claude Code worker（`claude -p`） | 依照協調者的決定修改 `docs/SPEC.md` 和 `contracts/` | `spec-ws` | — |
 | 測試作者 | Codex CLI | 只根據 SPEC 寫單元、整合、E2E 測試 | `tests-ws` | `app/`、主 repo |
-| 測試驗證、E2E、驗收 | agy（Gemini，依模型政策） | 審查測試、故意改壞程式抽查、跑 E2E、最終驗收 | `verify-ws`、回報 | — |
+| 測試驗證、E2E、驗收 | agy（Gemini，依模型政策） | 審查測試、故意改壞程式抽查、**只有畫面上看不到的 E2E**（SSE 原始格式、心跳、`Last-Event-ID` 標頭、延遲數字）、最終驗收 | `verify-ws`、回報、`.orchestra/evidence/<任務>/` | — |
 
 協調者能做和不能做的事，以 `PROGRESS.md` 最上方的說明為準。
 
@@ -63,7 +63,7 @@
 | 2 開發 | Claude worker 在 `impl-ws` 實作 ‖ Codex 在 `tests-ws` 寫測試（同時進行） | — |
 | 2.5 合約檢查 | agy：用 `mypy stubtest` 比對 `app.domain` 和 `domain.pyi`；比對 `app.openapi()` 和 `openapi.yaml` 的網址、方法、狀態碼、必填欄位；確認測試只 import 合約裡有的名稱 | 合約一致 |
 | 3 驗證測試 | agy 在 `verify-ws`：涵蓋對照表、隨機失敗、故意改壞程式抽查、跑全部測試 → 協調者把失敗分給對的人 | 測試全部通過 |
-| 4 AI 自己跑 E2E | agy 用全新的 `verify-ws` 和真的 uvicorn：自動化 E2E、curl -N 探索、斷線重連、關機、真瀏覽器、效能 | E2E 全部通過 |
+| 4 AI 自己跑 E2E | **Claude in Chrome worker**：在真瀏覽器裡驗證所有看得到的行為（頁面、斷線與恢復、伺服器重啟、多分頁），每項都截圖 ‖ **agy** 用全新的 `verify-ws` 和真的 uvicorn：只測畫面上看不到的（curl -N 原始串流、心跳、`Last-Event-ID`、效能），留原始輸出檔 | E2E 全部通過，**而且證據齊全** |
 | 5 驗收 | agy 從 clean clone 跑 `uv sync` 和全部測試 → 協調者把測試合併進主 repo → 交付 | **交給使用者** |
 
 ## 失敗分給誰（Phase 3／4）
@@ -120,9 +120,33 @@
 
 每個 phase 結束都做一次 git commit，並更新 `PROGRESS.md`。
 
+## E2E 證據規則（使用者決定 E7）
+
+使用者要能確認 agent 真的有跑 E2E，所以每個 E2E 任務都要留證據。證據放 `.orchestra/evidence/<任務 ID>/`，**只留在本機**（已加進 `.gitignore`，不 commit），清理時**不刪**。
+
+**每份 E2E 任務說明都要寫進下面這些要求：**
+
+- **瀏覽器 E2E worker（Claude in Chrome）**
+  - 每一項檢查至少截 2 張：操作前一張、結果出現後一張；中間有關鍵狀態變化（例如「連線中斷」→「恢復」）也要截。
+  - 截圖一律用 `computer` 的 `screenshot` 加上 `save_to_disk: true`，再用 Bash 把回傳的路徑複製成 `.orchestra/evidence/<任務>/<檢查ID>-<序號>-<說明>.png`（例如 `A1-02-sse-closed.png`）。
+  - 整段操作用 `gif_creator` 錄成 GIF（`download: true`），下載後搬到同一個資料夾。
+  - 證據資料夾裡要有 `INDEX.md`：每張圖一行，寫檢查 ID、截圖時間、畫面上應該看到什麼。
+  - 回報裡每項檢查都要列出對應的截圖檔名。
+- **agy（HTTP E2E）**
+  - 畫面上看不到的檢查不用截圖，改存原始輸出：curl -N 收到的串流、uvicorn access log、pytest 輸出，每個檔案開頭寫指令和開始時間。
+  - 同樣要有 `INDEX.md`，回報裡每項檢查列出對應的檔名。
+- 任務說明裡提供的證據資料夾路徑是**絕對路徑**（worker 在外部工作區跑，路徑要指回主 repo 的 `.orchestra/evidence/<任務>/`）。
+
+**協調者稽核：**
+
+- `INDEX.md` 列的每個檔案都要存在，數量對得上檢查項目；缺證據的檢查一律算**沒做**，要重跑。
+- 協調者實際打開至少 3 張截圖（或所有失敗項目的截圖），確認畫面內容和回報一致。
+- 截圖時間要落在這次 worker 的執行時間內。
+- 交付報告裡列出每個 E2E 任務的證據資料夾路徑，讓使用者自己看。
+
 ## 檔案清理（使用者要求：確定不需要的就刪）
 
-- **保留**：`briefs/*.md`（任務說明）、`reports/*.md`（worker 的最終回報）。
+- **保留**：`briefs/*.md`（任務說明）、`reports/*.md`（worker 的最終回報）、`evidence/`（E2E 截圖和原始輸出，只留本機、不 commit，見「E2E 證據規則」）。
 - **事後稽核通過後就刪**：原始執行紀錄（`*.jsonl`、`*.log`、`*.err`）。刪之前先把 `result` 抽出來存成 `reports/<task>.md`。稽核**不通過**時保留紀錄當證據，記進 `PROGRESS.md`，等事情處理完再刪。
 - **空檔案**直接刪。
 - 工作區的快取（`.mypy_cache`、`.pytest_cache`、`.ruff_cache`、`__pycache__`）不搬回主 repo，用完就刪。

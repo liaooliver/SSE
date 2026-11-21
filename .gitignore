@@ -12,3 +12,6 @@ __pycache__/
 .orchestra/reports/*.jsonl
 .orchestra/reports/*.log
 .orchestra/reports/*.err
+
+# E2E evidence (screenshots, GIFs, raw outputs): kept locally, never committed
+.orchestra/evidence/

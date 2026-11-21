@@ -128,6 +128,7 @@
 | D6 | 每次執行的時間上限 → 30 分鐘（預設值，使用者沒有異議） | ✅ 2026-11-20 |
 | D7 | 環境冒煙測試 → **不跑，直接開始** | ✅ 2026-11-20 |
 | D8 | 真瀏覽器 E2E → **Claude Code worker 用 Claude in Chrome 擴充功能** | ✅ 2026-11-20 |
+| E7 | E2E 要留證據 → **看得到的 E2E 全部交給 Claude in Chrome，每項檢查都截圖並錄 GIF；agy 只測看不到的（原始串流、心跳、標頭、延遲），留原始輸出檔；證據放 `.orchestra/evidence/<任務>/`，只留本機不 commit；協調者稽核時檢查並實際打開截圖**（規則見 `ORCHESTRATION.md`「E2E 證據規則」） | ✅ 2026-11-21 |
 | E1–E3 | 合約檢查 T2.5 後續：E1 `reset.when` 對齊 R18、E2 刪 `/health` 例外、E3 `domain.pyi` 用 noqa → SPEC v1.1.2 | ✅ 2026-11-21 |
 | E4 | R27 串流中斷時頁面靠 EventSource 自動重連、不重跑同步流程 → **算符合，並在 R27 補一句（SPEC v1.1.3）** | ✅ 2026-11-21 |
 | E5 | R27：EventSource 自動重連成功後，`#run-status` 要不要清掉錯誤、改回「執行中」，SPEC 沒寫（T5.1 靜態確認：實作在 `open` 時恢復顯示輪次狀態，只是 SPEC 沒要求） | ✅ 2026-11-21 補進 SPEC（v1.1.4，只改文件） |
@@ -201,3 +202,4 @@
 | 2026-11-21 20:16 | T5.1 `ACCEPT`，稽核通過，存 `reports/p5-agy-acceptance.md`；刪 log/err、verify-ws 快取。T5.2：tests 併入主 repo（diff -rq 相同、未讀內容）並 commit。下一步 T5.3 |
 | 2026-11-21 20:18 | 交付時問使用者 E5／E6：兩項都選補進 SPEC。寫 `briefs/p5-claude-spec-v114.md`，快照 spec-ws，背景派 T5.4 |
 | 2026-11-21 20:20 | T5.4 完成並稽核通過，存 `reports/p5-spec-v114.md`，刪 jsonl/err。v1.1.4 搬回主 repo並同步各工作區。T5.3 交付報告給使用者，專案結案 |
+| 2026-11-21 20:40 | 使用者決定 E7（E2E 要留截圖）。更新 `ORCHESTRATION.md`（角色分工、Phase 4、新增「E2E 證據規則」、檔案清理）、`.gitignore` 排除 `.orchestra/evidence/`。之前的 Phase 4 沒有留截圖，原始紀錄已依清理規則刪除，只剩文字報告 |
