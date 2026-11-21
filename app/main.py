@@ -28,7 +28,7 @@ def create_app(
         finally:
             await runtime.stop()
 
-    app = FastAPI(title="Install progress streaming", version="1.1.1", lifespan=lifespan)
+    app = FastAPI(title="Install progress streaming", version="1.1.2", lifespan=lifespan)
     app.include_router(install.router)
     app.include_router(system.router)
     app.include_router(page.router)
