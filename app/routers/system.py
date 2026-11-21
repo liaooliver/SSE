@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 from app.routers.install import RuntimeDep
-from app.schemas import Stats
+from app.schemas import Health, Stats
 
 router = APIRouter()
 
@@ -15,6 +15,6 @@ async def get_stats(runtime: RuntimeDep) -> Stats:
 
 
 @router.get("/health")
-async def health() -> dict[str, str]:
-    """R17: liveness."""
-    return {"status": "ok"}
+async def health() -> Health:
+    """R17: liveness; body is ``{"status": "ok"}``."""
+    return Health(status="ok")

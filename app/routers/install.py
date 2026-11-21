@@ -27,7 +27,6 @@ from app.sse import EventStreamResponse, event_stream, reset_stream
 router = APIRouter()
 
 _NO_RUN = "No run has been started on this database"
-_EVENT_ID_PATTERN = r"^[0-9]+\.[0-9]+$"
 
 
 def get_runtime(request: Request) -> Runtime:
@@ -158,9 +157,7 @@ async def get_logs(
 )
 async def stream_events(
     runtime: RuntimeDep,
-    last_event_id: Annotated[
-        str | None, Query(json_schema_extra={"pattern": _EVENT_ID_PATTERN})
-    ] = None,
+    last_event_id: Annotated[str | None, Query()] = None,
     last_event_id_header: Annotated[str | None, Header(alias="Last-Event-ID")] = None,
 ) -> Response:
     """R18-R24: SSE stream of the current run starting after the given event id."""

@@ -1,12 +1,16 @@
 """Pydantic request/response models (contracts/openapi.yaml)."""
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.domain import SCENARIOS
 
 type Status = Literal["pending", "running", "succeeded", "failed"]
+# Plain aliases (not PEP 695 ``type``) so pydantic inlines the constraints instead of
+# emitting separate ``$ref`` components.
+_Positive = Annotated[int, Field(ge=1)]
+_NonEmpty = Annotated[str, Field(min_length=1)]
 
 
 class _Out(BaseModel):
@@ -45,9 +49,9 @@ class ScenarioInfo(_Out):
 class TaskError(_Out):
     """R13."""
 
-    error_code: str
-    message: str
-    hint: str
+    error_code: _NonEmpty
+    message: _NonEmpty
+    hint: _NonEmpty
 
 
 class TaskOut(_Out):
@@ -71,10 +75,10 @@ class StageOut(_Out):
 class Snapshot(_Out):
     """R13."""
 
-    run_id: int
+    run_id: _Positive
     scenario: str
     status: Literal["running", "succeeded", "failed"]
-    last_seq: int
+    last_seq: _Positive
     stages: list[StageOut]
 
 
@@ -94,20 +98,20 @@ class InstallRequest(BaseModel):
 class InstallStarted(_Out):
     """R14."""
 
-    run_id: int
+    run_id: _Positive
     scenario: str
 
 
 class LogItem(_Out):
     """R15."""
 
-    seq: int
+    seq: _Positive
     stage_id: str
     task_id: str
-    line_no: int
+    line_no: _Positive
     level: Literal["info", "error"]
     text: str
-    ts: str
+    ts: Annotated[str, Field(json_schema_extra={"format": "date-time"})]
 
 
 class LogPageOut(_Out):
@@ -121,4 +125,10 @@ class LogPageOut(_Out):
 class Stats(_Out):
     """R16."""
 
-    subscribers: int
+    subscribers: Annotated[int, Field(ge=0)]
+
+
+class Health(_Out):
+    """R17."""
+
+    status: Literal["ok"]
