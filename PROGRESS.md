@@ -187,4 +187,4 @@
 | 2026-11-21 09:31 | T3.6 完成並稽核通過，存 `reports/p3-codex-gaps.md`；刪 log、tests-ws 快取、Codex 的 uv 暫存快取。tests 先留在 tests-ws（T5.2 才併入主 repo）。寫 `briefs/p3-agy-verify-r2.md`，以主 repo HEAD＋tests-ws/tests 重組 verify-ws，快照主 repo，背景派 T3 第 2 輪 |
 | 2026-11-21 09:49 | T3 第 2 輪完成並稽核通過：`T3: PASS`。存 `reports/p3-agy-run-2.md`，刪 log/err、verify-ws 快取。Phase 3 結束；殘留小缺口記在 T3r2 列，不再派。寫 `briefs/p4-agy-e2e.md`（T4.1–T4.3 合併，T4.4 之後再跑以免影響效能量測），重組 verify-ws、快照主 repo，背景派 T4 |
 | 2026-11-21 10:00 | T4 完成並稽核通過：`T4: PASS`（e2e ×3、探索 10 項、perf ×3）。存 `reports/p4-agy-e2e.md`，刪 log/err、verify-ws 快取。寫 `briefs/p4-claude-browser.md`，建 browser-ws，背景派 T4.4（使用者的 Chrome 開一個新分頁，只連 127.0.0.1:185xx） |
-| 2026-11-21 10:16 | T4.4 完成並稽核通過（`T4.4: PASS`），存 `reports/p4-claude-browser.md`，刪 jsonl/err、browser-ws 的 `__pycache__`。C4 `CLOSED` 分支與 R26 實際觀察未完成 → 寫 `briefs/p4-claude-browser-b.md`，背景派 T4.4b |
+| 2026-11-21 10:12 | T4.4 完成並稽核通過（`T4.4: PASS`），存 `reports/p4-claude-browser.md`，刪 jsonl/err、browser-ws 的 `__pycache__`。C4 `CLOSED` 分支與 R26 實際觀察未完成 → 寫 `briefs/p4-claude-browser-b.md`，背景派 T4.4b |
