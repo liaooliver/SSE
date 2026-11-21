@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **2 同時開發** 🔵 |
+| 目前 Phase | **3 驗證測試、處理失敗** 🔵（Phase 2 ✅） |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.2**、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T2.8 → 稽核（只改 `app/`、非 app 檔對 `t28-pre.sha` 不變、log 無外部路徑；全專案 ruff 是否通過）→ 搬回主 repo → 重組 verify-ws（主 repo HEAD，排除協調者檔案，單一 baseline commit）→ 重跑 T2.5 → 檢查主 repo 有無新檔 → 通過後 T3 |
+| 下一步 | 等 T3（agy 一次跑 T3.1–T3.3，`briefs/p3-agy-verify.md`）→ 稽核（verify-ws 對 baseline 乾淨、`.t3-tmp`／install.db 不存在、log 無外部路徑、報告無兩邊原始碼）→ 檢查主 repo 有無新檔 → 依 T3.4 分派失敗（IMPL BUG→實作者、TEST BUG→Codex、SPEC AMBIGUOUS→使用者，各最多 3 輪） |
 
 ## Phase 總覽
 
@@ -49,8 +49,8 @@
 | 0.5 | Agent 環境搭建（角色、隔離、合約機制、權限、模型） | ✅ 完成（使用者決定不跑冒煙測試） | — |
 | 0.6 | Python／FastAPI 環境 | ✅ 完成（`667f7b2`） | 環境驗證通過 |
 | 1 | 規格 | ✅ 完成（v1.0 定案，D1／D11） | **使用者核准** |
-| 2 | 同時開發（實作 ‖ 測試） | 🔵 進行中 | — |
-| 3 | 驗證測試、處理失敗 | ⬜ 未開始 | 測試全部通過 |
+| 2 | 同時開發（實作 ‖ 測試） | ✅ 完成（合約檢查 T2.5r PASS） | — |
+| 3 | 驗證測試、處理失敗 | 🔵 進行中 | 測試全部通過 |
 | 4 | AI 自己跑 E2E | ⬜ 未開始 | E2E 全部通過 |
 | 5 | 驗收、交付 | ⬜ 未開始 | **交給使用者** |
 
@@ -86,10 +86,10 @@
 | T2.6 | 2 | 修 8 項 OpenAPI schema 偏差（只改 schema 標註，不改行為） | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p2-claude-impl-contract-fix.md` | `impl-ws/app/`；`reports/p2-impl-contract-fix.md` | 權限收窄：acceptEdits＋Read/Edit/Write/Glob/Grep＋`Bash(uv:*)`。第一次跑到一半撞上用量上限（result 是上限訊息），用 `--resume` 同一 session 補完驗證和回報。稽核通過：只改 4 個檔（main.py、routers/install.py、routers/system.py、schemas.py），非 app 檔不變，紀錄無外部路徑；8 項全修，app/ 的 ruff／mypy／stubtest 通過，行為不變。已搬回主 repo。另報：全專案 ruff 在 `contracts/domain.pyi` 失敗（UP040×5＋格式）→ E3 |
 | T2.7 | 2 | SPEC v1.1.1 → v1.1.2：寫入使用者對 E1–E3 的決定 | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p2-claude-spec-v112.md` | `docs/SPEC.md`、`contracts/`、`AGENTS.md`；`reports/p2-spec-v112.md` | E1 `reset.when` 對齊 R18；E2 刪 AGENTS §4 的 `/health` 例外；E3 `domain.pyi` 五個別名加 `# noqa: UP040`＋理由、JsonValue 改單行。稽核通過（只用 Read/Grep/Glob/Edit、只改 4 個檔、無外部路徑），diff 符合 E1–E3。協調者發現 brief 本身有缺陷：pragma 理由用全形括號會觸發 RUF003 → resume 同一 session 改成半形 `(B1)`。已搬回主 repo 並同步 impl-ws、tests-ws（覆蓋前確認仍是 v1.1.1）。worker 另提：R18 表格第一列「`r ≠ R`，或 `n > L`，且這一輪還在執行」斷句有歧義，但下一列使行為唯一，不是真衝突 → 不處理 |
 | T2.8 | 2 | 實作跟上 v1.1.2：`info.version` 1.1.2，並跑全專案品質關卡（首次驗 E3） | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p2-claude-impl-v112.md` | `impl-ws/app/`；`reports/p2-impl-v112.md` | 稽核通過：只改 `app/main.py:31`（version 1.1.2）、非 app 檔不變、無外部路徑。全專案 ruff format／check、mypy、stubtest 全過（E3 實測有效）。已搬回主 repo |
-| T2.5r | 2 | 重跑合約檢查（v1.1.2）＋全專案品質關卡 | agy（gemini-4-neon-high） | 🔵 | `briefs/p2-agy-contract-r2.md` | `verify-ws`；`reports/p2-agy-contract-r2.md` | 跑完檢查主 repo 有無新檔 |
-| T3.1 | 3 | 審查測試：涵蓋對照表、隨機失敗、空測試 | agy | ⬜ | `verify-ws` | `reports/p3-agy-test-audit.md` | |
-| T3.2 | 3 | 故意改壞程式，看測試會不會失敗 | agy | ⬜ | `verify-ws` | 同上 | |
-| T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | ⬜ | `verify-ws` | `reports/p3-agy-run-N.md` | 用「需求 ID + 預期 + 實際」描述 |
+| T2.5r | 2 | 重跑合約檢查（v1.1.2）＋全專案品質關卡 | agy（gemini-4-neon-high） | ✅ | `briefs/p2-agy-contract-r2.md` | `verify-ws`；`reports/p2-agy-contract-r2.md` | `CONTRACT CHECK: PASS`，0 偏差、無 GAP／CONFLICT。stubtest 過；OpenAPI 逐項只剩 artefact；E1 文字與 R18 一致；tests 只匯入 `create_app` 和 `domain.pyi` 的名稱、無 SQLite；收集 74（67＋6 e2e＋1 perf）；ruff format／check、mypy 全過。稽核通過：verify-ws 對 baseline 乾淨、無 install.db、log 無外部路徑、主 repo 無新檔 |
+| T3.1 | 3 | 審查測試：涵蓋對照表、隨機失敗、空測試 | agy | 🔵 | `briefs/p3-agy-verify.md`（T3.1–T3.3 合併一次跑） | `reports/p3-agy-verify.md` | D 部分 |
+| T3.2 | 3 | 故意改壞程式，看測試會不會失敗 | agy | 🔵 | 同上 | 同上 | C 部分，≥8 個突變，門檻殺掉 ≥7 |
+| T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | 🔵 | 同上 | 同上（之後重跑存 `reports/p3-agy-run-N.md`） | A、B 部分；用「需求 ID + 預期 + 實際」描述 |
 | T3.4 | 3 | 把失敗分給對的人（最多 3 輪） | 協調者 | ⬜ | T3.3 | 退回 T2.1／T2.2，或問使用者 | 看「重試計數」 |
 | T4.1 | 4 | 對真的 uvicorn 跑自動化 E2E | agy | ⬜ | 全新的 `verify-ws` | `reports/p4-agy-e2e.md` | pytest `-m e2e` |
 | T4.2 | 4 | 探索式 E2E：curl -N、多個客戶端、斷線重連、關機 | agy | ⬜ | 同上 | 同上 | |
@@ -176,3 +176,4 @@
 | 2026-11-21 08:45 | T2.6 完成（撞上限後 resume），稽核通過，4 個檔搬回主 repo；刪除 jsonl/err、impl-ws 的 `.mypy_cache`／`.ruff_cache`／`__pycache__`。使用者決定：E1 對齊 R18、E2 刪例外、E3 在 domain.pyi 用 noqa；`install.db` 刪除（之後每次 agy 跑完檢查主 repo 新檔）。寫 `briefs/p2-claude-spec-v112.md`，背景派 T2.7 |
 | 2026-11-21 08:47 | T2.7 完成並稽核通過；resume 一次修正 pragma 括號；存 `reports/p2-spec-v112.md`（含追加修正），刪 jsonl/err。v1.1.2 搬回主 repo 並同步 impl-ws、tests-ws。寫 `briefs/p2-claude-impl-v112.md`，背景派 T2.8 |
 | 2026-11-21 08:48 | T2.8 完成並稽核通過，`app/main.py` 搬回主 repo；刪 jsonl/err、impl-ws 快取 |
+| 2026-11-21 08:56 | T2.5r 完成：`CONTRACT CHECK: PASS`（0 偏差）。稽核通過，主 repo 無新檔；存 `reports/p2-agy-contract-r2.md`，刪 log/err。Phase 2 結束。寫 `briefs/p3-agy-verify.md`（T3.1–T3.3 合併），重組 verify-ws、快照主 repo，背景派 T3 |
