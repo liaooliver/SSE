@@ -39,7 +39,7 @@
 | 目前 Phase | **5 驗收與交付** 🔵（Phase 4 ✅） |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.3**（合約 1.1.2）、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws、browser-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 寫 `briefs/p5-agy-acceptance.md` → 以主 repo HEAD＋tests-ws/tests 重組 verify-ws、快照主 repo → 背景派 T5.1 → 稽核 → T5.2 併入 tests → T5.3 交付（附 E5／E6 給使用者決定，非阻塞） |
+| 下一步 | 等 T5.1 → 稽核（verify-ws 對 baseline 乾淨、無 install.db、log 無外部路徑、主 repo 對 `main-pre-agy.txt` 不變、無殘留 uvicorn）→ T5.2 併入 tests → T5.3 交付（附 E5／E6） |
 
 ## Phase 總覽
 
@@ -100,7 +100,7 @@
 | T4.4b | 4 | 瀏覽器補驗：C4 三種錯誤路徑、R26 文字安全實際觀察 | Claude 瀏覽器 worker（sonnet-5-5／high，`--chrome`） | ✅ | `briefs/p4-claude-browser-b.md` | `browser-ws`；`reports/p4-claude-browser-b.md` | mock 改用 `uv run python`，不加權限 `T4.4b: PASS`：A1（伺服器換空 DB → events 404 → CLOSED）顯示「SSE 連線已關閉，3 秒後重試」，3.0 秒後重跑同步，結果正確；A2（用故障注入 proxy 讓 `GET /install` 斷線）每 3.0 秒重試、移除故障後自行復原；B（mock 在所有字串欄位放 `<b>`／`<img onerror>`）全部原樣顯示、0 個 b/img 元素、title 沒被改。A3（串流中停伺服器再用同 DB 重啟）：顯示「連線中斷，瀏覽器重新連線中…」，不重跑同步流程，靠 EventSource 自動重連（`last_event_id=2.4` → 200）補齊並正確結束 → 是否符合 R27「網路錯誤 → 3 秒後重跑同步流程」屬 SPEC 歧義，交使用者（E4）。稽核通過：只連 127.0.0.1:18500–18502、分頁與 extension 自建的空白分頁都關了、伺服器已停、browser-ws 不變、紀錄無外部路徑 |
 | T4.5 | 4 | SPEC v1.1.2 → v1.1.3：寫入 E4（R27 串流中斷靠 EventSource 自動重連，不必重跑同步流程） | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p4-claude-spec-v113.md` | `docs/SPEC.md`；`reports/p4-spec-v113.md` | 稽核通過：只用 Read/Edit/Grep、只改 `docs/SPEC.md`（diff 只有標題、R27 一句、附錄版本列＋變更明細表）、無外部路徑。合約維持 1.1.2。已搬回主 repo（覆蓋前確認仍是 v1.1.2）並同步 impl-ws、tests-ws、browser-ws。worker 另提兩個非阻塞歧義 → E5、E6 |
 | T4.3 | 4 | 效能驗收（AC11，`-m perf`） | agy | ✅ | 同上 | 同上 | perf ×3 全過（各約 1.5 秒；測試不印 p95） |
-| T5.1 | 5 | 從 clean clone 開始，uv sync 之後跑全部測試 | agy | ⬜ | git clone | `reports/p5-agy-acceptance.md` | |
+| T5.1 | 5 | 從 clean clone 開始，uv sync 之後跑全部測試 | agy（gemini-4-neon-high） | 🔵 | `briefs/p5-agy-acceptance.md`；全新 `verify-ws`（主 repo 45fd779＋tests-ws/tests） | `reports/p5-agy-acceptance.md` | uv sync --locked、AC12 五指令、預設 ×3、perf ×3、AC 對照表、R27 v1.1.3 靜態確認、版本標示一致 |
 | T5.2 | 5 | 把 `tests/` 合併進主 repo，並 commit | 協調者 | ⬜ | T5.1 通過 | commit | 只搬檔案，不讀內容 |
 | T5.3 | 5 | 交付報告給使用者 | 協調者 | ⬜ | 全部 | — | 附上 E2E 和驗收的證據 |
 
@@ -196,3 +196,4 @@
 | 2026-11-21 10:17 | T4.4b 完成並稽核通過（`T4.4b: PASS`），存 `reports/p4-claude-browser-b.md`，刪 jsonl/err。A3 的行為與 R27 字面可能有出入，屬 SPEC AMBIGUOUS，交使用者決定 E4 |
 | 2026-11-21 20:02 | 使用者決定 E4：算符合，並在 R27 補一句（SPEC v1.1.3）。協調者判斷合約不受影響、維持 1.1.2（實作的 `info.version` 不用動）。寫 `briefs/p4-claude-spec-v113.md`，快照 spec-ws，背景派 T4.5 |
 | 2026-11-21 20:06 | T4.5 完成並稽核通過，存 `reports/p4-spec-v113.md`，刪 jsonl/err。v1.1.3 搬回主 repo，同步 impl-ws、tests-ws、browser-ws。Phase 4 結束。記下 E5、E6（非阻塞，交付時問使用者）。下一步 T5.1 |
+| 2026-11-21 20:06 | 寫 `briefs/p5-agy-acceptance.md`；以主 repo 45fd779＋tests-ws/tests 重組 verify-ws，快照主 repo，背景派 T5.1 |
