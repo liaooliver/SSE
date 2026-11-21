@@ -15,3 +15,6 @@ __pycache__/
 
 # E2E evidence (screenshots, GIFs, raw outputs): kept locally, never committed
 .orchestra/evidence/
+
+# local SQLite DB created by the server at startup (default SSE_DB_PATH=./install.db, WAL side files)
+install.db*
