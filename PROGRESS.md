@@ -39,7 +39,7 @@
 | 目前 Phase | **4 AI 自己跑 E2E** 🔵（Phase 3 ✅） |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.2**、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T4.4（Claude 瀏覽器 worker，sonnet-5-5／high，`--chrome`，權限收窄）→ 稽核（只碰 `.t44-tmp`、分頁已關、伺服器已停、無 install.db、紀錄只連 127.0.0.1）→ 通過則 Phase 4 結束，進 T5.1 驗收 |
+| 下一步 | 等 T4.4b → 稽核 → 若「伺服器停止時靠 EventSource 自動重連、不重跑同步流程」與 C4「網路錯誤 → 3 秒後重跑同步流程」有出入，屬 SPEC AMBIGUOUS，交使用者決定 → Phase 4 結束，進 T5.1 |
 
 ## Phase 總覽
 
@@ -96,7 +96,8 @@
 | T3r2 | 3 | T3 第 2 輪：重跑＋審查新測試＋目標突變 | agy（gemini-4-neon-high） | ✅ | `briefs/p3-agy-verify-r2.md` | `reports/p3-agy-run-2.md` | `T3: PASS`：75/75 ×3（53／51／51 秒），無 flaky；新／改測試都判定只斷言 SPEC 要求且會失敗；7 個目標突變（R10#9、R14、R15、R19、R26、R20、R23）全殺。殘留小缺口（記錄、不再派）：R26 靜態正向檢查遇方括號索引會退讓（交 T4.4 瀏覽器）、R14 執行中跨 task 的 log↔task 事件間隔、R3 傳入 `bool`、R15 `after > until > 0`、R18 header 路徑的執行中 `n > L`、OpenAPI 全端點比對不在測試內（T2.5r 已人工比對）。稽核通過 |
 | T4.1 | 4 | 對真的 uvicorn 跑自動化 E2E | agy | ✅ | `briefs/p4-agy-e2e.md`（T4.1–T4.3 合併）；全新的 `verify-ws` | `reports/p4-agy-e2e.md` | `T4: PASS`：6 個 e2e ×3 全過（約 16 秒）。稽核通過：verify-ws 乾淨、無 install.db、沒有殘留 uvicorn／18xxx 埠、log 無外部路徑、報告無原始碼、主 repo 無新檔 |
 | T4.2 | 4 | 探索式 E2E：curl -N、多個客戶端、斷線重連、關機 | agy | ✅ | 同上 | 同上 | 10 項全 OK（附實際 header／SSE 行）：端點與 422／409、3 個 curl -N 並行（202 筆連續、/stats 1→2→3→0、gzip 下不壓縮）、header 與 query（含空白）重連無缺漏重複、R18 全部分支（協調者對照 R18 原文確認含「header 不合法視同沒帶」）、10 個並行 POST 恰 1 個 202、ping 間隔 0.5 秒、斷線 0.002 秒退訂、SIGINT／SIGTERM 0.25 秒退出並復原 E_INTERRUPTED、SIGKILL 復原且 run_id 遞增、logs 分頁串接 168 筆完全相符。R23 在 macOS loopback 因核心送出緩衝 128 KiB > 整輪 38 KiB 無法以真 TCP 觸發（AC10 已用 ASGI 涵蓋），正常客戶端不受影響 |
-| T4.4 | 4 | 真瀏覽器 E2E（R26／R27） | Claude 瀏覽器 worker（`--chrome`） | 🔵 | `briefs/p4-claude-browser.md`；`browser-ws`（主 repo HEAD 去掉協調者檔案，沒有 tests），伺服器由 worker 自己啟動 | `reports/p4-claude-browser.md` | D8 |
+| T4.4 | 4 | 真瀏覽器 E2E（R26／R27） | Claude 瀏覽器 worker（`--chrome`） | ✅ | `briefs/p4-claude-browser.md`；`browser-ws`（主 repo HEAD 去掉協調者檔案，沒有 tests），伺服器由 worker 自己啟動 | `reports/p4-claude-browser.md` | D8 `T4.4: PASS`（0 偏差）：載入、安裝畫面（200 ms 取樣：跟隨／展開／捲動／收合全對）、點開收合 task 0 請求、失敗紅色與 message／hint、C2、C3、中途加入與第二分頁 168 行逐行相符、執行中重整、409、伺服器停止與 E_INTERRUPTED 復原、C1 都 OK。未完成：C4 的 `CLOSED` 分支沒觸發（伺服器停止時靠 EventSource 自動重連復原，沒有重跑同步流程）；R26 文字安全只做靜態檢查（mock 用 `python3` 被權限擋下，沒執行）→ T4.4b。稽核通過：只開 127.0.0.1:18510、自己開的 2 個分頁都關了（extension 群組自動建的空白 New Tab 留著）、伺服器已停、browser-ws 只多 `__pycache__`（已刪）、紀錄無外部路徑 |
+| T4.4b | 4 | 瀏覽器補驗：C4 三種錯誤路徑、R26 文字安全實際觀察 | Claude 瀏覽器 worker（sonnet-5-5／high，`--chrome`） | 🔵 | `briefs/p4-claude-browser-b.md` | `browser-ws`；`reports/p4-claude-browser-b.md` | mock 改用 `uv run python`，不加權限 |
 | T4.3 | 4 | 效能驗收（AC11，`-m perf`） | agy | ✅ | 同上 | 同上 | perf ×3 全過（各約 1.5 秒；測試不印 p95） |
 | T5.1 | 5 | 從 clean clone 開始，uv sync 之後跑全部測試 | agy | ⬜ | git clone | `reports/p5-agy-acceptance.md` | |
 | T5.2 | 5 | 把 `tests/` 合併進主 repo，並 commit | 協調者 | ⬜ | T5.1 通過 | commit | 只搬檔案，不讀內容 |
@@ -186,3 +187,4 @@
 | 2026-11-21 09:31 | T3.6 完成並稽核通過，存 `reports/p3-codex-gaps.md`；刪 log、tests-ws 快取、Codex 的 uv 暫存快取。tests 先留在 tests-ws（T5.2 才併入主 repo）。寫 `briefs/p3-agy-verify-r2.md`，以主 repo HEAD＋tests-ws/tests 重組 verify-ws，快照主 repo，背景派 T3 第 2 輪 |
 | 2026-11-21 09:49 | T3 第 2 輪完成並稽核通過：`T3: PASS`。存 `reports/p3-agy-run-2.md`，刪 log/err、verify-ws 快取。Phase 3 結束；殘留小缺口記在 T3r2 列，不再派。寫 `briefs/p4-agy-e2e.md`（T4.1–T4.3 合併，T4.4 之後再跑以免影響效能量測），重組 verify-ws、快照主 repo，背景派 T4 |
 | 2026-11-21 10:00 | T4 完成並稽核通過：`T4: PASS`（e2e ×3、探索 10 項、perf ×3）。存 `reports/p4-agy-e2e.md`，刪 log/err、verify-ws 快取。寫 `briefs/p4-claude-browser.md`，建 browser-ws，背景派 T4.4（使用者的 Chrome 開一個新分頁，只連 127.0.0.1:185xx） |
+| 2026-11-21 10:16 | T4.4 完成並稽核通過（`T4.4: PASS`），存 `reports/p4-claude-browser.md`，刪 jsonl/err、browser-ws 的 `__pycache__`。C4 `CLOSED` 分支與 R26 實際觀察未完成 → 寫 `briefs/p4-claude-browser-b.md`，背景派 T4.4b |
