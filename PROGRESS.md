@@ -39,7 +39,7 @@
 | 目前 Phase | **5 驗收與交付** 🔵（Phase 4 ✅） |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.3**（合約 1.1.2）、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws、browser-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | T5.3 交付報告給使用者；等使用者決定 E5／E6（要的話開 v1.1.4，否則結案） |
+| 下一步 | 等 T5.4 → 稽核（只改 `docs/SPEC.md`、只用 Read/Edit/Glob/Grep、無外部路徑、diff 只有 R27＋標題＋附錄）→ 搬回主 repo，同步各工作區 → T5.3 交付報告定稿 → 結案 |
 
 ## Phase 總覽
 
@@ -103,6 +103,7 @@
 | T5.1 | 5 | 從 clean clone 開始，uv sync 之後跑全部測試 | agy（gemini-4-neon-high） | ✅ | `briefs/p5-agy-acceptance.md`；全新 `verify-ws`（主 repo 45fd779＋tests-ws/tests） | `reports/p5-agy-acceptance.md` | `T5.1: ACCEPT`。`uv sync --locked` 不改 lock（Python 3.13.9）；AC12 五指令全過；預設 75 passed ×3（約 51 秒，無 flaky）；perf ×3 全過；AC1–AC12 皆有對應節點；R27 v1.1.3 (a)(b)(c) 皆 OK；版本標示一致；`app/` 5 處 `# noqa: RUF001` 皆附理由。稽核通過：verify-ws 對 baseline 無變更、無 install.db、log 無外部路徑、主 repo 只多報告、無殘留 uvicorn |
 | T5.2 | 5 | 把 `tests/` 合併進主 repo，並 commit | 協調者 | ✅ | T5.1 通過 | commit | 只搬檔案、不讀內容；`diff -rq` 確認主 repo `tests/` 與通過驗收的 verify-ws/tests、tests-ws/tests 完全相同（排除 `__pycache__`） |
 | T5.3 | 5 | 交付報告給使用者 | 協調者 | 🔵 | 全部 | — | 附上 E2E 和驗收的證據；附 E5／E6 給使用者決定 |
+| T5.4 | 5 | SPEC v1.1.3 → v1.1.4：寫入 E5（重連成功後恢復狀態）、E6（`GET /install` 的 404 不算錯誤） | Claude 規格編輯（opus-5-5／high） | 🔵 | `briefs/p5-claude-spec-v114.md` | `docs/SPEC.md`；`reports/p5-spec-v114.md` | 只改文件、合約維持 1.1.2；行為已由 T5.1 E 節靜態確認，不重跑驗收 |
 
 ## 重試計數（每個問題最多 3 輪，超過就交給使用者）
 
@@ -129,8 +130,8 @@
 | D8 | 真瀏覽器 E2E → **Claude Code worker 用 Claude in Chrome 擴充功能** | ✅ 2026-11-20 |
 | E1–E3 | 合約檢查 T2.5 後續：E1 `reset.when` 對齊 R18、E2 刪 `/health` 例外、E3 `domain.pyi` 用 noqa → SPEC v1.1.2 | ✅ 2026-11-21 |
 | E4 | R27 串流中斷時頁面靠 EventSource 自動重連、不重跑同步流程 → **算符合，並在 R27 補一句（SPEC v1.1.3）** | ✅ 2026-11-21 |
-| E5 | R27：EventSource 自動重連成功後，`#run-status` 要不要清掉錯誤、改回「執行中」，SPEC 沒寫（T5.1 靜態確認：實作在 `open` 時恢復顯示輪次狀態，只是 SPEC 沒要求） | ⏳ 非阻塞，交付時問 |
-| E6 | R27：「錯誤與重試」字面上的「`409` 以外的錯誤」包含 `GET /install` 的 `404`，但「載入時」把 `404` 定義為「只顯示計畫」，字面互相衝突（實作與瀏覽器觀察都照「載入時」走） | ⏳ 非阻塞，交付時問 |
+| E5 | R27：EventSource 自動重連成功後，`#run-status` 要不要清掉錯誤、改回「執行中」，SPEC 沒寫（T5.1 靜態確認：實作在 `open` 時恢復顯示輪次狀態，只是 SPEC 沒要求） | ✅ 2026-11-21 補進 SPEC（v1.1.4，只改文件） |
+| E6 | R27：「錯誤與重試」字面上的「`409` 以外的錯誤」包含 `GET /install` 的 `404`，但「載入時」把 `404` 定義為「只顯示計畫」，字面互相衝突（實作與瀏覽器觀察都照「載入時」走） | ✅ 2026-11-21 寫明 404 不算錯誤（v1.1.4，只改文件） |
 
 ## 偏差紀錄
 
@@ -198,3 +199,4 @@
 | 2026-11-21 20:06 | T4.5 完成並稽核通過，存 `reports/p4-spec-v113.md`，刪 jsonl/err。v1.1.3 搬回主 repo，同步 impl-ws、tests-ws、browser-ws。Phase 4 結束。記下 E5、E6（非阻塞，交付時問使用者）。下一步 T5.1 |
 | 2026-11-21 20:06 | 寫 `briefs/p5-agy-acceptance.md`；以主 repo 45fd779＋tests-ws/tests 重組 verify-ws，快照主 repo，背景派 T5.1 |
 | 2026-11-21 20:16 | T5.1 `ACCEPT`，稽核通過，存 `reports/p5-agy-acceptance.md`；刪 log/err、verify-ws 快取。T5.2：tests 併入主 repo（diff -rq 相同、未讀內容）並 commit。下一步 T5.3 |
+| 2026-11-21 20:18 | 交付時問使用者 E5／E6：兩項都選補進 SPEC。寫 `briefs/p5-claude-spec-v114.md`，快照 spec-ws，背景派 T5.4 |
