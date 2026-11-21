@@ -37,9 +37,9 @@
 | 項目 | 值 |
 |---|---|
 | 目前 Phase | **2 同時開發** 🔵 |
-| 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.1**、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
+| 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.2**、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T2.7 → 稽核（只改 4 個檔、diff 符合 E1–E3）→ 搬回主 repo、同步 impl-ws／tests-ws → 實作者把 `info.version` 改成 1.1.2 → 重組 verify-ws、重跑 T2.5（含全專案 ruff）→ 通過後 T3。每次 agy 跑完要檢查主 repo 有沒有多出檔案 |
+| 下一步 | 等 T2.8 → 稽核（只改 `app/`、非 app 檔對 `t28-pre.sha` 不變、log 無外部路徑；全專案 ruff 是否通過）→ 搬回主 repo → 重組 verify-ws（主 repo HEAD，排除協調者檔案，單一 baseline commit）→ 重跑 T2.5 → 檢查主 repo 有無新檔 → 通過後 T3 |
 
 ## Phase 總覽
 
@@ -84,7 +84,8 @@
 | T2.4 | 2 | Codex 依 v1.1.1 對齊測試（A1–C5、D1–D4） | Codex（gpt-6.2-astra／high） | ✅ | `briefs/p2-codex-align.md` | `tests-ws/tests/`；`reports/p2-codex-align.md` | 稽核通過（只改 `tests/` 下 6 個檔、合約與設定 shasum 不變、無 `app/`、紀錄無外部路徑、回報無原始碼）；約 14 分鐘；74 個節點（67 一般、6 e2e、1 perf），新增 20 個、無移除；三項離線檢查通過。CONFLICT 1：R18 規定已結束輪次游標超前回 `204`，openapi `reset.when` 措辭少了「輪次執行中」限定；測試照 SPEC。GAP 0 |
 | T2.5 | 2 | 合約檢查：stubtest、`app.openapi()` 對 `openapi.yaml`、測試 import 範圍 | agy（gemini-4-neon-high） | ✅ | `briefs/p2-agy-contract.md` | `verify-ws`；`reports/p2-agy-contract.md` | 稽核通過（verify-ws 對 baseline 無變更、`.t25-tmp/` 已刪、紀錄只出現 agy 自己的 `~/.gemini` 設定、回報無測試原始碼）。stubtest ✅、測試 import 範圍 ✅（只用 `create_app` 與 pyi 名稱）、收集 74 個節點 ✅。FAIL 9 項：8 項 impl（`info.version` 1.0.0、`last_event_id` 殘留 `pattern`、`/health` schema、多個 `minimum`／`minLength`／`format: date-time` 缺漏）→ T2.6；1 項 yaml（`reset.when` 措辭和 R18 不符；實作行為照 R18：已結束且 n ≥ L 回 204）→ 待使用者 E1。另：AGENTS.md §4 允許 `/health` 回裸 dict，和合約衝突 → 待使用者 E2。agy 的 `--mode auto` 這個帳號不能用，實際以預設模式＋`--sandbox` 執行 |
 | T2.6 | 2 | 修 8 項 OpenAPI schema 偏差（只改 schema 標註，不改行為） | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p2-claude-impl-contract-fix.md` | `impl-ws/app/`；`reports/p2-impl-contract-fix.md` | 權限收窄：acceptEdits＋Read/Edit/Write/Glob/Grep＋`Bash(uv:*)`。第一次跑到一半撞上用量上限（result 是上限訊息），用 `--resume` 同一 session 補完驗證和回報。稽核通過：只改 4 個檔（main.py、routers/install.py、routers/system.py、schemas.py），非 app 檔不變，紀錄無外部路徑；8 項全修，app/ 的 ruff／mypy／stubtest 通過，行為不變。已搬回主 repo。另報：全專案 ruff 在 `contracts/domain.pyi` 失敗（UP040×5＋格式）→ E3 |
-| T2.7 | 2 | SPEC v1.1.1 → v1.1.2：寫入使用者對 E1–E3 的決定 | Claude 規格編輯（opus-5-5／high） | 🔵 | `briefs/p2-claude-spec-v112.md` | `docs/SPEC.md`、`contracts/`、`AGENTS.md`；`reports/p2-spec-v112.md` | E1 `reset.when` 對齊 R18；E2 刪 AGENTS §4 的 `/health` 例外；E3 `domain.pyi` 五個別名加 `# noqa: UP040`＋理由、JsonValue 改單行。版本升 1.1.2 後，實作的 `info.version` 要跟著改（小型實作任務），再重跑 T2.5 |
+| T2.7 | 2 | SPEC v1.1.1 → v1.1.2：寫入使用者對 E1–E3 的決定 | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p2-claude-spec-v112.md` | `docs/SPEC.md`、`contracts/`、`AGENTS.md`；`reports/p2-spec-v112.md` | E1 `reset.when` 對齊 R18；E2 刪 AGENTS §4 的 `/health` 例外；E3 `domain.pyi` 五個別名加 `# noqa: UP040`＋理由、JsonValue 改單行。稽核通過（只用 Read/Grep/Glob/Edit、只改 4 個檔、無外部路徑），diff 符合 E1–E3。協調者發現 brief 本身有缺陷：pragma 理由用全形括號會觸發 RUF003 → resume 同一 session 改成半形 `(B1)`。已搬回主 repo 並同步 impl-ws、tests-ws（覆蓋前確認仍是 v1.1.1）。worker 另提：R18 表格第一列「`r ≠ R`，或 `n > L`，且這一輪還在執行」斷句有歧義，但下一列使行為唯一，不是真衝突 → 不處理 |
+| T2.8 | 2 | 實作跟上 v1.1.2：`info.version` 1.1.2，並跑全專案品質關卡（首次驗 E3） | Claude 實作者（opus-5-5／high） | 🔵 | `briefs/p2-claude-impl-v112.md` | `impl-ws/app/`；`reports/p2-impl-v112.md` | 權限同 T2.6 |
 | T3.1 | 3 | 審查測試：涵蓋對照表、隨機失敗、空測試 | agy | ⬜ | `verify-ws` | `reports/p3-agy-test-audit.md` | |
 | T3.2 | 3 | 故意改壞程式，看測試會不會失敗 | agy | ⬜ | `verify-ws` | 同上 | |
 | T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | ⬜ | `verify-ws` | `reports/p3-agy-run-N.md` | 用「需求 ID + 預期 + 實際」描述 |
@@ -172,3 +173,4 @@
 | 2026-11-21 00:22 | 寫 `briefs/p2-agy-contract.md`。組 verify-ws：主 repo `3229abf` clone，移除 `.orchestra/`、`CLAUDE.md`、`PROGRESS.md`、`ORCHESTRATION.md`、`docs/plans/`（比照 impl-ws），重建 git 只留一個 baseline commit `dc386e4`（避免歷史洩漏實作與測試報告），加入 tests-ws/tests（diff 相同；SPEC/contracts/AGENTS/pyproject 和 tests-ws 一致）。`--dangerously-skip-permissions` 被 auto mode 擋下，改用 ORCHESTRATION 寫的 `--sandbox` 加 `--mode auto`，背景派 T2.5 |
 | 2026-11-21 00:27 | T2.5 完成並稽核通過，存 `reports/p2-agy-contract.md`；刪除 log/err 和 verify-ws 的 `.mypy_cache`、`.venv`。8 項 impl 偏差依 AGENTS.md「衝突時以合約為準」直接退回實作者，寫 `briefs/p2-claude-impl-contract-fix.md`，背景派 T2.6。E1（`reset.when`）、E2（AGENTS §4 `/health`）屬規格／規範修改，交使用者決定 |
 | 2026-11-21 08:45 | T2.6 完成（撞上限後 resume），稽核通過，4 個檔搬回主 repo；刪除 jsonl/err、impl-ws 的 `.mypy_cache`／`.ruff_cache`／`__pycache__`。使用者決定：E1 對齊 R18、E2 刪例外、E3 在 domain.pyi 用 noqa；`install.db` 刪除（之後每次 agy 跑完檢查主 repo 新檔）。寫 `briefs/p2-claude-spec-v112.md`，背景派 T2.7 |
+| 2026-11-21 08:47 | T2.7 完成並稽核通過；resume 一次修正 pragma 括號；存 `reports/p2-spec-v112.md`（含追加修正），刪 jsonl/err。v1.1.2 搬回主 repo 並同步 impl-ws、tests-ws。寫 `briefs/p2-claude-impl-v112.md`，背景派 T2.8 |

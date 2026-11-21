@@ -1,4 +1,4 @@
-"""Contract for ``app/domain.py`` (SPEC v1.1.1).
+"""Contract for ``app/domain.py`` (SPEC v1.1.2).
 
 Pure logic only: no FastAPI imports, no I/O. Tests may import exactly the names in ``__all__``.
 """
@@ -34,10 +34,8 @@ __all__ = [
     "script_for",
 ]
 
-JsonValue: TypeAlias = (
-    str | int | float | bool | list["JsonValue"] | dict[str, "JsonValue"] | None
-)
-EventType: TypeAlias = Literal[
+JsonValue: TypeAlias = str | int | float | bool | list["JsonValue"] | dict[str, "JsonValue"] | None  # noqa: UP040  stubtest 不支援 PEP 695 (B1)
+EventType: TypeAlias = Literal[  # noqa: UP040  stubtest 不支援 PEP 695 (B1)
     "run_started",
     "stage_started",
     "stage_succeeded",
@@ -48,9 +46,9 @@ EventType: TypeAlias = Literal[
     "log",
     "run_finished",
 ]
-Status: TypeAlias = Literal["pending", "running", "succeeded", "failed"]
-RunStatus: TypeAlias = Literal["running", "succeeded", "failed"]
-LogLevel: TypeAlias = Literal["info", "error"]
+Status: TypeAlias = Literal["pending", "running", "succeeded", "failed"]  # noqa: UP040  stubtest 不支援 PEP 695 (B1)
+RunStatus: TypeAlias = Literal["running", "succeeded", "failed"]  # noqa: UP040  stubtest 不支援 PEP 695 (B1)
+LogLevel: TypeAlias = Literal["info", "error"]  # noqa: UP040  stubtest 不支援 PEP 695 (B1)
 
 @dataclass(frozen=True, slots=True)
 class TaskDef:

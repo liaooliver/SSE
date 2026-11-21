@@ -1,4 +1,4 @@
-# SPEC：安裝進度即時串流（v1.1.1）
+# SPEC：安裝進度即時串流（v1.1.2）
 
 依據 `install-progress-sequence.svg`（專案根目錄），用 FastAPI + SSE 實作「安裝卡住或失敗時，畫面能立刻看出是哪一個步驟、為什麼失敗」的服務：
 
@@ -238,6 +238,7 @@
 | v1.0 | 依 SVG 重寫：Stage／Task／Log 模型、7 種模擬情境、單一事件序列加上 SQLite、快照／補讀／SSE 三段同步、`<run_id>.<seq>` 事件 id 和 `reset`。決策紀錄見 `docs/plans/spec_v1_plan.md` |
 | v1.1 | 使用者核准。依實作者與測試作者回報的缺口和衝突修正合約（T2.3），明細見下表 |
 | v1.1.1 | 使用者決定。釐清 `apply_event` 的檢查範圍與 `/stats` 的更新條件（T2.3b），明細見下表 |
+| v1.1.2 | 使用者決定。合約檢查（T2.5）後續修正：`reset` 條件與 R18 對齊、移除 `/health` 的裸 `dict` 例外、`domain.pyi` 通過全專案 ruff，明細見下表 |
 
 ### v1.0 → v1.1 變更明細
 
@@ -265,3 +266,11 @@
 | D2 | `apply_event` 不需要檢查 `run_started` 的 `data.run_id`／`data.scenario` 是否相符；測試不可斷言 | R10；`domain.pyi` `apply_event` |
 | D3 | `apply_event` 不需要強制 stage／task 依計畫順序開始，也不需要檢查同時只有一個 `running`；測試不可斷言 | R10；`domain.pyi` `apply_event` |
 | D4 | R20 補一句：依 R16 不計入的回應（`404`、`204`、`retry`+`reset` 後關閉）不更新 `/stats`；意義依 R16，不變 | R16、R20 |
+
+### v1.1.1 → v1.1.2 變更明細
+
+| 項目 | 變更 | 影響的 R／AC 與檔案 |
+|---|---|---|
+| E1 | `x-sse-events.control.reset.when` 寫滿 R18 的 `reset` 條件：起點屬於另一輪（這一輪執行中或已結束都一樣），或 `n > L` 且這一輪還在執行；這一輪已結束且 `r = R`、`n ≥ L` 時回 `204`，不送 `reset`。`GET /install/events` 的 `204` 說明改為 `r = R` 且 `n ≥ L`。R18 本身不變 | R18；`openapi.yaml` |
+| E2 | `AGENTS.md` §4 移除 `/health` 可回傳裸 `dict` 的例外：所有 JSON 端點都用 Pydantic model 或明確的回傳型別，產生符合合約的 schema（`/health` 是 `additionalProperties: false`、`status: const "ok"`） | R17；`AGENTS.md` |
+| E3 | `domain.pyi` 的 `JsonValue` 改成單行（去掉括號）；五個型別別名 `JsonValue`、`EventType`、`Status`、`RunStatus`、`LogLevel` 的第一行加上 `# noqa: UP040  stubtest 不支援 PEP 695 (B1)`。名稱、值、順序不變 | R2；`domain.pyi` |

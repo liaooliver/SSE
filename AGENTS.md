@@ -57,8 +57,8 @@ uv run pytest            # 有 tests/ 時
   ```
 - **依賴注入**：共享資源（broker、設定）用 `Depends`，並定義型別別名
   `BrokerDep = Annotated[Broker, Depends(get_broker)]`。
-- **回應**：JSON 端點用 Pydantic model 或明確的回傳型別，讓 FastAPI 自動產生 schema；
-  不回傳裸的 `dict` 當作公開 API 形狀（`/health` 這種極小端點除外，但仍要標 `dict[str, str]`）。
+- **回應**：所有 JSON 端點（包含 `/health`）都用 Pydantic model 或明確的回傳型別，
+  讓 FastAPI 自動產生符合 `contracts/openapi.yaml` 的 schema；不回傳裸的 `dict` 當作公開 API 形狀。
 - **狀態碼**：用 `status.HTTP_201_CREATED` 等常數，不寫魔術數字。
 - **錯誤**：用 `HTTPException` 或註冊 exception handler；不吞例外、不用裸 `except:`。
 - **async 規則**：
