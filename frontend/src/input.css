@@ -1,0 +1,80 @@
+/* Build input for app/static/index.html (SPEC R26). Compiled by build.mjs and inlined. */
+
+/* Only scan the page template, so the output depends on nothing else in this folder. */
+@import "tailwindcss" source(none);
+@source "./index.html";
+
+/* Preline UI (Tailwind v4 setup): variants, then the theme tokens (bg-card, text-foreground, …).
+   Preline JS is not used (no interactive Preline components), so its dist/*.js is not a @source. */
+@import "../node_modules/preline/variants.css";
+@import "../node_modules/preline/theme.css";
+
+/* Preline's theme switches tokens with a `.dark` class. This page has no theme toggle (E10),
+   so the dark values of the tokens it uses follow prefers-color-scheme instead, matching
+   Tailwind's default media-based `dark:` variant. Values are Preline's `.dark` values, except
+   --primary/--primary-hover, kept at blue-600/700 so white button text stays above 4.5:1. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-1: var(--color-neutral-900);
+    --foreground: var(--color-neutral-200);
+    --border: var(--color-neutral-700);
+    --navbar: var(--color-neutral-800);
+    --navbar-line: var(--color-neutral-700);
+    --card: var(--color-neutral-800);
+    --card-line: var(--color-neutral-700);
+    --card-divider: var(--color-neutral-700);
+    --layer: var(--color-neutral-800);
+    --layer-line: var(--color-neutral-700);
+    --layer-foreground: var(--color-white);
+    --layer-hover: var(--color-neutral-700);
+    --surface: var(--color-neutral-700);
+    --surface-foreground: var(--color-neutral-200);
+    --muted: var(--color-neutral-800);
+    --muted-hover: var(--color-neutral-700);
+    --muted-foreground-1: var(--color-neutral-400);
+    --muted-foreground-2: var(--color-neutral-300);
+    --primary: var(--color-primary-600);
+    --primary-hover: var(--color-primary-700);
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+}
+
+/* Visible keyboard focus ring for every interactive element. */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-blue-600);
+    outline-offset: 2px;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:focus-visible {
+      outline-color: var(--color-blue-400);
+    }
+  }
+}
+
+/* Same ring, drawn inside the element (for full-width rows inside a bordered card). */
+@utility focus-ring-inset {
+  &:focus-visible {
+    outline: 2px solid var(--color-blue-600);
+    outline-offset: -2px;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:focus-visible {
+      outline-color: var(--color-blue-400);
+    }
+  }
+}
+
+@layer components {
+  /* Empty log panel (existing text, kept as generated content). */
+  .log:empty::before {
+    content: "（尚無 log）";
+    color: var(--color-neutral-400);
+    font-family: var(--font-sans);
+  }
+}

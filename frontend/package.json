@@ -1,0 +1,15 @@
+{
+  "name": "install-progress-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Build source for app/static/index.html (SPEC R26/R27). Tailwind CSS v4 + Preline UI, compiled and inlined.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.5",
+    "preline": "5.1.0",
+    "tailwindcss": "4.3.5"
+  }
+}

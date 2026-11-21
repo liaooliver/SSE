@@ -27,6 +27,7 @@ uv run pytest            # 有 tests/ 時
 | Ruff | lint + 格式化 | 設定在 `pyproject.toml`，不另開設定檔 |
 | mypy | 型別檢查（strict + pydantic plugin） | CI 唯一的型別關卡 |
 | pytest | 測試 | `asyncio_mode = auto`；`-m e2e` 真的 uvicorn、`-m perf` 效能 |
+| Node / npm | 只用於建置前端 | 只在 `frontend/` 裡用 `npm ci`、`npm run build`；版本精確釘選，`package-lock.json` 要一起交付；執行 app 與測試不需要 |
 
 不准新增依賴，除非任務說明允許。需要時在回報寫 `NEED DEPENDENCY: <套件> — <理由>`。
 
@@ -76,9 +77,16 @@ app/
   routers/       # 只處理 HTTP：解析輸入 → 呼叫 domain/服務 → 組回應
     page.py      # GET /（R26）：回傳 app/static/index.html
   static/
-    index.html   # R26 的前端頁面（單一 HTML，不依賴外部資源）
+    index.html   # R26 頁面的建置產物，由 frontend/ 產生（單一 HTML，不依賴外部資源）；不得手動編輯
   schemas.py     # Pydantic request/response model
   broker.py      # 執行期狀態（訂閱者、歷史）等有狀態元件
+frontend/        # R26 頁面的建置來源；只有改頁面時需要 Node
+  package.json   # 精確釘選 tailwindcss、@tailwindcss/cli、preline 版本；`build` script
+  package-lock.json  # 鎖定檔，要一起交付
+  src/index.html # 頁面模板（markup + inline script）；頁面唯一的來源
+  src/input.css  # Tailwind + Preline 匯入、自訂 CSS
+  build.mjs      # 跑 Tailwind CLI，把 CSS inline 進模板，寫出 ../app/static/index.html
+  README.md      # 建置與修改頁面的說明
 tests/           # 由測試作者負責；實作者不得建立或讀取
 contracts/       # 合約檔（唯讀，只有規格編輯 worker 能改）
 ```
@@ -86,6 +94,8 @@ contracts/       # 合約檔（唯讀，只有規格編輯 worker 能改）
 - 依賴方向：`routers → domain / broker`，`domain` 不依賴任何其他 app 模組。
 - 公開介面只有 `create_app`、`app`、以及 `contracts/domain.pyi` 列出的名稱。
   其他模組名稱可以自由調整，但不得讓測試依賴它們。
+- 要改頁面：編輯 `frontend/src/`，在 `frontend/` 裡跑 `npm run build`，並把原始碼和產生的
+  `app/static/index.html` 一起 commit。
 
 ## 6. 風格
 

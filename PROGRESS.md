@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **全部完成** ✅（Phase 5 ✅，已交付） |
+| 目前 Phase | **全部完成** ✅（Phase 6 介面優化已交付） |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.4**（合約 1.1.2）、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws、browser-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 無（已交付）。使用者若要新功能或改規格，從 Phase 1 流程重新開始 |
+| 下一步 | 無（已交付）。使用者若要新功能或改規格，從 Phase 1 流程重新開始；改頁面照 `AGENTS.md` §5（改 `frontend/src/`、`npm run build`） |
 
 ## Phase 總覽
 
@@ -52,7 +52,8 @@
 | 2 | 同時開發（實作 ‖ 測試） | ✅ 完成（合約檢查 T2.5r PASS） | — |
 | 3 | 驗證測試、處理失敗 | ✅ 完成（T3 第 2 輪 PASS） | 測試全部通過 |
 | 4 | AI 自己跑 E2E | 🔵 進行中 | E2E 全部通過 |
-| 5 | 驗收、交付 | ⬜ 未開始 | **交給使用者** |
+| 5 | 驗收、交付 | ✅ 完成 | **交給使用者** |
+| 6 | 介面優化（Preline，E8–E10）：不改 SPEC，只改視覺 | ✅ 完成 | 迴歸全過＋視覺 E2E 證據齊全 → 交給使用者 |
 
 狀態符號：⬜ 未開始 · 🔵 進行中 · 🟡 等待關卡／決策 · 🔁 退回重做 · ✅ 完成 · ❌ 失敗
 
@@ -104,6 +105,11 @@
 | T5.2 | 5 | 把 `tests/` 合併進主 repo，並 commit | 協調者 | ✅ | T5.1 通過 | commit | 只搬檔案、不讀內容；`diff -rq` 確認主 repo `tests/` 與通過驗收的 verify-ws/tests、tests-ws/tests 完全相同（排除 `__pycache__`） |
 | T5.3 | 5 | 交付報告給使用者 | 協調者 | ✅ | 全部 | — | 附 E2E 與驗收證據；E5／E6 已由使用者決定並寫入 v1.1.4 |
 | T5.4 | 5 | SPEC v1.1.3 → v1.1.4：寫入 E5（重連成功後恢復狀態）、E6（`GET /install` 的 404 不算錯誤） | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p5-claude-spec-v114.md` | `docs/SPEC.md`；`reports/p5-spec-v114.md` | 稽核通過：只用 Read/Edit、只改 `docs/SPEC.md`（標題、R27 兩句、附錄版本列＋變更明細表）、無外部路徑。已搬回主 repo（覆蓋前確認仍是 v1.1.3）並同步 impl-ws、tests-ws、browser-ws。worker 另記幾個實務上不會發生的邊角（`/install/events`、`/install/logs` 在快照 200 後回 404 等）→ 記錄為已知、不處理 |
+| T6.1 | 6 | 用 Preline（Tailwind）優化頁面視覺：`frontend/` 原始碼＋建置腳本，產出內嵌 CSS 的 `app/static/index.html`；id、行為、文字不變 | Claude 實作（opus-5-5／high，`--chrome` 只開 127.0.0.1） | ✅ | `briefs/p6-claude-impl-preline.md`；impl-ws | `reports/p6-impl-preline.md` | E8–E10。稽核通過（86 turns、18 分、$5.21）：只改 `app/static/index.html`、`frontend/**`、`.gitignore`；WebFetch 只到 preline.co；瀏覽器只開 127.0.0.1:18642；log 無其他工作區路徑。tailwindcss／@tailwindcss/cli 4.3.5、preline 5.1.0；build 三次 sha256 一致；index.html 80 KB；無 Preline JS。證據 `evidence/T6.1/` 14 張（協調者看過 4 張）。注意：Preline dark 預設用 `.dark` class，worker 在 input.css 手抄約 20 個 token 的 media dark 值 |
+| T6.2 | 6 | `AGENTS.md` §2／§5 補上 `frontend/` 與 Node 建置說明 | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p6-claude-agents-frontend.md`；spec-ws | `reports/p6-agents-frontend.md` | SPEC 不改（R26 已允許：內嵌即不依賴外部資源）。稽核通過：只用 Read/Edit/Grep、只改 `AGENTS.md`（§2 Node/npm 列、§5 `frontend/` 樹與 index.html 為建置產物、改頁面流程條列）、無外部路徑。worker 記：§1 沒擋「產物過期」（由 T6.3 D 檢查可重現性；不加進 §1，符合 E9）、§2「不准新增依賴」只指 Python |
+| T6.3 | 6 | 迴歸：品質關卡、75 測試 ×3、perf ×3、R26 無外部資源、JS 行為未變 | agy（gemini-4-neon-high） | ✅ | T6.1、T6.2 | `reports/p6-agy-regression.md`；`evidence/T6.3/` | **PASS**（10 分）：gate 5 項過、75 passed ×3、perf ×3、R26 grep 只有 SVG xmlns、6 個 id 各 1 次、script 4 hunk 全 PRESENTATIONAL、無 innerHTML、文字不變、`npm ci && build` 兩次與交付版 byte 相同。稽核：工作區只多快取（已刪），證據 26 檔已複製。worker 指出 brief D.2 的 `git diff --exit-code` 用法有誤（基準是改版前），改用 cmp／shasum 驗證 |
+| T6.4 | 6 | 真瀏覽器視覺 E2E＋R27 迴歸（淺色／深色、窄螢幕、各情境），每項截圖 | Claude 瀏覽器 worker（sonnet-5-5／high） | ✅ | T6.1 | `reports/p6-claude-browser.md`；`reports/p6-claude-browser-recheck.md`；`evidence/T6.4/`、`evidence/T6.4b/` | E7。**FAIL（0 deviations、1 visual issue）**（12 分、$1.73）：R1–R7 全 OK，V1–V7 OK；唯一問題是沒有錯誤框時 log 框上下留白不對稱（上 16／下 28 px），協調者看 R3-02 確認。稽核：只開 127.0.0.1:18500、無越界、證據 52 檔＝INDEX。→ T6.1-fix1（第 1 輪）修正後重驗：T6.4b **PASS**（7 分、$0.66），淺色／深色、有無錯誤框的 log 框上下間距都 17/17 px（含 1 px 邊框），執行中行為正常；協調者看過 F1、F2、F4-02。T6.3 重跑 **PASS**（證據 `evidence/T6.3b/`，報告 `reports/p6-agy-regression-r2.md`） |
+| T6.5 | 6 | 合併回主 repo、commit、交付報告 | 協調者 | ✅ | T6.3、T6.4 | commit | |
 
 ## 重試計數（每個問題最多 3 輪，超過就交給使用者）
 
@@ -133,6 +139,9 @@
 | E4 | R27 串流中斷時頁面靠 EventSource 自動重連、不重跑同步流程 → **算符合，並在 R27 補一句（SPEC v1.1.3）** | ✅ 2026-11-21 |
 | E5 | R27：EventSource 自動重連成功後，`#run-status` 要不要清掉錯誤、改回「執行中」，SPEC 沒寫（T5.1 靜態確認：實作在 `open` 時恢復顯示輪次狀態，只是 SPEC 沒要求） | ✅ 2026-11-21 補進 SPEC（v1.1.4，只改文件） |
 | E6 | R27：「錯誤與重試」字面上的「`409` 以外的錯誤」包含 `GET /install` 的 `404`，但「載入時」把 `404` 定義為「只顯示計畫」，字面互相衝突（實作與瀏覽器觀察都照「載入時」走） | ✅ 2026-11-21 寫明 404 不算錯誤（v1.1.4，只改文件） |
+| E8 | Preline 怎麼引入（R26 禁止 CDN）→ **本機用 Tailwind CLI 建置，CSS（必要時連同 JS）內嵌進 `index.html`，R26 不改** | ✅ 2026-11-21 |
+| E9 | 前端建置原始碼 → **commit 進 repo（`frontend/`：package.json、Tailwind 輸入、建置腳本），`AGENTS.md` 註明；建置產物 `index.html` 也 commit** | ✅ 2026-11-21 |
+| E10 | 優化範圍 → **只做視覺**：保留現有元素、id、行為與文字（R27 不變），用 Preline 元件重新設計外觀，含淺色／深色 | ✅ 2026-11-21 |
 
 ## 偏差紀錄
 
@@ -203,3 +212,9 @@
 | 2026-11-21 20:18 | 交付時問使用者 E5／E6：兩項都選補進 SPEC。寫 `briefs/p5-claude-spec-v114.md`，快照 spec-ws，背景派 T5.4 |
 | 2026-11-21 20:20 | T5.4 完成並稽核通過，存 `reports/p5-spec-v114.md`，刪 jsonl/err。v1.1.4 搬回主 repo並同步各工作區。T5.3 交付報告給使用者，專案結案 |
 | 2026-11-21 20:40 | 使用者決定 E7（E2E 要留截圖）。更新 `ORCHESTRATION.md`（角色分工、Phase 4、新增「E2E 證據規則」、檔案清理）、`.gitignore` 排除 `.orchestra/evidence/`。之前的 Phase 4 沒有留截圖，原始紀錄已依清理規則刪除，只剩文字報告 |
+| 2026-11-21 20:50 | 使用者開新任務：用 Preline 優化介面，一路做到底。決定 E8（本機建置內嵌）、E9（`frontend/` commit）、E10（只做視覺）。開 Phase 6，寫 T6.1、T6.2 任務說明 |
+| 2026-11-21 20:51 | T6.2 完成並稽核通過，存 `reports/p6-agents-frontend.md`，刪 jsonl/err；AGENTS.md 先留在 spec-ws，等 T6.1 一起合併。寫好 T6.3、T6.4 任務說明 |
+| 2026-11-21 21:10 | T6.1 完成並稽核通過，存 `reports/p6-impl-preline.md`，刪 jsonl/err。重建 verify-ws（main b9246f0 為基準 commit，疊上 T6.1＋spec-ws AGENTS.md 為未 commit 變更）與 browser-ws。T6.3 改用 port 18000–18399，與 T6.4（18500–18599）錯開後並行啟動 |
+| 2026-11-21 21:23 | T6.3 PASS、T6.4 FAIL（1 個輕微視覺問題：log 框留白不對稱），兩者稽核通過，報告存檔、刪 jsonl/err/raw、T6.3 證據複製到 `evidence/T6.3/`。寫 `briefs/p6-claude-impl-fix1.md`，啟動 impl-ws 修正（第 1 輪，最多 3 輪） |
+| 2026-11-21 21:28 | T6.1-fix1 完成並稽核通過（4 分、$1.14）：根因是 Tailwind v4 `space-y-3` 讓隱藏的錯誤框仍算最後一個子元素；只改兩個 class 字串（taskBody 去掉 `space-y-3`、errorBox 加 `mt-3`），上下間距 16/16 px，build 兩次 sha256 一致；協調者看過 fix1-01。報告存 `reports/p6-impl-fix1.md`，刪 jsonl/err。同步到 verify-ws、browser-ws，並行啟動 T6.3 重跑（證據將收進 `evidence/T6.3b/`）與 T6.4b（`briefs/p6-claude-browser-recheck.md`） |
+| 2026-11-21 21:39 | T6.3 重跑 PASS、T6.4b PASS，稽核通過（兩工作區除快取外無變動，已清），證據收進 `evidence/T6.3b/`、`evidence/T6.4b/`，刪原始紀錄。T6.5：把 `app/static/index.html`（sha256 9aed92c4…）、`frontend/`（不含 node_modules）、`.gitignore`（加 `frontend/node_modules/`）、`AGENTS.md` 合併回主 repo，與 verify-ws／browser-ws／impl-ws 逐 byte 相同；impl-ws 同步 AGENTS.md、.gitignore。Phase 6 交付 |

@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>安裝進度</title>
+<!-- @build:inline-css -->
+</head>
+<body class="min-h-dvh bg-background-1 font-sans text-foreground antialiased">
+<template id="icon-chevron"><svg class="size-4 shrink-0 text-muted-foreground-1 transition-transform duration-200 in-aria-expanded:rotate-180 motion-reduce:transition-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></template>
+<template id="icon-error"><svg class="mt-0.5 size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></template>
+<header class="border-b border-navbar-line bg-navbar">
+  <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-6">
+    <div class="flex w-full items-center gap-x-2.5 sm:me-2 sm:w-auto">
+      <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-600 text-white shadow-2xs" aria-hidden="true">
+        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+      </span>
+      <h1 class="text-base font-semibold text-foreground">安裝進度</h1>
+    </div>
+    <label class="flex min-w-0 flex-1 items-center gap-x-2 text-sm font-medium whitespace-nowrap text-muted-foreground-2 sm:flex-none">模擬情境
+      <span class="relative min-w-0 flex-1 sm:w-56 sm:flex-none">
+        <select id="scenario" class="focus-ring block w-full appearance-none truncate rounded-lg border border-layer-line bg-layer py-2 ps-3 pe-9 text-sm font-normal text-foreground shadow-2xs"></select>
+        <svg class="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+      </span>
+    </label>
+    <button id="install-btn" type="button" disabled class="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-x-2 rounded-lg border border-primary-line bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-2xs hover:bg-primary-hover disabled:pointer-events-none disabled:opacity-50"><svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>安裝</button>
+    <span id="run-status" role="status" aria-live="polite" class="flex w-full min-w-0 items-start gap-x-2 rounded-lg border border-line-2 bg-muted px-3 py-2 text-sm break-words text-muted-foreground-2 before:mt-1.5 before:size-2 before:shrink-0 before:rounded-full before:bg-current before:content-[''] data-[kind=running]:border-blue-200 data-[kind=running]:before:mt-0.75 data-[kind=running]:bg-blue-50 data-[kind=running]:text-blue-800 data-[kind=running]:before:size-3.5 data-[kind=running]:before:animate-spin data-[kind=running]:before:border-2 data-[kind=running]:before:border-current data-[kind=running]:before:border-t-transparent data-[kind=running]:before:bg-transparent data-[kind=succeeded]:border-teal-200 data-[kind=succeeded]:bg-teal-50 data-[kind=succeeded]:text-teal-800 data-[kind=failed]:border-red-200 data-[kind=failed]:bg-red-50 data-[kind=failed]:text-red-800 data-[kind=error]:border-red-200 data-[kind=error]:bg-red-50 data-[kind=error]:text-red-800 motion-reduce:before:animate-none dark:data-[kind=running]:border-blue-500/30 dark:data-[kind=running]:bg-blue-500/15 dark:data-[kind=running]:text-blue-200 dark:data-[kind=succeeded]:border-teal-500/30 dark:data-[kind=succeeded]:bg-teal-500/15 dark:data-[kind=succeeded]:text-teal-200 dark:data-[kind=failed]:border-red-500/30 dark:data-[kind=failed]:bg-red-500/15 dark:data-[kind=failed]:text-red-200 dark:data-[kind=error]:border-red-500/30 dark:data-[kind=error]:bg-red-500/15 dark:data-[kind=error]:text-red-200">載入中…</span>
+  </div>
+</header>
+<main class="mx-auto grid max-w-6xl gap-4 px-4 py-4 sm:gap-6 sm:px-6 sm:py-6 md:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)] md:items-start">
+  <section class="flex min-w-0 flex-col rounded-xl border border-card-line bg-card shadow-2xs">
+    <h2 class="flex items-center gap-x-2 border-b border-card-divider px-4 py-3 text-sm font-semibold text-foreground"><svg class="size-4 shrink-0 text-muted-foreground-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 8.58 3.91a2 2 0 0 0 1.66 0L22 12"/><path d="m2 17 8.58 3.91a2 2 0 0 0 1.66 0L22 17"/></svg>Stage</h2>
+    <ul id="stage-list" class="space-y-1 p-2"></ul>
+  </section>
+  <section class="flex min-w-0 flex-col rounded-xl border border-card-line bg-card shadow-2xs">
+    <h2 class="flex items-center gap-x-2 border-b border-card-divider px-4 py-3 text-sm font-semibold text-foreground"><svg class="size-4 shrink-0 text-muted-foreground-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/></svg><span id="task-title" class="min-w-0 flex-1 break-words">Task</span>
+      <button id="follow-btn" type="button" aria-pressed="true" class="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-x-1.5 rounded-full border border-layer-line bg-layer px-3 py-1 text-xs font-medium text-layer-foreground shadow-2xs before:size-1.5 before:rounded-full before:bg-transparent before:ring-1 before:ring-current before:content-[''] hover:bg-layer-hover aria-pressed:border-blue-200 aria-pressed:bg-blue-50 aria-pressed:text-blue-800 aria-pressed:before:bg-current aria-pressed:before:ring-0 aria-pressed:hover:bg-blue-100 dark:aria-pressed:border-blue-500/30 dark:aria-pressed:bg-blue-500/15 dark:aria-pressed:text-blue-200 dark:aria-pressed:hover:bg-blue-500/25">自動跟隨中</button></h2>
+    <ul id="task-list" class="space-y-3 p-3 sm:p-4"></ul>
+  </section>
+</main>
+<script>
+"use strict";
+(() => {
+  // R26/R27: plain DOM, textContent only, no external resources.
+  const STATUS_LABEL = { pending: "等待中", running: "執行中", succeeded: "成功", failed: "失敗" };
+  const EVENT_TYPES = [
+    "run_started", "stage_started", "stage_succeeded", "stage_failed",
+    "task_started", "task_succeeded", "task_failed", "log", "run_finished",
+  ];
+  const RETRY_MS = 3000;
+
+  // Presentation only: Tailwind/Preline class names for the nodes built below. State styling
+  // comes from the existing data-status / aria-current / aria-expanded attributes.
+  const CLS = {
+    stage: "group",
+    stageBtn: "focus-ring relative flex w-full cursor-pointer items-center justify-between"
+      + " gap-x-3 rounded-lg border border-transparent py-2.5 ps-4 pe-2.5 text-start text-sm"
+      + " font-medium text-foreground hover:bg-muted-hover"
+      + " before:absolute before:inset-y-2 before:start-1 before:hidden before:w-1"
+      + " before:rounded-full before:bg-current before:content-['']"
+      + " group-aria-[current=true]:border-blue-200 group-aria-[current=true]:bg-blue-50"
+      + " group-aria-[current=true]:font-semibold group-aria-[current=true]:text-blue-800"
+      + " group-aria-[current=true]:before:block group-aria-[current=true]:before:bg-blue-600"
+      + " dark:group-aria-[current=true]:before:bg-blue-400"
+      + " dark:group-aria-[current=true]:border-blue-500/30"
+      + " dark:group-aria-[current=true]:bg-blue-500/15"
+      + " dark:group-aria-[current=true]:text-blue-100"
+      + " group-data-[status=failed]:border-red-200 group-data-[status=failed]:bg-red-50"
+      + " group-data-[status=failed]:font-semibold group-data-[status=failed]:text-red-700"
+      + " dark:group-data-[status=failed]:border-red-500/30"
+      + " dark:group-data-[status=failed]:bg-red-500/15"
+      + " dark:group-data-[status=failed]:text-red-200"
+      + " group-data-[status=failed]:before:bg-red-600 dark:group-data-[status=failed]:before:bg-red-400",
+    name: "min-w-0 break-words",
+    badge: "badge inline-flex shrink-0 items-center gap-x-1.5 rounded-full px-2.5 py-1"
+      + " text-xs font-medium whitespace-nowrap bg-surface text-surface-foreground"
+      + " before:size-1.5 before:shrink-0 before:rounded-full before:bg-current"
+      + " before:content-['']"
+      + " group-data-[status=running]:bg-blue-100 group-data-[status=running]:text-blue-800"
+      + " group-data-[status=running]:before:size-3 group-data-[status=running]:before:border-2"
+      + " group-data-[status=running]:before:border-current"
+      + " group-data-[status=running]:before:border-t-transparent"
+      + " group-data-[status=running]:before:bg-transparent"
+      + " group-data-[status=running]:before:animate-spin motion-reduce:before:animate-none"
+      + " dark:group-data-[status=running]:bg-blue-500/20"
+      + " dark:group-data-[status=running]:text-blue-200"
+      + " group-data-[status=succeeded]:bg-teal-100 group-data-[status=succeeded]:text-teal-800"
+      + " dark:group-data-[status=succeeded]:bg-teal-500/20"
+      + " dark:group-data-[status=succeeded]:text-teal-200"
+      + " group-data-[status=failed]:bg-red-100 group-data-[status=failed]:text-red-800"
+      + " dark:group-data-[status=failed]:bg-red-500/20 dark:group-data-[status=failed]:text-red-200",
+    task: "task group rounded-xl border border-card-line bg-card shadow-2xs"
+      + " data-[status=running]:border-blue-300 dark:data-[status=running]:border-blue-500/50"
+      + " data-[status=failed]:border-red-300 dark:data-[status=failed]:border-red-500/50",
+    taskHead: "task-head focus-ring-inset flex w-full cursor-pointer items-center"
+      + " justify-between gap-x-3 rounded-xl px-4 py-3 text-start text-sm font-medium"
+      + " text-foreground hover:bg-layer-hover aria-expanded:rounded-b-none"
+      + " group-data-[status=failed]:font-semibold group-data-[status=failed]:text-red-700"
+      + " dark:group-data-[status=failed]:text-red-200",
+    taskMeta: "flex shrink-0 items-center gap-x-2",
+    taskBody: "task-body border-t border-card-divider p-3 sm:p-4",
+    log: "log max-h-72 list-decimal overflow-y-auto rounded-lg bg-neutral-900 py-3 ps-12 pe-3"
+      + " font-mono text-xs leading-5 text-neutral-200 marker:text-neutral-400 empty:ps-4 scheme-dark"
+      + " dark:bg-neutral-950 dark:ring-1 dark:ring-neutral-700",
+    logLine: "ps-1 break-words whitespace-pre-wrap",
+    logError: "error rounded-sm bg-red-500/15 ps-1 font-semibold break-words whitespace-pre-wrap"
+      + " text-red-300 marker:text-red-300",
+    errorBox: "error-box mt-3 flex gap-x-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm"
+      + " text-red-800 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-200",
+    errorText: "min-w-0 space-y-1 break-words",
+    errorCode: "font-semibold",
+  };
+
+  function icon(name) {
+    return document.getElementById(`icon-${name}`).content.firstElementChild.cloneNode(true);
+  }
+
+  const ui = {
+    scenario: document.getElementById("scenario"),
+    installBtn: document.getElementById("install-btn"),
+    runStatus: document.getElementById("run-status"),
+    stageList: document.getElementById("stage-list"),
+    taskList: document.getElementById("task-list"),
+    followBtn: document.getElementById("follow-btn"),
+    taskTitle: document.getElementById("task-title"),
+  };
+
+  // Static view built once from the plan (R11) and scenarios (R12).
+  const plan = [];                  // [{id, name, tasks: [{id, name}]}]
+  const scenarioLabels = new Map(); // scenario id -> label
+  const stageViews = new Map();     // stage id -> {node, badge, name, taskNodes: []}
+  const taskViews = new Map();      // task id -> {node, badge, body, log, errorBox, ...}
+
+  // Run state, rebuilt by every sync.
+  let run = null;                   // {runId, scenario, status} or null (no run yet)
+  const stageStatus = new Map();
+  const taskState = new Map();      // task id -> {stageId, status, error, expanded, seqs}
+  let lastApplied = 0;
+
+  // UI / connection state.
+  let selectedStage = null;
+  let shownStage = null;
+  let following = true;
+  let posting = false;
+  let source = null;
+  let generation = 0;
+  let retryTimer = null;
+  let ready = false;
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  class HttpError extends Error {
+    constructor(status) {
+      super(`HTTP ${status}`);
+      this.status = status;
+    }
+  }
+
+  async function getJson(url) {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new HttpError(res.status);
+    return res.json();
+  }
+
+  function describe(err) {
+    return err instanceof HttpError ? err.message : "無法連線到伺服器";
+  }
+
+  // ---------- static view ----------
+
+  function buildPlan(data) {
+    plan.length = 0;
+    stageViews.clear();
+    taskViews.clear();
+    const stageNodes = [];
+    for (const stage of data.stages) {
+      plan.push(stage);
+      const node = el("li", CLS.stage);
+      node.dataset.stageId = stage.id;
+      node.dataset.status = "pending";
+      const button = el("button", CLS.stageBtn);
+      button.type = "button";
+      const badge = el("span", CLS.badge, STATUS_LABEL.pending);
+      button.append(el("span", CLS.name, stage.name), badge);
+      button.addEventListener("click", () => onStageClick(stage.id));
+      node.append(button);
+      stageNodes.push(node);
+      const taskNodes = stage.tasks.map((task) => buildTask(stage.id, task));
+      stageViews.set(stage.id, { node, badge, name: stage.name, taskNodes });
+    }
+    ui.stageList.replaceChildren(...stageNodes);
+  }
+
+  function buildTask(stageId, task) {
+    const node = el("li", CLS.task);
+    node.dataset.taskId = task.id;
+    node.dataset.status = "pending";
+    const head = el("button", CLS.taskHead);
+    head.type = "button";
+    head.setAttribute("aria-expanded", "false");
+    const badge = el("span", CLS.badge, STATUS_LABEL.pending);
+    const meta = el("span", CLS.taskMeta);
+    meta.append(badge, icon("chevron"));
+    head.append(el("span", CLS.name, task.name), meta);
+    const body = el("div", CLS.taskBody);
+    body.hidden = true;
+    const log = el("ol", CLS.log);
+    const errorBox = el("div", CLS.errorBox);
+    errorBox.hidden = true;
+    const errorCode = el("p", CLS.errorCode);
+    const errorMessage = el("p");
+    const errorHint = el("p");
+    const errorText = el("div", CLS.errorText);
+    errorText.append(errorCode, errorMessage, errorHint);
+    errorBox.append(icon("error"), errorText);
+    body.append(log, errorBox);
+    node.append(head, body);
+    // R27: reopening a collapsed task only toggles visibility; no request is made.
+    head.addEventListener("click", () => {
+      const state = taskState.get(task.id);
+      setExpanded(task.id, !state.expanded);
+    });
+    taskViews.set(task.id, {
+      node, head, badge, body, log, errorBox, errorCode, errorMessage, errorHint, stageId,
+    });
+    return node;
+  }
+
+  function buildScenarios(list) {
+    scenarioLabels.clear();
+    const options = list.map((s) => {
+      scenarioLabels.set(s.id, s.label);
+      const option = el("option", "", s.label);
+      option.value = s.id;
+      return option;
+    });
+    ui.scenario.replaceChildren(...options);
+  }
+
+  // ---------- run state rendering ----------
+
+  function resetRun(snapshot) {
+    run = snapshot
+      ? { runId: snapshot.run_id, scenario: snapshot.scenario, status: snapshot.status }
+      : null;
+    lastApplied = snapshot ? snapshot.last_seq : 0;
+    const byStage = new Map((snapshot ? snapshot.stages : []).map((s) => [s.id, s]));
+    for (const stage of plan) {
+      const snapStage = byStage.get(stage.id);
+      setStageStatus(stage.id, snapStage ? snapStage.status : "pending");
+      const snapTasks = new Map((snapStage ? snapStage.tasks : []).map((t) => [t.id, t]));
+      for (const task of stage.tasks) {
+        const snapTask = snapTasks.get(task.id);
+        const status = snapTask ? snapTask.status : "pending";
+        taskState.set(task.id, {
+          stageId: stage.id, status, error: null, expanded: false, seqs: new Set(),
+        });
+        const view = taskViews.get(task.id);
+        view.log.replaceChildren();
+        setTaskStatus(task.id, status);
+        setTaskError(task.id, snapTask ? snapTask.error : null);
+        setExpanded(task.id, status === "running" || status === "failed");
+      }
+    }
+    refreshSelection();
+    renderRunStatus();
+  }
+
+  function setStageStatus(stageId, status) {
+    const view = stageViews.get(stageId);
+    if (!view) return;
+    stageStatus.set(stageId, status);
+    view.node.dataset.status = status;
+    view.badge.textContent = STATUS_LABEL[status] ?? status;
+  }
+
+  function setTaskStatus(taskId, status) {
+    const view = taskViews.get(taskId);
+    const state = taskState.get(taskId);
+    if (!view || !state) return;
+    state.status = status;
+    view.node.dataset.status = status;
+    view.badge.textContent = STATUS_LABEL[status] ?? status;
+  }
+
+  function setTaskError(taskId, error) {
+    const view = taskViews.get(taskId);
+    const state = taskState.get(taskId);
+    if (!view || !state) return;
+    state.error = error;
+    view.errorBox.hidden = !error;
+    view.errorCode.textContent = error ? `錯誤代碼：${error.error_code}` : "";
+    view.errorMessage.textContent = error ? `原因：${error.message}` : "";
+    view.errorHint.textContent = error ? `排除建議：${error.hint}` : "";
+  }
+
+  function setExpanded(taskId, expanded) {
+    const view = taskViews.get(taskId);
+    const state = taskState.get(taskId);
+    if (!view || !state) return;
+    state.expanded = expanded;
+    view.body.hidden = !expanded;
+    view.head.setAttribute("aria-expanded", String(expanded));
+    if (expanded) scrollToBottom(view.log);
+  }
+
+  function scrollToBottom(log) {
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function appendLog(item) {
+    const view = taskViews.get(item.task_id);
+    const state = taskState.get(item.task_id);
+    if (!view || !state || state.seqs.has(item.seq)) return;
+    state.seqs.add(item.seq);
+    const line = el("li", item.level === "error" ? CLS.logError : CLS.logLine, item.text);
+    line.value = item.line_no;
+    line.dataset.seq = String(item.seq);
+    view.log.append(line);
+    if (state.expanded) scrollToBottom(view.log);
+  }
+
+  function followTarget() {
+    let lastActive = null;
+    for (const stage of plan) {
+      const status = stageStatus.get(stage.id);
+      if (status === "running" || status === "failed") return stage.id;
+      if (status !== "pending") lastActive = stage.id;
+    }
+    return lastActive ?? (plan.length ? plan[0].id : null);
+  }
+
+  function refreshSelection() {
+    const target = following || selectedStage === null ? followTarget() : selectedStage;
+    selectedStage = target;
+    if (target !== shownStage) {
+      shownStage = target;
+      const view = stageViews.get(target);
+      ui.taskList.replaceChildren(...(view ? view.taskNodes : []));
+      ui.taskTitle.textContent = view ? `Task：${view.name}` : "Task";
+      for (const node of view ? view.taskNodes : []) {
+        const state = taskState.get(node.dataset.taskId);
+        if (state && state.expanded) scrollToBottom(taskViews.get(node.dataset.taskId).log);
+      }
+    }
+    for (const [id, view] of stageViews) {
+      const selected = id === target;
+      view.node.classList.toggle("selected", selected);
+      if (selected) view.node.setAttribute("aria-current", "true");
+      else view.node.removeAttribute("aria-current");
+    }
+    ui.followBtn.textContent = following ? "自動跟隨中" : "恢復自動跟隨";
+    ui.followBtn.setAttribute("aria-pressed", String(following));
+  }
+
+  function failedError() {
+    for (const state of taskState.values()) if (state.error) return state.error;
+    return null;
+  }
+
+  function renderRunStatus() {
+    let text;
+    let kind;
+    if (!ready) {
+      text = "載入中…";
+      kind = "idle";
+    } else if (!run) {
+      text = "尚未執行過安裝";
+      kind = "idle";
+    } else {
+      const label = scenarioLabels.get(run.scenario) ?? run.scenario;
+      const prefix = `第 ${run.runId} 輪（${label}）`;
+      kind = run.status;
+      if (run.status === "running") {
+        text = `${prefix}：安裝執行中…`;
+      } else if (run.status === "succeeded") {
+        text = `${prefix}：安裝完成，全部成功`;
+      } else {
+        const error = failedError();
+        text = `${prefix}：安裝失敗` + (error ? `（${error.error_code}）${error.message}` : "");
+      }
+    }
+    ui.runStatus.textContent = text;
+    ui.runStatus.dataset.kind = kind;
+    updateInstallBtn();
+  }
+
+  function showStatusError(message) {
+    ui.runStatus.textContent = message;
+    ui.runStatus.dataset.kind = "error";
+  }
+
+  function updateInstallBtn() {
+    ui.installBtn.disabled = !ready || posting || (run !== null && run.status === "running");
+  }
+
+  // ---------- event application ----------
+
+  function applyEvent(type, data) {
+    switch (type) {
+      case "run_started":
+        run.status = "running";
+        break;
+      case "stage_started":
+        setStageStatus(data.stage_id, "running");
+        break;
+      case "stage_succeeded":
+        setStageStatus(data.stage_id, "succeeded");
+        break;
+      case "stage_failed":
+        setStageStatus(data.stage_id, "failed");
+        break;
+      case "task_started":
+        setTaskStatus(data.task_id, "running");
+        setExpanded(data.task_id, true);
+        break;
+      case "task_succeeded":
+        setTaskStatus(data.task_id, "succeeded");
+        setExpanded(data.task_id, false);
+        break;
+      case "task_failed":
+        setTaskStatus(data.task_id, "failed");
+        setTaskError(data.task_id, {
+          error_code: data.error_code, message: data.message, hint: data.hint,
+        });
+        setExpanded(data.task_id, true);
+        break;
+      case "log":
+        break;
+      case "run_finished":
+        run.status = data.result;
+        break;
+      default:
+        return;
+    }
+    refreshSelection();
+    renderRunStatus();
+  }
+
+  function parseEventId(raw) {
+    const match = /^([0-9]+)\.([0-9]+)$/.exec((raw ?? "").trim());
+    return match ? { runId: Number(match[1]), seq: Number(match[2]) } : null;
+  }
+
+  function onEvent(es, type, ev) {
+    if (es !== source) return;
+    const id = parseEventId(ev.lastEventId);
+    if (!id || !run || id.runId !== run.runId) {
+      resync();
+      return;
+    }
+    // R27 safety net: apply only events newer than the highest applied seq.
+    if (id.seq <= lastApplied) return;
+    let data;
+    try {
+      data = JSON.parse(ev.data);
+    } catch {
+      resync();
+      return;
+    }
+    lastApplied = id.seq;
+    if (type === "log") appendLog({ ...data, seq: id.seq });
+    applyEvent(type, data);
+    if (type === "run_finished") closeSource();
+  }
+
+  // ---------- sync flow (R27, SVG stage 1) ----------
+
+  function closeSource() {
+    if (source) source.close();
+    source = null;
+  }
+
+  function scheduleRetry(message) {
+    showStatusError(`${message}，${RETRY_MS / 1000} 秒後重試`);
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(sync, RETRY_MS);
+  }
+
+  function resync() {
+    closeSource();
+    sync();
+  }
+
+  async function sync() {
+    const gen = ++generation;
+    closeSource();
+    clearTimeout(retryTimer);
+    try {
+      const res = await fetch("/install", { cache: "no-store" });
+      if (gen !== generation) return;
+      if (res.status === 404) {
+        resetRun(null);
+        return;
+      }
+      if (!res.ok) throw new HttpError(res.status);
+      const snapshot = await res.json();
+      if (gen !== generation) return;
+      resetRun(snapshot);
+      let after = 0;
+      for (;;) {
+        const url = `/install/logs?run_id=${snapshot.run_id}&after=${after}`
+          + `&until=${snapshot.last_seq}`;
+        const page = await fetch(url, { cache: "no-store" });
+        if (gen !== generation) return;
+        if (page.status === 409) {
+          sync();
+          return;
+        }
+        if (!page.ok) throw new HttpError(page.status);
+        const body = await page.json();
+        if (gen !== generation) return;
+        for (const item of body.items) appendLog(item);
+        if (body.next_after === null) break;
+        after = body.next_after;
+      }
+      openSource(snapshot.run_id, snapshot.last_seq);
+    } catch (err) {
+      if (gen !== generation) return;
+      scheduleRetry(`同步失敗：${describe(err)}`);
+    }
+  }
+
+  function openSource(runId, lastSeq) {
+    const es = new EventSource(`/install/events?last_event_id=${runId}.${lastSeq}`);
+    source = es;
+    for (const type of EVENT_TYPES) {
+      es.addEventListener(type, (ev) => onEvent(es, type, ev));
+    }
+    es.addEventListener("reset", () => {
+      if (es === source) resync();
+    });
+    es.addEventListener("open", () => {
+      if (es === source) renderRunStatus();
+    });
+    es.addEventListener("error", () => {
+      if (es !== source) return;
+      const running = run !== null && run.status === "running";
+      if (es.readyState === EventSource.CLOSED) {
+        // e.g. 204 when already up to date; only resync if the run may still produce events.
+        source = null;
+        if (running) scheduleRetry("SSE 連線已關閉");
+      } else if (running) {
+        showStatusError("連線中斷，瀏覽器重新連線中…");
+      }
+    });
+  }
+
+  // ---------- user actions ----------
+
+  function onStageClick(stageId) {
+    if (stageId !== shownStage) following = false;
+    selectedStage = stageId;
+    refreshSelection();
+  }
+
+  ui.followBtn.addEventListener("click", () => {
+    following = true;
+    refreshSelection();
+  });
+
+  ui.installBtn.addEventListener("click", async () => {
+    posting = true;
+    updateInstallBtn();
+    try {
+      const res = await fetch("/install", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scenario: ui.scenario.value }),
+      });
+      if (res.status === 202) {
+        const body = await res.json();
+        run = { runId: body.run_id, scenario: body.scenario, status: "running" };
+        posting = false;
+        renderRunStatus();
+        sync();
+        return;
+      }
+      if (res.status === 409) showStatusError("無法開始安裝：已有一輪安裝正在執行（409）");
+      else if (res.status === 422) showStatusError("無法開始安裝：情境不正確（422）");
+      else showStatusError(`無法開始安裝：HTTP ${res.status}`);
+    } catch {
+      showStatusError("無法開始安裝：無法連線到伺服器");
+    } finally {
+      posting = false;
+      updateInstallBtn();
+    }
+  });
+
+  // ---------- startup ----------
+
+  async function init() {
+    try {
+      const [planData, scenarios] = await Promise.all([
+        getJson("/install/plan"), getJson("/install/scenarios"),
+      ]);
+      buildPlan(planData);
+      buildScenarios(scenarios);
+    } catch (err) {
+      showStatusError(`無法載入安裝計畫：${describe(err)}，${RETRY_MS / 1000} 秒後重試`);
+      setTimeout(init, RETRY_MS);
+      return;
+    }
+    ready = true;
+    resetRun(null);
+    sync();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
