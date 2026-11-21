@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **5 驗收與交付** 🔵（Phase 4 ✅） |
-| 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.3**（合約 1.1.2）、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws、browser-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
+| 目前 Phase | **全部完成** ✅（Phase 5 ✅，已交付） |
+| 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.4**（合約 1.1.2）、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws、browser-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T5.4 → 稽核（只改 `docs/SPEC.md`、只用 Read/Edit/Glob/Grep、無外部路徑、diff 只有 R27＋標題＋附錄）→ 搬回主 repo，同步各工作區 → T5.3 交付報告定稿 → 結案 |
+| 下一步 | 無（已交付）。使用者若要新功能或改規格，從 Phase 1 流程重新開始 |
 
 ## Phase 總覽
 
@@ -102,8 +102,8 @@
 | T4.3 | 4 | 效能驗收（AC11，`-m perf`） | agy | ✅ | 同上 | 同上 | perf ×3 全過（各約 1.5 秒；測試不印 p95） |
 | T5.1 | 5 | 從 clean clone 開始，uv sync 之後跑全部測試 | agy（gemini-4-neon-high） | ✅ | `briefs/p5-agy-acceptance.md`；全新 `verify-ws`（主 repo 45fd779＋tests-ws/tests） | `reports/p5-agy-acceptance.md` | `T5.1: ACCEPT`。`uv sync --locked` 不改 lock（Python 3.13.9）；AC12 五指令全過；預設 75 passed ×3（約 51 秒，無 flaky）；perf ×3 全過；AC1–AC12 皆有對應節點；R27 v1.1.3 (a)(b)(c) 皆 OK；版本標示一致；`app/` 5 處 `# noqa: RUF001` 皆附理由。稽核通過：verify-ws 對 baseline 無變更、無 install.db、log 無外部路徑、主 repo 只多報告、無殘留 uvicorn |
 | T5.2 | 5 | 把 `tests/` 合併進主 repo，並 commit | 協調者 | ✅ | T5.1 通過 | commit | 只搬檔案、不讀內容；`diff -rq` 確認主 repo `tests/` 與通過驗收的 verify-ws/tests、tests-ws/tests 完全相同（排除 `__pycache__`） |
-| T5.3 | 5 | 交付報告給使用者 | 協調者 | 🔵 | 全部 | — | 附上 E2E 和驗收的證據；附 E5／E6 給使用者決定 |
-| T5.4 | 5 | SPEC v1.1.3 → v1.1.4：寫入 E5（重連成功後恢復狀態）、E6（`GET /install` 的 404 不算錯誤） | Claude 規格編輯（opus-5-5／high） | 🔵 | `briefs/p5-claude-spec-v114.md` | `docs/SPEC.md`；`reports/p5-spec-v114.md` | 只改文件、合約維持 1.1.2；行為已由 T5.1 E 節靜態確認，不重跑驗收 |
+| T5.3 | 5 | 交付報告給使用者 | 協調者 | ✅ | 全部 | — | 附 E2E 與驗收證據；E5／E6 已由使用者決定並寫入 v1.1.4 |
+| T5.4 | 5 | SPEC v1.1.3 → v1.1.4：寫入 E5（重連成功後恢復狀態）、E6（`GET /install` 的 404 不算錯誤） | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p5-claude-spec-v114.md` | `docs/SPEC.md`；`reports/p5-spec-v114.md` | 稽核通過：只用 Read/Edit、只改 `docs/SPEC.md`（標題、R27 兩句、附錄版本列＋變更明細表）、無外部路徑。已搬回主 repo（覆蓋前確認仍是 v1.1.3）並同步 impl-ws、tests-ws、browser-ws。worker 另記幾個實務上不會發生的邊角（`/install/events`、`/install/logs` 在快照 200 後回 404 等）→ 記錄為已知、不處理 |
 
 ## 重試計數（每個問題最多 3 輪，超過就交給使用者）
 
@@ -200,3 +200,4 @@
 | 2026-11-21 20:06 | 寫 `briefs/p5-agy-acceptance.md`；以主 repo 45fd779＋tests-ws/tests 重組 verify-ws，快照主 repo，背景派 T5.1 |
 | 2026-11-21 20:16 | T5.1 `ACCEPT`，稽核通過，存 `reports/p5-agy-acceptance.md`；刪 log/err、verify-ws 快取。T5.2：tests 併入主 repo（diff -rq 相同、未讀內容）並 commit。下一步 T5.3 |
 | 2026-11-21 20:18 | 交付時問使用者 E5／E6：兩項都選補進 SPEC。寫 `briefs/p5-claude-spec-v114.md`，快照 spec-ws，背景派 T5.4 |
+| 2026-11-21 20:20 | T5.4 完成並稽核通過，存 `reports/p5-spec-v114.md`，刪 jsonl/err。v1.1.4 搬回主 repo並同步各工作區。T5.3 交付報告給使用者，專案結案 |
