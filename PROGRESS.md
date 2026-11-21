@@ -39,7 +39,7 @@
 | 目前 Phase | **3 驗證測試、處理失敗** 🔵（Phase 2 ✅） |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.2**、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T3（agy 一次跑 T3.1–T3.3，`briefs/p3-agy-verify.md`）→ 稽核（verify-ws 對 baseline 乾淨、`.t3-tmp`／install.db 不存在、log 無外部路徑、報告無兩邊原始碼）→ 檢查主 repo 有無新檔 → 依 T3.4 分派失敗（IMPL BUG→實作者、TEST BUG→Codex、SPEC AMBIGUOUS→使用者，各最多 3 輪） |
+| 下一步 | 等 T3.5、T3.6（並行）→ 各自稽核（只改 `app/`／`tests/`、其他檔對 `t35-pre`／`t36-pre` 快照不變、紀錄無外部路徑、報告無原始碼）→ 搬回主 repo（tests 先只放 tests-ws，T5.2 才併入主 repo）→ 重組 verify-ws → agy 重跑 T3（存 `reports/p3-agy-run-2.md`）→ 檢查主 repo 有無新檔 |
 
 ## Phase 總覽
 
@@ -87,10 +87,12 @@
 | T2.7 | 2 | SPEC v1.1.1 → v1.1.2：寫入使用者對 E1–E3 的決定 | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p2-claude-spec-v112.md` | `docs/SPEC.md`、`contracts/`、`AGENTS.md`；`reports/p2-spec-v112.md` | E1 `reset.when` 對齊 R18；E2 刪 AGENTS §4 的 `/health` 例外；E3 `domain.pyi` 五個別名加 `# noqa: UP040`＋理由、JsonValue 改單行。稽核通過（只用 Read/Grep/Glob/Edit、只改 4 個檔、無外部路徑），diff 符合 E1–E3。協調者發現 brief 本身有缺陷：pragma 理由用全形括號會觸發 RUF003 → resume 同一 session 改成半形 `(B1)`。已搬回主 repo 並同步 impl-ws、tests-ws（覆蓋前確認仍是 v1.1.1）。worker 另提：R18 表格第一列「`r ≠ R`，或 `n > L`，且這一輪還在執行」斷句有歧義，但下一列使行為唯一，不是真衝突 → 不處理 |
 | T2.8 | 2 | 實作跟上 v1.1.2：`info.version` 1.1.2，並跑全專案品質關卡（首次驗 E3） | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p2-claude-impl-v112.md` | `impl-ws/app/`；`reports/p2-impl-v112.md` | 稽核通過：只改 `app/main.py:31`（version 1.1.2）、非 app 檔不變、無外部路徑。全專案 ruff format／check、mypy、stubtest 全過（E3 實測有效）。已搬回主 repo |
 | T2.5r | 2 | 重跑合約檢查（v1.1.2）＋全專案品質關卡 | agy（gemini-4-neon-high） | ✅ | `briefs/p2-agy-contract-r2.md` | `verify-ws`；`reports/p2-agy-contract-r2.md` | `CONTRACT CHECK: PASS`，0 偏差、無 GAP／CONFLICT。stubtest 過；OpenAPI 逐項只剩 artefact；E1 文字與 R18 一致；tests 只匯入 `create_app` 和 `domain.pyi` 的名稱、無 SQLite；收集 74（67＋6 e2e＋1 perf）；ruff format／check、mypy 全過。稽核通過：verify-ws 對 baseline 乾淨、無 install.db、log 無外部路徑、主 repo 無新檔 |
-| T3.1 | 3 | 審查測試：涵蓋對照表、隨機失敗、空測試 | agy | 🔵 | `briefs/p3-agy-verify.md`（T3.1–T3.3 合併一次跑） | `reports/p3-agy-verify.md` | D 部分 |
-| T3.2 | 3 | 故意改壞程式，看測試會不會失敗 | agy | 🔵 | 同上 | 同上 | C 部分，≥8 個突變，門檻殺掉 ≥7 |
-| T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | 🔵 | 同上 | 同上（之後重跑存 `reports/p3-agy-run-N.md`） | A、B 部分；用「需求 ID + 預期 + 實際」描述 |
-| T3.4 | 3 | 把失敗分給對的人（最多 3 輪） | 協調者 | ⬜ | T3.3 | 退回 T2.1／T2.2，或問使用者 | 看「重試計數」 |
+| T3.1 | 3 | 審查測試：涵蓋對照表、隨機失敗、空測試 | agy | ✅ | `briefs/p3-agy-verify.md`（T3.1–T3.3 合併一次跑） | `reports/p3-agy-verify.md` | D 部分：無空測試；涵蓋缺口 R14（非 log 事件不等待）、R15（執行中省略 until）、R19（reset 回應標頭）、R25（無 running task 的復原）、R26（textContent／addEventListener／close）；7 個時序敏感節點 → T3.6 |
+| T3.2 | 3 | 故意改壞程式，看測試會不會失敗 | agy | ✅ | 同上 | 同上 | C 部分：10 個突變（R9、R10、R14、R15、R16、R18、R20、R22、R23、R25）全部被抓到，10/10 |
+| T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | ✅ | 同上 | 同上（之後重跑存 `reports/p3-agy-run-N.md`） | `T3: FAIL`：71/73 通過，3 次結果一致（無 flaky），約 29 秒。2 個 IMPL BUG，都是 R10 第 9 項（`run_started` data 缺欄位／型別錯沒拋錯；`log` 的 `ts` 沒驗）→ T3.5。0 TEST BUG、0 歧義。稽核通過：verify-ws 乾淨、無 install.db、log 無外部路徑、報告無原始碼、主 repo 無新檔 |
+| T3.4 | 3 | 把失敗分給對的人（最多 3 輪） | 協調者 | 🔵 | T3.3 | 退回 T2.1／T2.2，或問使用者 | 看「重試計數」 |
+| T3.5 | 3 | 修 R10 第 9 項：`apply_event` 依 R8 檢查所有事件 data 的欄位與型別 | Claude 實作者（opus-5-5／high） | 🔵 | `briefs/p3-claude-impl-r10-data.md` | `impl-ws/app/`；`reports/p3-impl-r10-data.md` | 只給行為描述，不給測試名稱 |
+| T3.6 | 3 | 補涵蓋缺口、讓時序敏感的測試在慢機器上也穩定 | Codex（gpt-6.2-astra／high） | 🔵 | `briefs/p3-codex-gaps.md` | `tests-ws/tests/`；`reports/p3-codex-gaps.md` | 只給 agy 的 D 部分（只談測試和 SPEC）；不改 SPEC 推導出的上限 |
 | T4.1 | 4 | 對真的 uvicorn 跑自動化 E2E | agy | ⬜ | 全新的 `verify-ws` | `reports/p4-agy-e2e.md` | pytest `-m e2e` |
 | T4.2 | 4 | 探索式 E2E：curl -N、多個客戶端、斷線重連、關機 | agy | ⬜ | 同上 | 同上 | |
 | T4.4 | 4 | 真瀏覽器 E2E（R26／R27） | Claude 瀏覽器 worker（`--chrome`） | ⬜ | 同上，伺服器由 agy 或任務說明啟動 | `reports/p4-claude-browser.md` | D8 |
@@ -103,7 +105,8 @@
 
 | 問題 | 輪數 | 最後處理 |
 |---|---|---|
-| — | — | — |
+| R10 第 9 項 data 驗證（IMPL） | 1 | T3.5 派給實作者 |
+| T3 涵蓋缺口＋時序（TEST） | 1 | T3.6 派給 Codex |
 
 ## 等使用者決定的事
 
@@ -177,3 +180,4 @@
 | 2026-11-21 08:47 | T2.7 完成並稽核通過；resume 一次修正 pragma 括號；存 `reports/p2-spec-v112.md`（含追加修正），刪 jsonl/err。v1.1.2 搬回主 repo 並同步 impl-ws、tests-ws。寫 `briefs/p2-claude-impl-v112.md`，背景派 T2.8 |
 | 2026-11-21 08:48 | T2.8 完成並稽核通過，`app/main.py` 搬回主 repo；刪 jsonl/err、impl-ws 快取 |
 | 2026-11-21 08:56 | T2.5r 完成：`CONTRACT CHECK: PASS`（0 偏差）。稽核通過，主 repo 無新檔；存 `reports/p2-agy-contract-r2.md`，刪 log/err。Phase 2 結束。寫 `briefs/p3-agy-verify.md`（T3.1–T3.3 合併），重組 verify-ws、快照主 repo，背景派 T3 |
+| 2026-11-21 09:12 | T3 完成並稽核通過（`T3: FAIL`，71/73，2 個 IMPL BUG 同屬 R10 第 9 項；突變 10/10；無 flaky）。存 `reports/p3-agy-verify.md`，刪 log/err 和 verify-ws 的 `.venv`／`.pytest_cache`。涵蓋缺口與時序風險比照 TEST BUG 交給 Codex。寫 `briefs/p3-claude-impl-r10-data.md`、`briefs/p3-codex-gaps.md`，快照 impl-ws／tests-ws，背景並行派 T3.5、T3.6 |
