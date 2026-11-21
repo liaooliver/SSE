@@ -1,4 +1,4 @@
-# SPEC：安裝進度即時串流（v1.1.2）
+# SPEC：安裝進度即時串流（v1.1.3）
 
 依據 `install-progress-sequence.svg`（專案根目錄），用 FastAPI + SSE 實作「安裝卡住或失敗時，畫面能立刻看出是哪一個步驟、為什麼失敗」的服務：
 
@@ -174,7 +174,7 @@
   - **同步流程**（對應 SVG 的階段 1）：`GET /install` 取得快照和 `last_seq = S` → 用 R15 從 `after=0` 開始、`until=S`，分批讀完所有 log → 開啟 `EventSource("/install/events?last_event_id=<run_id>.<S>")`。只套用 `seq` 大於已套用最大值的事件（保險機制；伺服器端本來就保證不重複）。
   - **按下安裝**：`POST /install`，成功（`202`）後重新執行同步流程；`409` 或 `422` 時在 `#run-status` 顯示錯誤。執行中時 `#install-btn` 是 disabled。
   - **收到 `reset` 或補讀時遇到 `409`**：關閉目前的連線，重新執行同步流程。
-  - **錯誤與重試**：發生網路錯誤、同步流程中遇到 `409` 以外的錯誤，或這一輪還在執行時 `EventSource` 變成 `CLOSED`：在 `#run-status` 顯示錯誤，3 秒後重新執行同步流程。
+  - **錯誤與重試**：同步流程中的請求（`GET /install`、`GET /install/logs`）發生網路錯誤、同步流程中遇到 `409` 以外的錯誤，或這一輪還在執行時 `EventSource` 變成 `CLOSED`：在 `#run-status` 顯示錯誤，3 秒後重新執行同步流程。這一輪還在執行時 `EventSource` 發生錯誤，但 `readyState` 是 `CONNECTING`（瀏覽器正在自動重連）：只在 `#run-status` 顯示錯誤，**不**重新執行同步流程，讓 `EventSource` 自己帶 `Last-Event-ID` 重連；R18、R20 保證事件不漏、不重複。
   - **畫面**：左側 `#stage-list` 列出所有 stage 和狀態。右側 `#task-list` 顯示目前所選 stage 的 task。
     - 預設會自動跟著正在執行的 stage。自動跟隨時如果沒有 stage 正在執行，所選的 stage 依序是：失敗的 stage → 否則最後一個不是 `pending` 的 stage → 否則第一個 stage。
     - 使用者點了**目前顯示的以外**的 stage，就停止自動跟隨；點目前已經顯示的 stage 不會停止自動跟隨。
@@ -239,6 +239,7 @@
 | v1.1 | 使用者核准。依實作者與測試作者回報的缺口和衝突修正合約（T2.3），明細見下表 |
 | v1.1.1 | 使用者決定。釐清 `apply_event` 的檢查範圍與 `/stats` 的更新條件（T2.3b），明細見下表 |
 | v1.1.2 | 使用者決定。合約檢查（T2.5）後續修正：`reset` 條件與 R18 對齊、移除 `/health` 的裸 `dict` 例外、`domain.pyi` 通過全專案 ruff，明細見下表 |
+| v1.1.3 | 使用者決定。真實瀏覽器測試（T4.4）後續修正：釐清 R27「錯誤與重試」中的「網路錯誤」範圍，以及 `EventSource` 自動重連（`CONNECTING`）時不重跑同步流程。合約不變，維持 1.1.2。明細見下表 |
 
 ### v1.0 → v1.1 變更明細
 
@@ -274,3 +275,9 @@
 | E1 | `x-sse-events.control.reset.when` 寫滿 R18 的 `reset` 條件：起點屬於另一輪（這一輪執行中或已結束都一樣），或 `n > L` 且這一輪還在執行；這一輪已結束且 `r = R`、`n ≥ L` 時回 `204`，不送 `reset`。`GET /install/events` 的 `204` 說明改為 `r = R` 且 `n ≥ L`。R18 本身不變 | R18；`openapi.yaml` |
 | E2 | `AGENTS.md` §4 移除 `/health` 可回傳裸 `dict` 的例外：所有 JSON 端點都用 Pydantic model 或明確的回傳型別，產生符合合約的 schema（`/health` 是 `additionalProperties: false`、`status: const "ok"`） | R17；`AGENTS.md` |
 | E3 | `domain.pyi` 的 `JsonValue` 改成單行（去掉括號）；五個型別別名 `JsonValue`、`EventType`、`Status`、`RunStatus`、`LogLevel` 的第一行加上 `# noqa: UP040  stubtest 不支援 PEP 695 (B1)`。名稱、值、順序不變 | R2；`domain.pyi` |
+
+### v1.1.2 → v1.1.3 變更明細
+
+| 項目 | 變更 | 影響的 R／AC 與檔案 |
+|---|---|---|
+| E4 | R27「錯誤與重試」：「網路錯誤」限定為同步流程中的請求（`GET /install`、`GET /install/logs`）失敗；這一輪還在執行時 `EventSource` 發生錯誤但 `readyState` 是 `CONNECTING`，只在 `#run-status` 顯示錯誤，不重跑同步流程，讓瀏覽器帶 `Last-Event-ID` 自動重連（R18、R20 保證不漏、不重複）。只有 `EventSource` 變成 `CLOSED` 或同步流程本身失敗時，才在 3 秒後重跑同步流程。三個觸發條件與 3 秒重試不變 | R27；`docs/SPEC.md`（合約不變，維持 1.1.2） |

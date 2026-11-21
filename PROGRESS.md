@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **4 AI 自己跑 E2E** 🔵（Phase 3 ✅） |
-| 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.2**、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
+| 目前 Phase | **5 驗收與交付** 🔵（Phase 4 ✅） |
+| 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.3**（合約 1.1.2）、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws、browser-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T4.5 → 稽核（只改 `docs/SPEC.md`、只用 Read/Edit/Glob/Grep、無外部路徑、diff 只有 R27 一句＋標題＋附錄）→ 搬回主 repo，同步 impl-ws、tests-ws、browser-ws → Phase 4 結束 → T5.1 驗收（agy，從 clean clone） |
+| 下一步 | 寫 `briefs/p5-agy-acceptance.md` → 以主 repo HEAD＋tests-ws/tests 重組 verify-ws、快照主 repo → 背景派 T5.1 → 稽核 → T5.2 併入 tests → T5.3 交付（附 E5／E6 給使用者決定，非阻塞） |
 
 ## Phase 總覽
 
@@ -98,7 +98,7 @@
 | T4.2 | 4 | 探索式 E2E：curl -N、多個客戶端、斷線重連、關機 | agy | ✅ | 同上 | 同上 | 10 項全 OK（附實際 header／SSE 行）：端點與 422／409、3 個 curl -N 並行（202 筆連續、/stats 1→2→3→0、gzip 下不壓縮）、header 與 query（含空白）重連無缺漏重複、R18 全部分支（協調者對照 R18 原文確認含「header 不合法視同沒帶」）、10 個並行 POST 恰 1 個 202、ping 間隔 0.5 秒、斷線 0.002 秒退訂、SIGINT／SIGTERM 0.25 秒退出並復原 E_INTERRUPTED、SIGKILL 復原且 run_id 遞增、logs 分頁串接 168 筆完全相符。R23 在 macOS loopback 因核心送出緩衝 128 KiB > 整輪 38 KiB 無法以真 TCP 觸發（AC10 已用 ASGI 涵蓋），正常客戶端不受影響 |
 | T4.4 | 4 | 真瀏覽器 E2E（R26／R27） | Claude 瀏覽器 worker（`--chrome`） | ✅ | `briefs/p4-claude-browser.md`；`browser-ws`（主 repo HEAD 去掉協調者檔案，沒有 tests），伺服器由 worker 自己啟動 | `reports/p4-claude-browser.md` | D8 `T4.4: PASS`（0 偏差）：載入、安裝畫面（200 ms 取樣：跟隨／展開／捲動／收合全對）、點開收合 task 0 請求、失敗紅色與 message／hint、C2、C3、中途加入與第二分頁 168 行逐行相符、執行中重整、409、伺服器停止與 E_INTERRUPTED 復原、C1 都 OK。未完成：C4 的 `CLOSED` 分支沒觸發（伺服器停止時靠 EventSource 自動重連復原，沒有重跑同步流程）；R26 文字安全只做靜態檢查（mock 用 `python3` 被權限擋下，沒執行）→ T4.4b。稽核通過：只開 127.0.0.1:18510、自己開的 2 個分頁都關了（extension 群組自動建的空白 New Tab 留著）、伺服器已停、browser-ws 只多 `__pycache__`（已刪）、紀錄無外部路徑 |
 | T4.4b | 4 | 瀏覽器補驗：C4 三種錯誤路徑、R26 文字安全實際觀察 | Claude 瀏覽器 worker（sonnet-5-5／high，`--chrome`） | ✅ | `briefs/p4-claude-browser-b.md` | `browser-ws`；`reports/p4-claude-browser-b.md` | mock 改用 `uv run python`，不加權限 `T4.4b: PASS`：A1（伺服器換空 DB → events 404 → CLOSED）顯示「SSE 連線已關閉，3 秒後重試」，3.0 秒後重跑同步，結果正確；A2（用故障注入 proxy 讓 `GET /install` 斷線）每 3.0 秒重試、移除故障後自行復原；B（mock 在所有字串欄位放 `<b>`／`<img onerror>`）全部原樣顯示、0 個 b/img 元素、title 沒被改。A3（串流中停伺服器再用同 DB 重啟）：顯示「連線中斷，瀏覽器重新連線中…」，不重跑同步流程，靠 EventSource 自動重連（`last_event_id=2.4` → 200）補齊並正確結束 → 是否符合 R27「網路錯誤 → 3 秒後重跑同步流程」屬 SPEC 歧義，交使用者（E4）。稽核通過：只連 127.0.0.1:18500–18502、分頁與 extension 自建的空白分頁都關了、伺服器已停、browser-ws 不變、紀錄無外部路徑 |
-| T4.5 | 4 | SPEC v1.1.2 → v1.1.3：寫入 E4（R27 串流中斷靠 EventSource 自動重連，不必重跑同步流程） | Claude 規格編輯（opus-5-5／high） | 🔵 | `briefs/p4-claude-spec-v113.md` | `docs/SPEC.md`；`reports/p4-spec-v113.md` | 合約不變、維持 1.1.2，程式不用改 |
+| T4.5 | 4 | SPEC v1.1.2 → v1.1.3：寫入 E4（R27 串流中斷靠 EventSource 自動重連，不必重跑同步流程） | Claude 規格編輯（opus-5-5／high） | ✅ | `briefs/p4-claude-spec-v113.md` | `docs/SPEC.md`；`reports/p4-spec-v113.md` | 稽核通過：只用 Read/Edit/Grep、只改 `docs/SPEC.md`（diff 只有標題、R27 一句、附錄版本列＋變更明細表）、無外部路徑。合約維持 1.1.2。已搬回主 repo（覆蓋前確認仍是 v1.1.2）並同步 impl-ws、tests-ws、browser-ws。worker 另提兩個非阻塞歧義 → E5、E6 |
 | T4.3 | 4 | 效能驗收（AC11，`-m perf`） | agy | ✅ | 同上 | 同上 | perf ×3 全過（各約 1.5 秒；測試不印 p95） |
 | T5.1 | 5 | 從 clean clone 開始，uv sync 之後跑全部測試 | agy | ⬜ | git clone | `reports/p5-agy-acceptance.md` | |
 | T5.2 | 5 | 把 `tests/` 合併進主 repo，並 commit | 協調者 | ⬜ | T5.1 通過 | commit | 只搬檔案，不讀內容 |
@@ -129,6 +129,8 @@
 | D8 | 真瀏覽器 E2E → **Claude Code worker 用 Claude in Chrome 擴充功能** | ✅ 2026-11-20 |
 | E1–E3 | 合約檢查 T2.5 後續：E1 `reset.when` 對齊 R18、E2 刪 `/health` 例外、E3 `domain.pyi` 用 noqa → SPEC v1.1.2 | ✅ 2026-11-21 |
 | E4 | R27 串流中斷時頁面靠 EventSource 自動重連、不重跑同步流程 → **算符合，並在 R27 補一句（SPEC v1.1.3）** | ✅ 2026-11-21 |
+| E5 | R27：EventSource 自動重連成功後，`#run-status` 要不要清掉錯誤、改回「執行中」，SPEC 沒寫（T4.4b 觀察：錯誤字樣留到下一個狀態事件才換掉） | ⏳ 非阻塞，交付時問 |
+| E6 | R27：「錯誤與重試」字面上的「`409` 以外的錯誤」包含 `GET /install` 的 `404`，但「載入時」把 `404` 定義為「只顯示計畫」，字面互相衝突（實作與瀏覽器觀察都照「載入時」走） | ⏳ 非阻塞，交付時問 |
 
 ## 偏差紀錄
 
@@ -193,3 +195,4 @@
 | 2026-11-21 10:12 | T4.4 完成並稽核通過（`T4.4: PASS`），存 `reports/p4-claude-browser.md`，刪 jsonl/err、browser-ws 的 `__pycache__`。C4 `CLOSED` 分支與 R26 實際觀察未完成 → 寫 `briefs/p4-claude-browser-b.md`，背景派 T4.4b |
 | 2026-11-21 10:17 | T4.4b 完成並稽核通過（`T4.4b: PASS`），存 `reports/p4-claude-browser-b.md`，刪 jsonl/err。A3 的行為與 R27 字面可能有出入，屬 SPEC AMBIGUOUS，交使用者決定 E4 |
 | 2026-11-21 20:02 | 使用者決定 E4：算符合，並在 R27 補一句（SPEC v1.1.3）。協調者判斷合約不受影響、維持 1.1.2（實作的 `info.version` 不用動）。寫 `briefs/p4-claude-spec-v113.md`，快照 spec-ws，背景派 T4.5 |
+| 2026-11-21 20:06 | T4.5 完成並稽核通過，存 `reports/p4-spec-v113.md`，刪 jsonl/err。v1.1.3 搬回主 repo，同步 impl-ws、tests-ws、browser-ws。Phase 4 結束。記下 E5、E6（非阻塞，交付時問使用者）。下一步 T5.1 |
