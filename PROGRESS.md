@@ -39,7 +39,7 @@
 | 目前 Phase | **3 驗證測試、處理失敗** 🔵（Phase 2 ✅） |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.2**、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 等 T3.5、T3.6（並行）→ 各自稽核（只改 `app/`／`tests/`、其他檔對 `t35-pre`／`t36-pre` 快照不變、紀錄無外部路徑、報告無原始碼）→ 搬回主 repo（tests 先只放 tests-ws，T5.2 才併入主 repo）→ 重組 verify-ws → agy 重跑 T3（存 `reports/p3-agy-run-2.md`）→ 檢查主 repo 有無新檔 |
+| 下一步 | 等 T3 第 2 輪（agy，`briefs/p3-agy-verify-r2.md`，報告 `reports/p3-agy-run-2.md`）→ 稽核 → 檢查主 repo 有無新檔 → 通過則 Phase 3 結束，進 T4；失敗則依 T3.4 分派（重試計數第 2 輪） |
 
 ## Phase 總覽
 
@@ -92,7 +92,7 @@
 | T3.3 | 3 | 跑全部測試，判斷失敗出在哪 | agy | ✅ | 同上 | 同上（之後重跑存 `reports/p3-agy-run-N.md`） | `T3: FAIL`：71/73 通過，3 次結果一致（無 flaky），約 29 秒。2 個 IMPL BUG，都是 R10 第 9 項（`run_started` data 缺欄位／型別錯沒拋錯；`log` 的 `ts` 沒驗）→ T3.5。0 TEST BUG、0 歧義。稽核通過：verify-ws 乾淨、無 install.db、log 無外部路徑、報告無原始碼、主 repo 無新檔 |
 | T3.4 | 3 | 把失敗分給對的人（最多 3 輪） | 協調者 | 🔵 | T3.3 | 退回 T2.1／T2.2，或問使用者 | 看「重試計數」 |
 | T3.5 | 3 | 修 R10 第 9 項：`apply_event` 依 R8 檢查所有事件 data 的欄位與型別 | Claude 實作者（opus-5-5／high） | ✅ | `briefs/p3-claude-impl-r10-data.md` | `impl-ws/app/`；`reports/p3-impl-r10-data.md` | 只給行為描述。稽核通過：只改 `app/domain.py`（新增依 R8 的欄位表＋`_validate_data`），非 app 檔不變、紀錄無外部路徑、無殘留暫存檔／install.db。9 種事件全驗、int 不收 bool、enum 限值；額外欄位維持忽略；R10「不需要」項目不動。ruff／mypy／stubtest 過；自我檢查 894 筆劇本事件 0 拋錯、147 個反例全拋、7 情境實跑與 R25 復原正常。worker 跑了幾個唯讀 `sed`／`cat`／`ls`（在 impl-ws 內，`Bash(uv:*)` 沒擋到，無害）。已搬回主 repo |
-| T3.6 | 3 | 補涵蓋缺口、讓時序敏感的測試在慢機器上也穩定 | Codex（gpt-6.2-astra／high） | 🔵 | `briefs/p3-codex-gaps.md` | `tests-ws/tests/`；`reports/p3-codex-gaps.md` | 只給 agy 的 D 部分（只談測試和 SPEC）；不改 SPEC 推導出的上限 |
+| T3.6 | 3 | 補涵蓋缺口、讓時序敏感的測試在慢機器上也穩定 | Codex（gpt-6.2-astra／high） | ✅ | `briefs/p3-codex-gaps.md` | `tests-ws/tests/`；`reports/p3-codex-gaps.md` | 稽核通過：只改 tests（test_http／test_stream／test_e2e，新增 page_script.py），其他檔不變、紀錄無外部路徑、報告無原始碼（協調者沒讀 log）。新增 `test_r14_nonlog_timing`、`test_r15_midrun_default_until`；reset 回應加驗 R19 標頭；`test_r26_html` 加 textContent／innerHTML／addEventListener／close 靜態檢查；R25 無 running task 的中斷點無法用公開介面固定 → 不可確定性測試。7 個時序節點改成「先確認前提、錯過就重建（最多 3 輪）」或放寬自選間隔，SPEC 上限不變。節點 76（69＋6 e2e＋1 perf），預設 75，估約 54 秒。刪除 Codex 在系統暫存區的 `t36-uv.*` 快取 |
 | T4.1 | 4 | 對真的 uvicorn 跑自動化 E2E | agy | ⬜ | 全新的 `verify-ws` | `reports/p4-agy-e2e.md` | pytest `-m e2e` |
 | T4.2 | 4 | 探索式 E2E：curl -N、多個客戶端、斷線重連、關機 | agy | ⬜ | 同上 | 同上 | |
 | T4.4 | 4 | 真瀏覽器 E2E（R26／R27） | Claude 瀏覽器 worker（`--chrome`） | ⬜ | 同上，伺服器由 agy 或任務說明啟動 | `reports/p4-claude-browser.md` | D8 |
@@ -106,7 +106,7 @@
 | 問題 | 輪數 | 最後處理 |
 |---|---|---|
 | R10 第 9 項 data 驗證（IMPL） | 1 | T3.5 已修，待 T3 重跑確認 |
-| T3 涵蓋缺口＋時序（TEST） | 1 | T3.6 派給 Codex |
+| T3 涵蓋缺口＋時序（TEST） | 1 | T3.6 已改，待 T3 重跑確認 |
 
 ## 等使用者決定的事
 
@@ -181,4 +181,5 @@
 | 2026-11-21 08:48 | T2.8 完成並稽核通過，`app/main.py` 搬回主 repo；刪 jsonl/err、impl-ws 快取 |
 | 2026-11-21 08:56 | T2.5r 完成：`CONTRACT CHECK: PASS`（0 偏差）。稽核通過，主 repo 無新檔；存 `reports/p2-agy-contract-r2.md`，刪 log/err。Phase 2 結束。寫 `briefs/p3-agy-verify.md`（T3.1–T3.3 合併），重組 verify-ws、快照主 repo，背景派 T3 |
 | 2026-11-21 09:12 | T3 完成並稽核通過（`T3: FAIL`，71/73，2 個 IMPL BUG 同屬 R10 第 9 項；突變 10/10；無 flaky）。存 `reports/p3-agy-verify.md`，刪 log/err 和 verify-ws 的 `.venv`／`.pytest_cache`。涵蓋缺口與時序風險比照 TEST BUG 交給 Codex。寫 `briefs/p3-claude-impl-r10-data.md`、`briefs/p3-codex-gaps.md`，快照 impl-ws／tests-ws，背景並行派 T3.5、T3.6 |
-| 2026-11-21 09:20 | T3.5 完成並稽核通過，`app/domain.py` 搬回主 repo（先確認主 repo 仍是修改前版本）；存 `reports/p3-impl-r10-data.md`，刪 jsonl/err、impl-ws 快取。等 T3.6 |
+| 2026-11-21 09:15 | T3.5 完成並稽核通過，`app/domain.py` 搬回主 repo（先確認主 repo 仍是修改前版本）；存 `reports/p3-impl-r10-data.md`，刪 jsonl/err、impl-ws 快取。等 T3.6 |
+| 2026-11-21 09:31 | T3.6 完成並稽核通過，存 `reports/p3-codex-gaps.md`；刪 log、tests-ws 快取、Codex 的 uv 暫存快取。tests 先留在 tests-ws（T5.2 才併入主 repo）。寫 `briefs/p3-agy-verify-r2.md`，以主 repo HEAD＋tests-ws/tests 重組 verify-ws，快照主 repo，背景派 T3 第 2 輪 |
