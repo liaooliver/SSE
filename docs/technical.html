@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>安裝進度即時串流｜技術文件</title>
+<style>
+:root{color-scheme:light;--bg:#f8fafc;--surface:#ffffff;--text:#0f172a;--muted:#475569;--border:#cbd5e1;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--err:#b91c1c;--info:#0369a1;--code-bg:#f1f5f9;--font-sans:-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;--font-mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0b1120;--surface:#111827;--text:#e2e8f0;--muted:#94a3b8;--border:#334155;--accent:#60a5fa;--ok:#4ade80;--warn:#fbbf24;--err:#f87171;--info:#38bdf8;--code-bg:#1e293b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.85 var(--font-sans)}
+.wrap{width:min(960px,100%);margin:auto;padding:0 24px}
+a{color:var(--accent);text-underline-offset:.23em}a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:2px solid var(--info);outline-offset:3px}
+.top,footer{background:var(--surface)}
+.mast{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;border-bottom:1px solid var(--border);padding:19px 0;font-size:.85rem}
+.mast [aria-current]{color:var(--text);font-weight:650;text-decoration:none}
+.mast nav{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+time,.cite,figcaption{color:var(--muted)}
+.hero{padding:42px 0 37px;border-bottom:3px solid var(--accent)}
+h1,h2,h3{line-height:1.4;text-wrap:balance}
+h1{font-size:clamp(2.3rem,5vw,3.8rem);letter-spacing:-.045em;margin:0}
+.hero p{font-size:1.12rem;margin:.7em 0 0;color:var(--muted)}
+.toc{margin:28px 0 36px;padding:17px 23px 20px;border:1px solid var(--border);background:var(--surface)}
+.toc strong{font-size:.92rem;color:var(--muted)}
+.toc ol{columns:3;column-gap:2.6em;margin:8px 0 0;padding-left:1.65em;font-size:.93rem}
+.toc li{break-inside:avoid;padding:2px 0}.toc li::marker{font: .8rem var(--font-mono);color:var(--muted)}
+.toc a{text-decoration:none}.toc a:hover{text-decoration:underline}
+section{border-top:1px solid var(--border);padding:32px 0;scroll-margin-top:12px}
+h2{font-size:clamp(1.55rem,3.5vw,2.12rem);margin:0 0 18px}h3{font-size:1.18rem;margin:26px 0 8px;color:var(--accent)}
+p{max-width:80ch;margin:10px 0;overflow-wrap:anywhere}
+code{font: .92em/1.5 var(--font-mono);background:var(--code-bg);border-radius:3px;padding:.06em .25em;overflow-wrap:anywhere}
+pre{border-left:3px solid var(--accent);background:var(--code-bg);padding:15px 20px;overflow:auto;line-height:1.55;margin:15px 0}
+pre code{padding:0;background:transparent}
+aside{margin:20px 0;padding:13px 19px;border-left:3px solid var(--accent);background:var(--surface);overflow-wrap:anywhere}
+.cite{font-size:.8rem;margin-top:15px;max-width:none}.cite code,footer code{background:transparent}
+.scroll,.drawing{overflow-x:auto;max-width:100%}
+.scroll{margin:14px 0 17px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;min-width:590px;background:var(--surface);font-size:.92rem;line-height:1.6}
+th,td{padding:10px 13px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}
+#modules table{min-width:790px}#modules td:first-child code,#project td:first-child code,#tests td:first-child code{white-space:nowrap}th{color:var(--accent);background:var(--code-bg);font-weight:650}tr:last-child td{border-bottom:0}
+figure{margin:22px 0;background:var(--surface);border:1px solid var(--border)}
+.drawing{padding:10px}
+svg{display:block;height:auto;color:var(--accent)}
+svg .node{fill:var(--bg);stroke:var(--border);stroke-width:1.6}
+svg .good{stroke:var(--ok)}svg .bad{stroke:var(--err)}svg .active{stroke:var(--accent)}svg .attention{stroke:var(--warn)}
+svg text{fill:var(--text);font:600 16px var(--font-sans);text-anchor:middle}
+svg .sub{font:14px var(--font-sans);fill:var(--muted)}svg .mono{font-family:var(--font-mono)}
+svg .edge{fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linejoin:round;marker-end:var(--end)}
+svg .head{fill:var(--accent)}svg .wire-label{paint-order:stroke;stroke:var(--surface);stroke-width:5px;stroke-linejoin:round}svg .life{stroke:var(--border);stroke-dasharray:5 5;fill:none}
+figcaption{padding:10px 17px;border-top:1px solid var(--border);font-size:.86rem}
+footer{border-top:2px solid var(--accent);padding:24px 0 35px;font-size:.86rem}footer p{max-width:none}
+@media(max-width:650px){.wrap{padding:0 16px}.mast{padding:13px 0}.mast nav{gap:9px}.hero{padding:30px 0 24px}.toc{padding:14px;margin:20px 0 24px}.toc ol{columns:2;column-gap:1.8em}section{padding:24px 0}.drawing{padding:5px}figure{margin:16px 0}}
+@media(max-width:420px){.toc ol{font-size:.85rem;display:grid;grid-auto-flow:column;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(6,auto);column-gap:1em;padding-left:0;list-style-position:inside}.toc li{overflow-wrap:anywhere}.mast{font-size:.78rem}th,td{padding:8px 10px}}
+</style>
+</head><body>
+<header class="top"><div class="wrap"><div class="mast"><nav aria-label="成套文件切換"><a href="technical.html" aria-current="page">technical.html</a><span aria-hidden="true">⇄</span><a href="ai-agents.html">ai-agents.html</a></nav><time datetime="2026-11-21">2026-11-21</time></div>
+<div class="hero"><h1>安裝進度即時串流</h1><p>從按下安裝到斷線重連，沿著一筆事件看懂 FastAPI、SQLite 與瀏覽器如何對齊進度。</p></div></div></header>
+<main class="wrap"><nav id="contents" class="toc" aria-label="本文目錄"><strong>本文目錄</strong><ol>
+<li><a href="#project">專案在做什麼</a></li>
+<li><a href="#architecture">系統架構</a></li>
+<li><a href="#modules">模組說明</a></li>
+<li><a href="#model">資料模型與狀態機</a></li>
+<li><a href="#sse">SSE 在這個專案的應用</a></li>
+<li><a href="#success">正常流程</a></li>
+<li><a href="#failure">失敗流程</a></li>
+<li><a href="#recovery">重試與恢復流程</a></li>
+<li><a href="#frontend">前端</a></li>
+<li><a href="#tests">測試與驗證</a></li>
+<li><a href="#lessons">經驗分享與設計取捨</a></li>
+</ol></nav>
+<section id="project"><h2>專案在做什麼</h2>
+<p>選「磁碟空間不足」再按安裝，畫面會走完準備和下載。直到「複製檔案」顯示第 24 行紅字，使用者才看到模擬的寫入失敗。此時左側能定位失敗階段，右側保留該工作的輸出和排除建議。這就是專案要解決的問題：只知道整輪安裝失敗，還不足以判斷該處理哪一步。</p>
+<p>一輪安裝依序經過準備環境、下載套件、安裝、設定，每階段各有三個工作。頁面先用 <code>GET /install/plan</code> 取得完整計畫，再依執行進度標出每個節點。情境選單取自 <code>GET /install/scenarios</code>（R12），每項只有 <code>id</code>、<code>label</code>、<code>fail_task_id</code>；下表的失敗行數及代碼來自後端劇本。</p>
+<div class="scroll" tabindex="0" role="region" aria-label="情境、使用者看到的情境、失敗工作、失敗前正常行數／代碼"><table><thead><tr><th scope="col">情境</th><th scope="col">使用者看到的情境</th><th scope="col">失敗工作</th><th scope="col">失敗前正常行數／代碼</th></tr></thead><tbody>
+<tr><td><code>success</code></td><td>全部成功</td><td>全數完成</td><td>共 168 行正常紀錄</td></tr>
+<tr><td><code>network_unreachable</code></td><td>無法連線到套件伺服器</td><td><code>fetch_manifest</code></td><td>0 ／ <code>E_NETWORK</code></td></tr>
+<tr><td><code>dependency_missing</code></td><td>缺少相依套件</td><td><code>check_deps</code></td><td>7 ／ <code>E_DEPENDENCY</code></td></tr>
+<tr><td><code>checksum_mismatch</code></td><td>套件雜湊值不符</td><td><code>verify_checksum</code></td><td>9 ／ <code>E_CHECKSUM</code></td></tr>
+<tr><td><code>disk_full</code></td><td>磁碟空間不足</td><td><code>copy_files</code></td><td>23 ／ <code>E_DISK_FULL</code></td></tr>
+<tr><td><code>permission_denied</code></td><td>權限不足</td><td><code>set_permissions</code></td><td>3 ／ <code>E_PERMISSION</code></td></tr>
+<tr><td><code>service_timeout</code></td><td>服務啟動逾時</td><td><code>start_service</code></td><td>12 ／ <code>E_SERVICE_TIMEOUT</code></td></tr>
+</tbody></table></div>
+<p>想在本機跟著走一次，可在專案根目錄執行下列指令，開啟本機 8000 埠的首頁。此服務只支援單一 worker，模擬器根據情境產生日誌；例如選擇套件伺服器無法連線時，傳送進度的 SSE 仍可正常運作。</p>
+<pre><code>uv sync
+uv run uvicorn app.main:app --port 8000</code></pre>
+<p class="cite">依據　<code>docs/SPEC.md §1、R4–R6、R11–R12、§11</code> · <code>app/domain.py</code> · <code>frontend/src/index.html</code></p>
+</section>
+<section id="architecture"><h2>系統架構</h2>
+<p>先沿著啟動路徑讀圖，再看回到瀏覽器的兩條資料來源。安裝請求交給背景模擬器後，頁面可以離線。寫入事件是安裝程序的工作，訂閱者只決定自己讀到哪一筆。</p>
+<figure><div class="drawing" tabindex="0" role="region" aria-label="圖 1，可橫向捲動">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 440" width="100%" role="img" aria-label="FastAPI 從 Store 讀取快照與日誌，將安裝命令交給 Runtime。SSE 合併歷史與即時事件，監控路由從 Broker 讀取訂閱數" style="min-width:760px;--end:url(#tip1)">
+<defs><marker id="tip1" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto-start-reverse"><path class="head" d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect class="node " x="18" y="30" width="204" height="60" rx="7"/>
+<text x="120.0" y="57.0" class="">瀏覽器頁面</text>
+<text x="120.0" y="78.0" class="sub">選情境、啟動、同步</text>
+<rect class="node " x="330" y="30" width="207" height="60" rx="7"/>
+<text x="433.5" y="57.0" class="">FastAPI 路由</text>
+<text x="433.5" y="78.0" class="sub">page · install · system</text>
+<rect class="node active" x="634" y="30" width="215" height="60" rx="7"/>
+<text x="741.5" y="57.0" class="mono">Runtime</text>
+<text x="741.5" y="78.0" class="sub">背景模擬器依劇本執行</text>
+<path class="edge" style="marker-start:var(--end)" d="M225 60 H327"/>
+<text x="275" y="49" class="sub mono">HTTP</text>
+<path class="edge" d="M537 60 L631 60"/>
+<text x="585" y="49" class="sub">啟動</text>
+<rect class="node " x="634" y="150" width="215" height="60" rx="7"/>
+<text x="741.5" y="177.0" class="mono">SQLite / Store</text>
+<text x="741.5" y="198.0" class="sub">已提交的事件與輪次</text>
+<path class="edge" style="marker-start:var(--end)" d="M486 93 V132 H604 V160 H631"/>
+<text x="553" y="122" class="sub">快照／日誌補讀</text>
+<path class="edge" d="M703 90 L703 147"/>
+<text x="665" y="125" class="sub">① 寫入</text>
+<rect class="node " x="634" y="283" width="215" height="60" rx="7"/>
+<text x="741.5" y="310.0" class="mono">Broker</text>
+<text x="741.5" y="331.0" class="sub">每位訂閱者各有一個佇列</text>
+<path class="edge" d="M849 60 H865 V313 H852"/>
+<rect class="node active" x="330" y="241" width="207" height="60" rx="7"/>
+<text x="433.5" y="268.0" class="mono">GET /install/events</text>
+<text x="433.5" y="289.0" class="sub">install 路由＋串流回應</text>
+<rect class="node active" x="18" y="241" width="204" height="60" rx="7"/>
+<text x="120.0" y="268.0" class="mono">EventSource</text>
+<text x="120.0" y="289.0" class="sub">頁面更新狀態與日誌</text>
+<path class="edge" d="M634 180 H434 V238"/>
+<text x="540" y="168" class="sub">讀取歷史</text>
+<path class="edge" d="M634 313 H565 V279 H540"/>
+<text x="590" y="338" class="sub">即時事件</text>
+<text x="797" y="259" class="sub">② 提交後廣播</text>
+<path class="edge" d="M222 256 L327 256"/>
+<text x="276" y="247" class="sub mono">GET</text>
+<path class="edge" d="M330 288 L225 288"/>
+<text x="276" y="279" class="sub mono">SSE</text>
+<path class="edge" d="M119 90 L119 238"/>
+<text x="171" y="175" class="sub">建立訂閱</text>
+<rect class="node" x="330" y="366" width="207" height="60" rx="7"/>
+<text x="433.5" y="393" class="mono">GET /stats</text>
+<text x="433.5" y="414" class="sub">system 路由回傳訂閱數</text>
+<path class="edge" d="M741 343 V396 H540"/>
+<text x="632" y="385" class="sub mono">broker.count</text>
+</svg></div><figcaption>圖 1：<code>POST /install</code> 交給模擬器執行。<code>GET /install</code> 和 <code>GET /install/logs</code> 直接向儲存層讀取資料並回傳頁面。串流端點接合歷史與即時事件，監控端點則向 <code>Broker</code> 取得訂閱數。</figcaption></figure>
+<p><code>create_app</code> 建立獨立的 FastAPI 實例，掛上三個路由。進入 <code>lifespan</code> 才開啟資料庫、執行復原，並將 <code>Runtime</code> 掛在 <code>app.state.runtime</code>。設定在建立 app 時解析，優先採明確傳入的參數（值非 <code>None</code>），其次為環境變數，最後採預設值。</p>
+<p>資料庫路徑 <code>SSE_DB_PATH</code> 預設為 <code>./install.db</code>。相鄰日誌的間隔 <code>SSE_LOG_INTERVAL</code> 預設為 <code>0.15</code> 秒，閒置心跳間隔 <code>SSE_HEARTBEAT_SECONDS</code> 為 <code>15.0</code> 秒，每個訂閱者的佇列容量 <code>SSE_SUBSCRIBER_QUEUE_SIZE</code> 為 <code>1000</code> 筆。</p>
+<p>HTTP 入口也提供兩種不同的觀測。<code>GET /health</code> 傳回 <code>{&quot;status&quot;:&quot;ok&quot;}</code>；<code>GET /stats</code> 的 <code>subscribers</code> 表示正在重播或接收即時事件的連線數，可以在開關分頁時觀察。R16 規定回 <code>404</code>、<code>204</code> 或 <code>reset</code> 的連線不計入。實作先登記再讀取資料庫，確認屬於這些分支才退訂；若同時查詢統計，計數可能短暫包含尚在判斷的連線。</p>
+<p class="cite">依據　<code>app/main.py</code> · <code>app/routers/install.py</code> · <code>app/routers/page.py</code> · <code>app/routers/system.py</code> · <code>app/runtime.py</code> · <code>app/broker.py</code> · <code>app/store.py</code> · <code>app/sse.py</code> · <code>frontend/src/index.html</code> · <code>docs/SPEC.md R1–R3、R16–R25</code></p>
+</section>
+<section id="modules"><h2>模組說明</h2>
+<p>對外的 Python 入口是 <code>app.main</code> 的工廠、預設實例，以及 <code>contracts/domain.pyi</code> 列出的領域名稱。表內也列出模組間實際呼叫的符號，方便從 HTTP 或畫面追到負責的程式。</p>
+<div class="scroll" tabindex="0" role="region" aria-label="檔案、責任、主要入口或類別、誰使用"><table><thead><tr><th scope="col">檔案</th><th scope="col">責任</th><th scope="col">主要入口或類別</th><th scope="col">誰使用</th></tr></thead><tbody>
+<tr><td><code>app/__init__.py</code></td><td>應用程式套件標記</td><td>空檔</td><td>Python 匯入套件時</td></tr>
+<tr><td><code>app/main.py</code></td><td>組裝路由、管理啟停</td><td><code>create_app</code>、<code>app</code></td><td>uvicorn、測試</td></tr>
+<tr><td><code>app/domain.py</code></td><td>計畫、劇本、狀態轉換、事件格式</td><td><code>PLAN</code>、<code>SCENARIOS</code>、<code>script_for</code>、<code>initial_snapshot</code>、<code>apply_event</code>、<code>parse_event_id</code>、<code>format_event</code>、<code>RETRY_BLOCK</code>、<code>PING_COMMENT</code></td><td>模擬器、儲存層、路由、串流</td></tr>
+<tr><td><code>app/runtime.py</code></td><td>解析設定並持有執行中的安裝</td><td><code>resolve_settings</code>、<code>Settings</code>、<code>Runtime</code></td><td>工廠、生命週期、安裝與監控路由</td></tr>
+<tr><td><code>app/store.py</code></td><td>輪次交易、事件寫入、快照、分頁與復原</td><td><code>Store</code>、<code>RunInfo</code>、<code>LogPage</code></td><td>執行環境、安裝路由</td></tr>
+<tr><td><code>app/broker.py</code></td><td>登記訂閱、分送已提交事件</td><td><code>Broker</code>、<code>Subscriber</code></td><td>執行環境、安裝與監控路由、串流回應</td></tr>
+<tr><td><code>app/sse.py</code></td><td>重播、接即時事件、心跳、清理連線</td><td><code>event_stream</code>、<code>reset_stream</code>、<code>EventStreamResponse</code></td><td>安裝路由、ASGI</td></tr>
+<tr><td><code>app/schemas.py</code></td><td>定義 HTTP 輸入與輸出</td><td><code>InstallRequest</code>、<code>InstallStarted</code>、<code>Plan</code>、<code>Snapshot</code>、<code>LogPageOut</code>、<code>Stats</code>、<code>Health</code></td><td>安裝與監控路由</td></tr>
+<tr><td><code>app/routers/__init__.py</code></td><td>路由套件標記</td><td>空檔</td><td>Python 匯入路由時</td></tr>
+<tr><td><code>app/routers/install.py</code></td><td>提供安裝資料、命令、事件端點</td><td><code>get_plan</code>、<code>list_scenarios</code>、<code>start_install</code>、<code>get_snapshot</code>、<code>get_logs</code>、<code>stream_events</code>、<code>RuntimeDep</code></td><td><code>app/main.py</code> 掛載路由讓頁面呼叫，<code>app/routers/system.py</code> 匯入 <code>RuntimeDep</code></td></tr>
+<tr><td><code>app/routers/page.py</code></td><td>讀取並送出首頁 HTML</td><td><code>index_page</code></td><td>FastAPI 處理 <code>GET /</code></td></tr>
+<tr><td><code>app/routers/system.py</code></td><td>訂閱數與存活狀態</td><td><code>get_stats</code>、<code>health</code></td><td>FastAPI 處理監控請求</td></tr>
+<tr><td><code>app/static/index.html</code></td><td>可直接送出的單檔頁面</td><td>內嵌 CSS 與頁面腳本</td><td>首頁路由讀檔，瀏覽器執行</td></tr>
+<tr><td><code>frontend/src/index.html</code></td><td>頁面結構、同步和互動的來源</td><td>腳本內部的 <code>init</code>、<code>sync</code>、<code>openSource</code>、<code>onEvent</code></td><td>建置程式讀模板，瀏覽器執行產物</td></tr>
+<tr><td><code>frontend/src/input.css</code></td><td>Tailwind 掃描範圍、Preline 主題與自訂樣式</td><td>建置用 CSS 入口</td><td>Tailwind CLI</td></tr>
+<tr><td><code>frontend/build.mjs</code></td><td>編譯並檢查 CSS，嵌入模板</td><td>建置腳本</td><td><code>npm run build</code></td></tr>
+<tr><td><code>frontend/package.json</code></td><td>釘選建置套件、宣告指令</td><td><code>build</code></td><td>npm</td></tr>
+<tr><td><code>frontend/package-lock.json</code></td><td>鎖定完整依賴版本</td><td>npm 鎖定檔</td><td><code>npm ci</code></td></tr>
+<tr><td><code>frontend/README.md</code></td><td>說明需求、修改與重建步驟</td><td>建置說明</td><td>修改頁面的開發者</td></tr>
+</tbody></table></div>
+<h3>從命令追到執行中的工作</h3>
+<p><code>app/main.py</code> 把開關資源的責任放在生命週期。這讓測試能用同一個工廠指定資料庫路徑、日誌間隔、心跳及佇列容量，再觀察各 app 各自的行為。</p>
+<p><code>app/routers/install.py</code> 經 <code>RuntimeDep</code> 取得執行環境。回快照時把領域物件轉成 HTTP 模型；串流請求則先判斷游標，決定要回歷史與即時事件、要求重新同步，或直接結束。</p>
+<p><code>app/schemas.py</code> 在路由邊界檢查情境名稱。輸入可忽略多餘欄位，快照輸出則明確定義階段、工作和錯誤物件，客戶端可依合約讀取。</p>
+<p><code>app/runtime.py</code> 保留背景工作的參考。它在相鄰兩筆日誌之間等待 <code>log_interval</code>（預設 0.15 秒），其他事件直接寫入、廣播。關機時取消模擬器並結束串流。</p>
+<h3>從一筆事件追到畫面</h3>
+<p><code>app/domain.py</code> 的 <code>script_for</code> 決定事件的順序與內容。劇本本身可重現；實際輪次、序號與 UTC 時間等到寫入才確定。</p>
+<p><code>app/store.py</code> 以一個受鎖保護的 SQLite 連線執行交易。快照讀出同一輪的事件後，依序套用 <code>apply_event</code>。安裝路由和執行環境透過 <code>asyncio.to_thread</code> 呼叫同步的儲存方法。</p>
+<p><code>app/broker.py</code> 逐一用 <code>put_nowait</code> 投遞。遇到滿佇列就移除該訂閱者並通知連線停止，其他佇列仍可繼續收件。</p>
+<p><code>app/sse.py</code> 負責每個 ASGI 回應。傳送資料、等待用戶端斷線、等待訂閱停止三者並行；其中一項結束後清理其餘工作，最後關閉產生器、退訂。</p>
+<p><code>frontend/src/index.html</code> 把狀態對應到可反覆使用的 DOM 節點。<code>frontend/src/input.css</code> 提供這些節點使用的樣式，<code>frontend/build.mjs</code> 將編譯結果放入模板。下一節的快照模型正是這個頁面同步時的起點。</p>
+<p class="cite">依據　<code>AGENTS.md §5</code> · <code>contracts/domain.pyi</code> · <code>contracts/openapi.yaml</code> · <code>frontend/README.md</code></p>
+</section>
+<section id="model"><h2>資料模型與狀態機</h2>
+<p>一輪安裝（run）由情境與 <code>run_id</code> 識別。階段（stage）包含有順序的工作（task），工作識別碼在整份計畫中唯一。每一行日誌（log）屬於一組 <code>stage_id</code>、<code>task_id</code>。工作內部的 <code>line_no</code> 從 1 起算，跨工作的事件順序則看整輪共用的 <code>seq</code>。</p>
+<figure><div class="drawing" tabindex="0" role="region" aria-label="圖 2，可橫向捲動">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 214" width="100%" role="img" aria-label="階段與工作從 pending 開始，輪次從 running 開始，成功或失敗均為終態" style="min-width:630px;--end:url(#tip2)">
+<defs><marker id="tip2" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path class="head" d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect class="node " x="25" y="76" width="175" height="60" rx="7"/>
+<text x="112.5" y="103.0" class="mono">pending</text>
+<text x="112.5" y="124.0" class="sub">階段、工作的初始值</text>
+<rect class="node active" x="296" y="76" width="183" height="60" rx="7"/>
+<text x="387.5" y="103.0" class="mono">running</text>
+<text x="387.5" y="124.0" class="sub">輪次從此狀態開始</text>
+<rect class="node good" x="601" y="25" width="172" height="60" rx="7"/>
+<text x="687.0" y="52.0" class="mono">succeeded</text>
+<text x="687.0" y="73.0" class="sub">成功終態</text>
+<rect class="node bad" x="601" y="130" width="172" height="60" rx="7"/>
+<text x="687.0" y="157.0" class="mono">failed</text>
+<text x="687.0" y="178.0" class="sub">失敗終態</text>
+<path class="edge" d="M200 106 L293 106"/>
+<text x="247" y="95" class="sub mono">*_started</text>
+<path class="edge" d="M479 106 H501 V55 H598"/>
+<path class="edge" d="M501 106 V160 H598"/>
+<text x="548" y="44" class="sub mono">*_succeeded</text>
+<text x="548" y="185" class="sub mono">*_failed</text>
+</svg></div><figcaption>圖 2：階段與工作的事件名稱分別以 <code>stage_</code>、<code>task_</code> 開頭。輪次從 <code>running</code> 開始，由 <code>run_finished</code> 的 <code>result</code> 決定終態。</figcaption></figure>
+<p><code>initial_snapshot</code> 建立尚未套用事件的領域物件，輪次為 <code>running</code>、<code>last_seq = 0</code>，所有階段與工作為 <code>pending</code>。實際 HTTP 快照至少包含第一筆 <code>run_started</code>。<code>apply_event</code> 每次產生新快照，會檢查輪次一致、序號恰為上一筆加一、欄位型別正確、目標存在且狀態容許。日誌只能寫給執行中的階段及工作，結束後再套用事件會引發 <code>ValueError</code>。</p>
+<p>資料庫的 <code>runs</code> 表存 <code>id</code>、<code>scenario</code>、<code>status</code>；<code>events</code> 表的主鍵是 <code>(run_id, seq)</code>，另存事件 <code>type</code>、JSON 格式的 <code>data</code> 和帶時區的 UTC 時間 <code>ts</code>。工作錯誤和日誌本文都隨事件持久化。快照中的階段與工作狀態由事件重建，訂閱者佇列、頁面選取及展開狀態只活在記憶體。</p>
+<p>SSE 的 <code>id</code> 把兩個整數組成 <code>&lt;run_id&gt;.&lt;seq&gt;</code>。例如 <code>3.57</code> 表示第 3 輪第 57 筆事件。去除首尾空白後，兩側都必須是 ASCII 十進位數字。輪次遞增、每輪序號重新從 1 開始，因此舊分頁手上的游標同時說明它屬於哪一輪。</p>
+<p class="cite">依據　<code>contracts/domain.pyi</code> · <code>app/domain.py</code> · <code>app/store.py</code> · <code>docs/SPEC.md R7–R10、R13–R14</code></p>
+</section>
+<section id="sse"><h2>SSE 在這個專案的應用</h2>
+<h3>啟動是一次請求，進度是一連串回應資料</h3>
+<p>使用者只要送一次 <code>POST /install</code>。接下來，資料的方向一直是伺服器往頁面推送。若定期輪詢，頁面得決定多久查一次，閒置時也會送查詢；若採 WebSocket，這條進度通道又用不到雙向傳訊。此處選 SSE，一個普通 HTTP GET 即可逐筆送出具名文字事件，瀏覽器的 <code>EventSource</code> 同時處理重連和上次收到的 ID。</p>
+<p><code>GET /install/events</code> 成功開流回 <code>200</code>。<code>Content-Type</code> 以 <code>text/event-stream</code> 開頭，<code>Cache-Control: no-cache, no-transform</code> 限制快取與中間層轉換，<code>X-Accel-Buffering: no</code> 要求代理停用緩衝；回應不壓縮。送出第一個區塊表示訂閱與歷史讀取已就緒，該區塊單獨寫 <code>retry: 3000</code>，告知瀏覽器重連間隔為 3,000 毫秒。</p>
+<h3>線上格式與九種資料事件</h3>
+<p>以下是用本專案的儲存層建立第一輪成功情境後，交由 <code>format_event</code> 編碼的第一筆資料。<code>data</code> 只有一行 JSON；末尾空白行標示區塊完成，讓瀏覽器可以分派 <code>run_started</code>。</p>
+<pre><code>id: 1.1
+event: run_started
+data: {&quot;run_id&quot;:1,&quot;scenario&quot;:&quot;success&quot;}
+
+</code></pre>
+<div class="scroll" tabindex="0" role="region" aria-label="事件名稱、單筆 data 內容、讀者可以得知什麼"><table><thead><tr><th scope="col">事件名稱</th><th scope="col">單筆 data 內容</th><th scope="col">讀者可以得知什麼</th></tr></thead><tbody>
+<tr><td><code>run_started</code></td><td><code>run_id</code>（整數）、<code>scenario</code>（字串）</td><td>劇本起點加上實際輪次。</td></tr>
+<tr><td><code>stage_started</code>、<code>stage_succeeded</code>、<code>stage_failed</code></td><td><code>stage_id</code></td><td>對應階段開始、成功或失敗。</td></tr>
+<tr><td><code>task_started</code>、<code>task_succeeded</code></td><td><code>stage_id</code>、<code>task_id</code></td><td>工作屬於哪一階段，以及何時展開或收合。</td></tr>
+<tr><td><code>log</code></td><td><code>stage_id</code>、<code>task_id</code>、<code>line_no</code>、<code>level</code>、<code>text</code>、<code>ts</code></td><td>行號是整數；層級為 <code>info</code> 或 <code>error</code>；時間為帶時區的 UTC 字串。</td></tr>
+<tr><td><code>task_failed</code></td><td><code>stage_id</code>、<code>task_id</code>、<code>error_code</code>、<code>message</code>、<code>hint</code></td><td>定位失敗工作，顯示錯誤代碼、原因與排除建議。</td></tr>
+<tr><td><code>run_finished</code></td><td><code>result</code></td><td>值為 <code>succeeded</code> 或 <code>failed</code>。送完即正常結束串流。</td></tr>
+</tbody></table></div>
+<p>閒置時，伺服器在 <code>heartbeat_interval</code>（預設 15 秒）沒有輸出後送一個 <code>: ping</code> 註解和空白行。每次輸出後重新計時，持續閒置就重複送；資料與心跳同時就緒時優先送資料。心跳不會變成頁面上的一行安裝日誌。<code>retry</code>、心跳及要求重新同步的 <code>reset</code> 都是控制訊息，沒有資料事件序號，也不寫入 SQLite。</p>
+<h3>快照切在哪裡，串流就從哪裡接手</h3>
+<p>假設使用者在下載中重新整理。先以 <code>GET /install</code> 取得輪次、每個節點的狀態，以及同一個讀取交易所涵蓋的最後序號 S。這份快照足以把下載標成執行中，但工作下方的文字仍要補回。</p>
+<p>頁面固定 <code>until=S</code>，從 <code>after=0</code> 讀 <code>GET /install/logs</code>，每次都帶 <code>run_id</code>。伺服器只回 <code>after &lt; seq ≤ until</code> 內的日誌，依序排列；有下一頁就用 <code>next_after</code> 當新下界，直到它為 <code>null</code>。預設每頁 500 筆，可指定 1 至 1,000。補讀途中產生的事件會落在 S 之後，留給串流。</p>
+<p>接著頁面開啟 <code>/install/events?last_event_id=&lt;run_id&gt;.&lt;S&gt;</code>。伺服器先為這個訂閱者建立專屬的有界佇列並登記訂閱，再從資料庫讀大於 S 的已提交事件。重播後，佇列中若也有剛送過的資料，便丟棄 <code>seq ≤ last_sent</code> 的項目。這個先後次序同時處理「訂閱前已經發生」與「讀歷史時才發生」的事件。</p>
+<aside>例如第 57 筆同時出現在重播與佇列，重播播到 57 後會略過佇列的 57。若瀏覽器此時斷線，已收到的 ID 為 <code>3.57</code>，重連就從第 3 輪大於 57 的事件接續。</aside>
+<h3>游標的優先順序與邊界</h3>
+<p>第一次連線用查詢參數 <code>last_event_id</code>；同一個 <code>EventSource</code> 收過帶 <code>id</code> 的事件後，瀏覽器重連時會用 <code>Last-Event-ID</code> 標頭送回最後收到的事件 ID。合法標頭優先於合法查詢值；無效標頭視為缺席。路由先驗證查詢參數，若有帶但格式錯誤，直接回 <code>422</code>。</p>
+<div class="scroll" tabindex="0" role="region" aria-label="目前輪次 R、最後序號 L、端點的回答"><table><thead><tr><th scope="col">目前輪次 R、最後序號 L</th><th scope="col">端點的回答</th></tr></thead><tbody>
+<tr><td>尚無任何一輪</td><td><code>404</code>。</td></tr>
+<tr><td>無起點</td><td>從這一輪的 <code>seq = 1</code> 重播。</td></tr>
+<tr><td>起點屬於其他輪次；或同輪執行中，起點大於 L</td><td>先送 <code>retry</code>，再送無 <code>id</code> 的 <code>reset</code>，其 <code>data</code> 只有當前 <code>run_id</code>，然後關閉。</td></tr>
+<tr><td>同輪已結束，起點大於或等於 L</td><td><code>204 No Content</code>，瀏覽器停止重連。</td></tr>
+<tr><td>同輪的其他合法起點 n</td><td>送出 <code>seq &gt; n</code>。若執行中且已追平，等待即時事件；遇到 <code>run_finished</code> 結束。</td></tr>
+</tbody></table></div>
+<p>頁面用 <code>addEventListener</code> 監聽九個具名事件，從 <code>lastEventId</code> 解析輪次與序號，解析 JSON，再依類型更新工作、階段或輪次。它會忽略舊連線的回呼和已套用的序號；輪次錯誤、無法解讀 ID 或 JSON 則重新同步。<code>run_finished</code> 關流，<code>reset</code> 關流後重讀快照。</p>
+<figure><div class="drawing" tabindex="0" role="region" aria-label="圖 3，可橫向捲動">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 506" width="100%" role="img" aria-label="成功安裝時序：建立輪次、快照與日誌補讀、歷史與即時事件、run_finished" style="min-width:755px;--end:url(#tip3)">
+<defs><marker id="tip3" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path class="head" d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect class="node " x="12" y="12" width="174" height="55" rx="7"/>
+<text x="99.0" y="36.5" class="">頁面</text>
+<text x="99.0" y="57.5" class="sub">EventSource</text>
+<path class="life" d="M99 68 V482"/>
+<rect class="node " x="234" y="12" width="174" height="55" rx="7"/>
+<text x="321.0" y="36.5" class="">安裝路由</text>
+<text x="321.0" y="57.5" class="sub">Runtime</text>
+<path class="life" d="M321 68 V482"/>
+<rect class="node " x="462" y="12" width="174" height="55" rx="7"/>
+<text x="549.0" y="36.5" class="mono">SQLite</text>
+<text x="549.0" y="57.5" class="sub">Store</text>
+<path class="life" d="M549 68 V482"/>
+<rect class="node " x="690" y="12" width="174" height="55" rx="7"/>
+<text x="777.0" y="36.5" class="">串流端點</text>
+<text x="777.0" y="57.5" class="sub">Broker / SSE</text>
+<path class="life" d="M777 68 V482"/>
+<path class="edge" d="M99 102 L321 102"/>
+<text x="210.0" y="95" class="sub wire-label">POST /install</text>
+<path class="edge" d="M321 144 L549 144"/>
+<text x="435.0" y="137" class="sub wire-label">提交 run_started</text>
+<path class="edge" d="M321 187 L99 187"/>
+<text x="210.0" y="180" class="sub wire-label">202 · run_id、scenario</text>
+<path class="edge" d="M99 228 L321 228"/>
+<text x="210.0" y="221" class="sub wire-label">GET 快照，分頁補讀至 S</text>
+<path class="edge" d="M321 267 L99 267"/>
+<text x="210.0" y="260" class="sub wire-label">狀態、S 與日誌</text>
+<path class="edge" d="M99 308 L777 308"/>
+<text x="438.0" y="301" class="sub wire-label">GET /install/events?last_event_id=R.S</text>
+<path class="edge" d="M777 348 L549 348"/>
+<text x="663.0" y="341" class="sub wire-label">登記訂閱後讀取歷史</text>
+<path class="edge" d="M777 387 L99 387"/>
+<text x="438.0" y="380" class="sub wire-label">retry: 3000，重播大於 S 的事件</text>
+<path class="edge" d="M321 427 L777 427"/>
+<text x="549.0" y="420" class="sub wire-label">後續事件各自提交後廣播</text>
+<path class="edge" d="M777 467 L99 467"/>
+<text x="438.0" y="460" class="sub wire-label">串流至 run_finished；雙方結束連線</text>
+</svg></div><figcaption>圖 3：成功情境的一次讀寫交會。S 取決於快照讀取時機；圖中省略逐行日誌及重複的交易。</figcaption></figure>
+<p class="cite">依據　<code>docs/SPEC.md R8–R9、R13、R15、R18–R24、R26–R27</code> · <code>contracts/openapi.yaml</code> · <code>app/routers/install.py</code> · <code>app/sse.py</code> · <code>app/broker.py</code> · <code>app/domain.py</code> · <code>frontend/src/index.html</code></p>
+</section>
+<section id="success"><h2>正常流程</h2>
+<p>把圖 3 換成實際的成功輪次來看。選 <code>success</code> 送出後，伺服器先寫入第 1 筆，再回 <code>202</code>。不論使用者何時同步，最後一張快照都會反映同一批事件。下表的序號可由固定劇本逐筆計算，用來對照串流很方便。</p>
+<div class="scroll" tabindex="0" role="region" aria-label="整輪序號、這段完成的工作、頁面如何呈現"><table><thead><tr><th scope="col">整輪序號</th><th scope="col">這段完成的工作</th><th scope="col">頁面如何呈現</th></tr></thead><tbody>
+<tr><td><code>1</code></td><td><code>run_started</code>，建立輪次</td><td>顯示執行中，停用安裝按鈕。</td></tr>
+<tr><td><code>2–35</code></td><td>準備環境，依序檢查作業系統、磁碟與相依套件</td><td>工作開始即展開，每行附加到工作下方，成功後收合。</td></tr>
+<tr><td><code>36–89</code></td><td>下載套件，先取清單，再下載並驗證雜湊</td><td>自動跟隨開啟時，右側切換到下載階段。</td></tr>
+<tr><td><code>90–165</code></td><td>安裝，依次解壓縮、複製檔案、註冊元件</td><td>執行中的工作自動捲到最新一行。</td></tr>
+<tr><td><code>166–201</code></td><td>設定，寫入設定、設定權限、啟動服務</td><td>最後一個工作和階段各有一筆成功事件。</td></tr>
+<tr><td><code>202</code></td><td><code>run_finished</code> 的 <code>result</code> 為 <code>succeeded</code></td><td>顯示全部成功、恢復安裝按鈕、關閉串流。</td></tr>
+</tbody></table></div>
+<p>202 筆由輪次開始與結束各一筆、四階段各兩筆、十二工作各兩筆，以及 168 行日誌組成。這也說明為什麼不可拿最後一行日誌的序號當成整輪結束位置：之後還有工作、階段和輪次的結束事件。</p>
+<p class="cite">依據　<code>docs/SPEC.md R4、R6、R14、R21、R27</code> · <code>app/domain.py</code> · <code>app/runtime.py</code> · <code>frontend/src/index.html</code></p>
+</section>
+<section id="failure"><h2>失敗流程</h2>
+<p>回到磁碟不足的例子。<code>copy_files</code> 原定輸出 40 行，這個情境先產生 23 行正常日誌。第 24 行改成 <code>level: &quot;error&quot;</code>，文字為「磁碟空間不足，/opt 剩餘 0 MB」。下一筆 <code>task_failed</code> 才帶齊錯誤詳情；若只看紅字日誌，就會漏掉排除建議。</p>
+<figure><div class="drawing" tabindex="0" role="region" aria-label="圖 4，可橫向捲動">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 342" width="100%" role="img" aria-label="磁碟不足的後端事件與頁面變化，從紅字日誌到失敗結果" style="min-width:670px;--end:url(#tip4)">
+<defs><marker id="tip4" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path class="head" d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect class="node bad" x="34" y="18" width="270" height="60" rx="7"/>
+<text x="169.0" y="45.0" class="mono">log</text>
+<text x="169.0" y="66.0" class="sub">copy_files · line_no 24</text>
+<rect class="node bad" x="472" y="18" width="311" height="60" rx="7"/>
+<text x="627.5" y="45.0" class="">錯誤日誌</text>
+<text x="627.5" y="66.0" class="sub">紅字顯示 log 的 text</text>
+<path class="edge" d="M304 48 L469 48"/>
+<path class="edge" d="M169 78 L169 94"/>
+<rect class="node bad" x="34" y="97" width="270" height="60" rx="7"/>
+<text x="169.0" y="124.0" class="mono">task_failed</text>
+<text x="169.0" y="145.0" class="sub">E_DISK_FULL</text>
+<rect class="node bad" x="472" y="97" width="311" height="60" rx="7"/>
+<text x="627.5" y="124.0" class="">工作標紅並展開</text>
+<text x="627.5" y="145.0" class="sub">錯誤框列出代碼、原因與建議</text>
+<path class="edge" d="M304 127 L469 127"/>
+<path class="edge" d="M169 157 L169 173"/>
+<rect class="node bad" x="34" y="176" width="270" height="60" rx="7"/>
+<text x="169.0" y="203.0" class="mono">stage_failed</text>
+<text x="169.0" y="224.0" class="sub">install</text>
+<rect class="node bad" x="472" y="176" width="311" height="60" rx="7"/>
+<text x="627.5" y="203.0" class="">階段標紅</text>
+<text x="627.5" y="224.0" class="sub">自動跟隨定位失敗階段</text>
+<path class="edge" d="M304 206 L469 206"/>
+<path class="edge" d="M169 236 L169 252"/>
+<rect class="node bad" x="34" y="255" width="270" height="60" rx="7"/>
+<text x="169.0" y="282.0" class="mono">run_finished</text>
+<text x="169.0" y="303.0" class="sub">result = failed</text>
+<rect class="node bad" x="472" y="255" width="311" height="60" rx="7"/>
+<text x="627.5" y="282.0" class="">顯示安裝失敗</text>
+<text x="627.5" y="303.0" class="sub">關閉連線，重新啟用按鈕</text>
+<path class="edge" d="M304 285 L469 285"/>
+</svg></div><figcaption>圖 4：左列是依序提交的四筆事件，右列是各筆事件在頁面上造成的變化。</figcaption></figure>
+<p>實際欄位名是 <code>error_code</code>，此處為 <code>E_DISK_FULL</code>。<code>message</code> 與錯誤日誌相同，<code>hint</code> 是「請釋放至少 2 GB 空間後重新安裝」。兩者與代碼一起保存在工作快照的 <code>error</code>。下一個工作 <code>register</code> 和後續設定階段維持 <code>pending</code>；重新整理仍可用快照與補讀重現原因。</p>
+<p>若當時開著自動跟隨，失敗後已沒有執行中的階段，頁面依 C2 選中失敗階段。若使用者正在手動查看別的階段，選取會保留；可以按「恢復自動跟隨」回到錯誤現場。</p>
+<p class="cite">依據　<code>docs/SPEC.md R5–R6、R10、R13、R27（C2）</code> · <code>app/domain.py</code> · <code>app/runtime.py</code> · <code>frontend/src/index.html</code></p>
+</section>
+<section id="recovery"><h2>重試與恢復流程</h2>
+<h3>連線掉了，安裝繼續：瀏覽器自動重連</h3>
+<p>執行中收到 <code>error</code> 且 <code>readyState</code> 是 <code>CONNECTING</code>，頁面的 <code>#run-status</code> 顯示「連線中斷，瀏覽器重新連線中…」。它保留現有快照、日誌和同一個 <code>EventSource</code>。瀏覽器重連同一個網址。若已收到帶 <code>id</code> 的事件，就以 <code>Last-Event-ID</code> 標頭續接。若連第一筆帶 <code>id</code> 的事件都還沒收到，重連請求沒有這個標頭，伺服器沿用網址中的 <code>last_event_id=&lt;run_id&gt;.&lt;S&gt;</code>，從快照序號之後開始送。</p>
+<figure><div class="drawing" tabindex="0" role="region" aria-label="圖 5，可橫向捲動">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 212" width="100%" role="img" aria-label="CONNECTING 時瀏覽器以已收事件 ID 或原查詢游標重連，open 時清除狀態列錯誤" style="min-width:610px;--end:url(#tip5)">
+<defs><marker id="tip5" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path class="head" d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect class="node attention" x="22" y="19" width="306" height="60" rx="7"/>
+<text x="175.0" y="46.0" class="">網路斷線</text>
+<text x="175.0" y="67.0" class="sub">執行中，readyState = CONNECTING</text>
+<rect class="node attention" x="450" y="19" width="306" height="60" rx="7"/>
+<text x="603.0" y="46.0" class="">狀態列顯示連線中斷</text>
+<text x="603.0" y="67.0" class="sub">保留畫面與 EventSource</text>
+<path class="edge" d="M328 49 L447 49"/>
+<rect class="node " x="450" y="131" width="306" height="60" rx="7"/>
+<text x="603.0" y="158.0" class="">瀏覽器重新連線</text>
+<text x="603.0" y="179.0" class="sub">已有事件 ID 用標頭，否則沿用網址游標</text>
+<path class="edge" d="M603 79 L603 128"/>
+<rect class="node good" x="22" y="131" width="306" height="60" rx="7"/>
+<text x="175.0" y="158.0" class="">open 事件恢復輪次狀態</text>
+<text x="175.0" y="179.0" class="sub">接收缺少的事件，然後繼續即時顯示</text>
+<path class="edge" d="M450 161 L331 161"/>
+</svg></div><figcaption>圖 5：沿箭頭順時針閱讀。連線開啟就清除錯誤，不必等到下一行日誌。</figcaption></figure>
+<p>舊連線斷開時，伺服器清理訂閱。若是慢速訂閱者塞滿佇列，伺服器也只結束該連線；其餘訂閱者與模擬器照常執行。被中斷的頁面再次連上時仍由 SQLite 重播。</p>
+<p class="cite">依據　<code>docs/SPEC.md R18、R20、R23–R24、R27（E4、E5）</code> · <code>frontend/src/index.html</code> · <code>app/routers/install.py</code> · <code>app/broker.py</code> · <code>app/sse.py</code></p>
+<h3>程序停了，重啟時替舊輪次收尾</h3>
+<p>收到關機訊號時，執行環境停止模擬、結束串流。若程序停在某筆已提交的事件之後，資料庫可能留有 <code>running</code> 的輪次。用同一個資料庫重啟，<code>Runtime.start</code> 在對外服務前呼叫 <code>Store.recover</code>，從已落盤的序列還原最後狀態。</p>
+<figure><div class="drawing" tabindex="0" role="region" aria-label="圖 6，可橫向捲動">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 242" width="100%" role="img" aria-label="啟動復原只為執行中的工作與階段補失敗事件，最後結束舊輪次" style="min-width:675px;--end:url(#tip6)">
+<defs><marker id="tip6" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path class="head" d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect class="node " x="22" y="19" width="318" height="60" rx="7"/>
+<text x="181.0" y="46.0" class="">啟動時開啟同一個 SQLite</text>
+<text x="181.0" y="67.0" class="sub">找出上一輪的狀態</text>
+<rect class="node good" x="485" y="19" width="308" height="60" rx="7"/>
+<text x="639.0" y="46.0" class="">已結束或從未安裝</text>
+<text x="639.0" y="67.0" class="sub">直接完成啟動</text>
+<path class="edge" d="M340 49 L482 49"/>
+<text x="411" y="39" class="sub">無須復原</text>
+<rect class="node bad" x="22" y="157" width="318" height="60" rx="7"/>
+<text x="181.0" y="184.0" class="">若工作執行中，補 task_failed</text>
+<text x="181.0" y="205.0" class="sub">error_code = E_INTERRUPTED</text>
+<path class="edge" d="M181 79 L181 154"/>
+<text x="262" y="119" class="sub">舊輪仍在執行</text>
+<rect class="node bad" x="485" y="157" width="308" height="60" rx="7"/>
+<text x="639.0" y="184.0" class="">若階段執行中，補 stage_failed</text>
+<text x="639.0" y="205.0" class="sub">最後一律補 run_finished（failed）</text>
+<path class="edge" d="M340 187 L482 187"/>
+<text x="411" y="176" class="sub">延續原 seq</text>
+</svg></div><figcaption>圖 6：一次交易為中斷輪次補事件。當時沒有執行中的工作，就跳過工作錯誤；階段同理。</figcaption></figure>
+<p>若中斷時有執行中的工作，補上的 <code>task_failed</code> 含 <code>E_INTERRUPTED</code>、「伺服器在安裝途中停止」、「請重新安裝」。這條復原路徑直接補失敗事件，不另外製造一行錯誤日誌。若只有輪次開始，便可直接用 <code>run_finished</code> 將它結束。已完成的前綴保留，後續序號連續；使用者可在同一輪快照中看見結果。</p>
+<p class="cite">依據　<code>docs/SPEC.md R24–R25</code> · <code>app/main.py</code> · <code>app/runtime.py</code> · <code>app/store.py</code></p>
+<h3>使用者按下安裝，建立新的一輪</h3>
+<p>失敗後可以重新選情境並按安裝。<code>POST /install</code> 收到合法情境後，以同一寫入交易檢查有沒有進行中的輪次。這個檢查也涵蓋兩個分頁同時按安裝的情況。</p>
+<figure><div class="drawing" tabindex="0" role="region" aria-label="圖 7，可橫向捲動">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 210" width="100%" role="img" aria-label="使用者重裝時，交易決定建立新一輪或以 409 拒絕" style="min-width:650px;--end:url(#tip7)">
+<defs><marker id="tip7" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path class="head" d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect class="node " x="18" y="70" width="244" height="60" rx="7"/>
+<text x="140.0" y="97.0" class="mono">POST /install</text>
+<text x="140.0" y="118.0" class="sub">合法 scenario</text>
+<rect class="node attention" x="469" y="17" width="325" height="60" rx="7"/>
+<text x="631.5" y="44.0" class="">409 · 已有一輪執行中</text>
+<text x="631.5" y="65.0" class="sub">保留原輪；頁面顯示衝突</text>
+<rect class="node good" x="469" y="128" width="325" height="60" rx="7"/>
+<text x="631.5" y="155.0" class="">202 · 已建立新一輪</text>
+<text x="631.5" y="176.0" class="sub">新一輪從 seq = 1 起算，頁面重跑 sync</text>
+<path class="edge" d="M262 100 H357 V47 H466"/>
+<path class="edge" d="M357 100 V158 H466"/>
+<text x="410" y="34" class="sub">執行中</text>
+<text x="409" y="146" class="sub">可開始</text>
+</svg></div><figcaption>圖 7：同一交易保護現有安裝。輸入驗證失敗會在進入此判斷前回 422。</figcaption></figure>
+<p>成功時刪除前一輪及其事件，建立較大的 <code>run_id</code>，同時寫入新的 <code>run_started</code>。模擬器已排入背景執行。頁面收到 <code>202</code> 後呼叫 <code>sync()</code>，以快照的 <code>last_seq</code> 為界補讀日誌，再從該界線之後接收事件。此時快照可能已超過第 1 筆。固定計畫從頭執行，頁面保留手動選取階段的偏好。情境不合法或 JSON 有誤為 <code>422</code>，已在執行為 <code>409</code>，頁面都在狀態列顯示錯誤。發起安裝的請求失敗時，頁面不會定時重送該命令。</p>
+<p>C1 的限制出現在跨分頁操作。一輪結束後，本頁已停止監聽。若其他分頁此時開始新一輪，本頁仍顯示舊結果；再按安裝可能得到 <code>409</code>，需重新整理才能看到進行中的輪次。</p>
+<p class="cite">依據　<code>docs/SPEC.md R14、R27（C1、C3）</code> · <code>app/store.py</code> · <code>app/routers/install.py</code> · <code>app/schemas.py</code> · <code>frontend/src/index.html</code></p>
+<h3>頁面自己重試：依失敗的位置回到正確入口</h3>
+<p>同樣是「3 秒」，呼叫的函式可能完全不同。首次載入要先取得計畫與情境；快照同步則建立在畫面結構已經備妥的前提上。實作採固定 3 秒間隔，沒有指數退避。</p>
+<figure><div class="drawing" tabindex="0" role="region" aria-label="圖 8，可橫向捲動">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 337" width="100%" role="img" aria-label="初始化、同步失敗、重新同步訊號與空資料庫的四種頁面處理" style="min-width:670px;--end:url(#tip8)">
+<defs><marker id="tip8" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path class="head" d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect class="node " x="17" y="14" width="345" height="60" rx="7"/>
+<text x="189.5" y="41.0" class="">計畫或情境載入失敗</text>
+<text x="189.5" y="62.0" class="sub">init：任一初始請求失敗</text>
+<rect class="node attention" x="455" y="14" width="348" height="60" rx="7"/>
+<text x="629.0" y="41.0" class="">顯示錯誤，等 3 秒</text>
+<text x="629.0" y="62.0" class="sub">重跑 init，重新取計畫與情境</text>
+<path class="edge" d="M362 44 L452 44"/>
+<rect class="node " x="17" y="94" width="345" height="60" rx="7"/>
+<text x="189.5" y="121.0" class="">快照／補讀失敗，或串流關閉</text>
+<text x="189.5" y="142.0" class="sub">CLOSED 僅在本輪仍執行時重試</text>
+<rect class="node attention" x="455" y="94" width="348" height="60" rx="7"/>
+<text x="629.0" y="121.0" class="">顯示錯誤，等 3 秒</text>
+<text x="629.0" y="142.0" class="sub">重跑 sync，從快照開始</text>
+<path class="edge" d="M362 124 L452 124"/>
+<rect class="node " x="17" y="174" width="345" height="60" rx="7"/>
+<text x="189.5" y="201.0" class="">補讀遇到 409，或收到 reset</text>
+<text x="189.5" y="222.0" class="sub">或事件 ID、輪次、JSON 異常</text>
+<rect class="node active" x="455" y="174" width="348" height="60" rx="7"/>
+<text x="629.0" y="201.0" class="">立即重跑 sync</text>
+<text x="629.0" y="222.0" class="sub">關閉舊連線，改讀目前輪次</text>
+<path class="edge" d="M362 204 L452 204"/>
+<rect class="node " x="17" y="254" width="345" height="60" rx="7"/>
+<text x="189.5" y="281.0" class="">讀快照時收到 404</text>
+<text x="189.5" y="302.0" class="sub">從未執行過安裝</text>
+<rect class="node good" x="455" y="254" width="348" height="60" rx="7"/>
+<text x="629.0" y="281.0" class="">顯示計畫，節點皆 pending</text>
+<text x="629.0" y="302.0" class="sub">不顯示錯誤，也不排程重試</text>
+<path class="edge" d="M362 284 L452 284"/>
+</svg></div><figcaption>圖 8：第三列也涵蓋 <code>onEvent</code> 的檢查。若 <code>lastEventId</code> 無效、沒有目前輪次、輪次不符，或新事件的 JSON 解析失敗，頁面立即重新同步。執行中的輪次遇到 <code>CONNECTING</code> 時，由瀏覽器依圖 5 重連。</figcaption></figure>
+<p>若 <code>GET /install/logs</code> 回 <code>404</code>，它屬於同步失敗，要排程重試；只有讀快照的 <code>404</code> 代表此處的正常空畫面。已結束的一輪也會先載入快照並補完日誌，再開流；若起點已追平，端點回 <code>204</code>，頁面不排程同步。</p>
+<p>每次進入 <code>sync</code> 都會增加 <code>generation</code>、關掉上一條串流、清除舊計時器。尚未完成的讀取返回時，只有世代仍吻合的結果能更新畫面，避免較慢的舊請求覆蓋新輪次。</p>
+<p class="cite">依據　<code>docs/SPEC.md R13、R15、R18、R27（C4、E4–E6）</code> · <code>frontend/src/index.html</code> · <code>app/routers/install.py</code></p>
+</section>
+<section id="frontend"><h2>前端</h2>
+<h3>同一份進度，保留使用者正在查看的位置</h3>
+<p>R26 固定六個元素 ID。<code>#scenario</code> 和 <code>#install-btn</code> 用來選情境及啟動安裝，<code>#run-status</code> 顯示輪次狀態或錯誤。<code>#stage-list</code> 列出階段，<code>#task-list</code> 顯示所選階段的工作，<code>#follow-btn</code> 可恢復自動跟隨。</p>
+<p>頁面啟動時以 <code>Promise.all</code> 同時取得計畫與情境；建立左側階段與右側工作節點，再同步目前輪次。<code>run</code> 保存輪次資訊，<code>stageStatus</code> 和 <code>taskState</code> 保存狀態，<code>lastApplied</code> 記錄已套用的最大序號。每個工作另有已顯示日誌的序號集合，重複日誌不會再追加。</p>
+<p>跟隨模式先選執行中的階段；若沒有，依序選失敗階段、計畫中最後一個非 <code>pending</code> 的階段、第一個階段（C2）。使用者點目前的階段仍會跟隨；點別的階段時才切成手動選取。只有 <code>#follow-btn</code> 能恢復跟隨，重新按安裝也會保留手動模式（C3）。</p>
+<p>工作開始時展開並捲到日誌底部，成功時收合。點標題可查看先前日誌，資料與節點都留在分頁中，展開毋須發送 HTTP 請求。工作失敗時頁面將它展開，紅色錯誤框顯示代碼、原因與建議。R27 要求失敗工作保持展開；實作自動展開後，使用者仍能點標題手動收合。標題的 <code>aria-expanded</code> 與內容可見性同步，階段與工作則以 <code>data-status</code> 反映狀態。文字以 <code>textContent</code> 寫入。</p>
+<h3>改的是模板，交付的是完整 HTML</h3>
+<p>在 <code>frontend/src/index.html</code> 改標記與互動，在 <code>frontend/src/input.css</code> 改樣式。從 <code>frontend/</code> 執行下列兩個指令；<code>package.json</code> 精確釘選 Tailwind CSS 與 CLI 為 4.3.5、Preline 為 5.1.0，<code>package-lock.json</code> 鎖定依賴。</p>
+<pre><code>npm ci
+npm run build</code></pre>
+<p><code>build.mjs</code> 呼叫 Tailwind CLI 壓縮 CSS，包含 Preline 的 variants 與主題。它會檢查樣式是否含外部網址、資源引用或會提前關閉樣式區塊的內容，再把 CSS 插入模板，寫到 <code>app/static/index.html</code>。互動由模板內的腳本處理，頁面不載入 Preline JavaScript、外部字型或 CDN。應用程式與測試直接使用建置產物，僅重建頁面時需要 Node.js。</p>
+<p class="cite">依據　<code>docs/SPEC.md R26–R27</code> · <code>frontend/src/index.html</code> · <code>frontend/src/input.css</code> · <code>frontend/package.json</code> · <code>frontend/package-lock.json</code> · <code>frontend/build.mjs</code> · <code>frontend/README.md</code> · <code>app/static/index.html</code> · <code>app/routers/page.py</code></p>
+</section>
+<section id="tests"><h2>測試與驗證</h2>
+<p>先驗證劇本，再測 HTTP 與串流，最後才讓真正的 TCP 斷線。這樣可以分清「狀態算錯」和「事件在傳輸中漏掉」。測試依公開介面觀察，重播結果可以直接與輪次結束後的快照比對。</p>
+<div class="scroll" tabindex="0" role="region" aria-label="類別與檔案、用什麼方式驗證、需求／驗收"><table><thead><tr><th scope="col">類別與檔案</th><th scope="col">用什麼方式驗證</th><th scope="col">需求／驗收</th></tr></thead><tbody>
+<tr><td>單元 · <code>tests/test_domain.py</code></td><td>比對固定計畫、七種劇本、合法與非法轉移、事件 ID、資料與控制區塊格式。</td><td>R4–R10、R19–R20、R22（AC5）</td></tr>
+<tr><td>HTTP · <code>tests/test_http.py</code></td><td>測 app 隔離與設定、空資料庫、請求驗證、分頁界線，以及並發啟動時只有一輪成立。</td><td>R2–R3、R9、R11–R18、R25（AC8）</td></tr>
+<tr><td>串流 · <code>tests/test_stream.py</code></td><td>透過 ASGI 驗證中途加入、歷史與即時重疊、心跳、慢訂閱者、切換輪次與斷線清理。</td><td>R3、R5–R8、R10、R13–R25（AC1–AC2、AC4–AC7、AC9 的部分項目、AC10）</td></tr>
+<tr><td>端對端 · <code>tests/test_e2e.py</code></td><td>以真正的 uvicorn 和 TCP 驗證斷線續傳、標頭與心跳、訊號關機、中斷後重啟，以及首頁 HTML。</td><td>R1、R7–R8、R10、R13、R15–R26（AC1、AC3、AC9）</td></tr>
+<tr><td>效能 · <code>tests/test_perf.py</code></td><td>成功輪次先開始，再接 20 個訂閱者。每人須收到完整序列；全員已收第一個重試區塊之後才產生的日誌才計時。</td><td>R20、R23；AC11</td></tr>
+</tbody></table></div>
+<p>端對端測試以 HTTP 取得首頁，靜態檢查 R26。R27 的互動由 Phase 4 在瀏覽器手動驗收，包含逐一操作七種情境、安裝中重新整理、離線 5 秒後恢復，以及展開已收合工作時確認沒有新增網路請求。見 <code>tests/test_e2e.py:278</code>、<code>docs/SPEC.md:210–214</code>。</p>
+<p>AC11 的延遲從日誌的 <code>ts</code> 算到第 20 個訂閱者解析完同一筆為止，要求第 95 百分位小於 200 毫秒，模擬間隔設為 0.005 秒。這是驗收門檻，實際結果取決於當次量測。</p>
+<h3>從專案根目錄執行五道關卡</h3>
+<pre><code>uv sync
+uv run ruff format --check .
+uv run ruff check .
+uv run mypy
+uv run pytest</code></pre>
+<p>AC12 要求五道關卡全部通過，對應 R28（應用程式使用 <code>logging</code>）與 R29（遵循 <code>AGENTS.md</code>）。五個指令依序同步相依套件、驗證格式、檢查靜態規則、檢查型別及執行測試。<code>pyproject.toml</code> 設定預設排除 <code>perf</code>，因此最後一行包含真正啟動伺服器的 <code>e2e</code>。可用 <code>uv run pytest -m e2e</code> 單獨檢查端對端，用 <code>uv run pytest -m perf</code> 另跑效能驗收。</p>
+<p class="cite">依據　<code>AGENTS.md §1、§7</code> · <code>pyproject.toml</code> · <code>docs/SPEC.md §9–§10</code> · <code>tests/test_perf.py</code></p>
+</section>
+<section id="lessons"><h2>經驗分享與設計取捨</h2>
+<h3>先決定讀取邊界，再分頁</h3>
+<p>如果每翻一頁就改用當下的最後序號，補讀的範圍會隨安裝進度移動。把快照的 S 固定為每一頁的上界，日誌才能與畫面上的狀態對齊；之後的每一筆都交給同一條串流。這個界線比「目前第幾頁」更有用。</p>
+<p class="cite">依據　<code>app/store.py</code> · <code>frontend/src/index.html</code> · <code>docs/SPEC.md R13、R15、R27</code></p>
+<h3>輪次和位置要一起存</h3>
+<p>只有序號 57，無法辨認它屬於舊安裝還是新安裝。<code>AUTOINCREMENT</code> 保證重裝後的輪次更大，複合事件 ID 則讓端點能區分「同輪續傳」和「必須讀新快照」，即使舊事件已經清除也能正確回答。</p>
+<p class="cite">依據　<code>app/store.py</code> · <code>app/domain.py</code> · <code>app/routers/install.py</code></p>
+<h3>先落盤，才有重播的依據</h3>
+<p>SQLite 開啟 WAL，寫入按序提交後才通知訂閱者。看到事件的頁面掉線時，那筆事件已可從同一份歷史讀回。單一連線與鎖讓交易順序容易追查，同時也意味同一個儲存物件的讀寫會排隊；同步 I/O 移到工作執行緒，讓事件迴圈繼續服務連線。</p>
+<p class="cite">依據　<code>app/runtime.py</code> · <code>app/store.py</code> · <code>docs/SPEC.md R7、R25</code></p>
+<h3>讓重播與即時傳送短暫重疊</h3>
+<p>假如讀完歷史才登記訂閱，中間新提交的一筆可能既沒被查到，也沒進佇列。先登記會有少量重疊，但 <code>last_sent</code> 足以判斷哪筆送過；前端再保留 <code>lastApplied</code>，兩個邊界各有明確的檢查位置。</p>
+<p class="cite">依據　<code>app/routers/install.py</code> · <code>app/sse.py</code> · <code>frontend/src/index.html</code></p>
+<h3>慢分頁的成本由該連線承擔</h3>
+<p>廣播若等待最慢的訂閱者，其他分頁也會一起落後。每人一個有界佇列，滿了只中止該連線，代價是慢分頁需要重連和重播。歷史已在 SQLite，這項取捨才能成立。</p>
+<p class="cite">依據　<code>app/broker.py</code> · <code>app/sse.py</code> · <code>docs/SPEC.md R23</code></p>
+<h3>應用程式送出一行，中間層也要讓它通過</h3>
+<p>即使程式每次產生一個事件，代理若把回應累積成批次，使用者仍無法逐行看進度。停用代理緩衝、要求不轉換內容、每個區塊各送一個 ASGI 訊息，是同一條傳送路徑上的三個設計決定；驗證時要一起查看標頭與實際讀到的區塊。</p>
+<p class="cite">依據　<code>app/sse.py</code> · <code>docs/SPEC.md R19–R22</code> · <code>tests/test_e2e.py</code></p>
+</section></main><footer><div class="wrap"><p><strong>資料來源：</strong> <code>docs/SPEC.md</code> v1.1.4、<code>contracts/domain.pyi</code>、<code>contracts/openapi.yaml</code>、<code>app/</code>、<code>frontend/</code>、<code>tests/</code>、<code>pyproject.toml</code>、<code>README.md</code>、<code>AGENTS.md</code>。各節列有對應檔案與需求編號。</p><a href="#contents">回到目錄 ↑</a></div></footer></body></html>

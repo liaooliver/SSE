@@ -1,0 +1,2226 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>多 AI Agent 協作開發實戰：安裝進度即時串流</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --accent: #2563eb;
+      --ok: #15803d;
+      --warn: #b45309;
+      --err: #b91c1c;
+      --info: #0369a1;
+      --code-bg: #f1f5f9;
+      /* Subtle fills derived for cards & SVG nodes */
+      --tint-accent: #eff6ff;
+      --tint-ok: #f0fdf4;
+      --tint-warn: #fffbeb;
+      --tint-err: #fef2f2;
+      --tint-info: #f0f9ff;
+      --tint-neutral: #f1f5f9;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0b1120;
+        --surface: #111827;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --border: #334155;
+        --accent: #60a5fa;
+        --ok: #4ade80;
+        --warn: #fbbf24;
+        --err: #f87171;
+        --info: #38bdf8;
+        --code-bg: #1e293b;
+        --tint-accent: #172554;
+        --tint-ok: #052e16;
+        --tint-warn: #451a03;
+        --tint-err: #450a0a;
+        --tint-info: #082f49;
+        --tint-neutral: #1e293b;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.72;
+      overflow-x: clip;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
+
+    /* Sticky utility bar */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .doc-switch {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      font-weight: 500;
+    }
+
+    .doc-switch .sep {
+      color: var(--muted);
+    }
+
+    .doc-switch a[aria-current="page"] {
+      color: var(--text);
+      font-weight: 700;
+      background: var(--tint-accent);
+      border: 1px solid var(--accent);
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      text-decoration: none;
+    }
+
+    .doc-switch a:not([aria-current="page"]) {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--muted);
+      font-size: 0.8125rem;
+    }
+
+    /* Main container */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3.5rem;
+    }
+
+    /* Page header */
+    header.hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.55rem 1.6rem 1.4rem;
+      margin-bottom: 1.4rem;
+      box-shadow: var(--shadow);
+    }
+
+    header.hero h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.48rem, 3.2vw, 2.02rem);
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 0.95rem;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .hero-meta strong {
+      color: var(--text);
+    }
+
+    /* Table of contents */
+    nav.toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.1rem 1.35rem;
+      margin-bottom: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+
+    nav.toc h2 {
+      margin: 0 0 0.65rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      border: none;
+      padding: 0;
+    }
+
+    nav.toc ol {
+      margin: 0;
+      padding-left: 1.35rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.35rem 1.25rem;
+      font-size: 0.925rem;
+    }
+
+    nav.toc li {
+      margin: 0;
+    }
+
+    /* Sections */
+    main section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem 1.4rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow);
+      scroll-margin-top: 4.25rem;
+    }
+
+    main section h2 {
+      margin: 0 0 0.9rem;
+      padding-bottom: 0.55rem;
+      border-bottom: 2px solid var(--border);
+      font-size: 1.35rem;
+      line-height: 1.35;
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .sec-num {
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    h3 {
+      margin: 1.35rem 0 0.55rem;
+      font-size: 1.08rem;
+      line-height: 1.4;
+    }
+
+    p {
+      margin: 0 0 0.9rem;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    ul, ol {
+      margin: 0 0 0.95rem;
+      padding-left: 1.4rem;
+    }
+
+    li {
+      margin-bottom: 0.35rem;
+    }
+
+    li:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Inline code & blocks */
+    code {
+      font-family: var(--mono);
+      font-size: 0.86em;
+      background: var(--code-bg);
+      padding: 0.1rem 0.34rem;
+      border-radius: 5px;
+      word-break: break-word;
+    }
+
+    pre {
+      margin: 0.75rem 0 1rem;
+      padding: 0.9rem 1rem;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.55;
+      max-width: 100%;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: inherit;
+      word-break: normal;
+      white-space: pre;
+    }
+
+    /* Callouts */
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--tint-accent);
+      border-radius: 0 9px 9px 0;
+      padding: 0.85rem 1.05rem;
+      margin: 1rem 0;
+      font-size: 0.94rem;
+    }
+
+    .callout.warn {
+      border-left-color: var(--warn);
+      background: var(--tint-warn);
+    }
+
+    .callout.ok {
+      border-left-color: var(--ok);
+      background: var(--tint-ok);
+    }
+
+    .callout.info {
+      border-left-color: var(--info);
+      background: var(--tint-info);
+    }
+
+    .callout-title {
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+
+    /* KPI / Summary cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin: 1rem 0 1.15rem;
+    }
+
+    .stat-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+    }
+
+    .stat-card .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .stat-card .value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-card .note {
+      font-size: 0.84rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+      line-height: 1.5;
+    }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0.85rem 0 1.1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      min-width: 560px;
+    }
+
+    table.compact {
+      min-width: 720px;
+      font-size: 0.84rem;
+    }
+
+    th, td {
+      padding: 0.58rem 0.72rem;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td code {
+      overflow-wrap: anywhere;
+    }
+
+    table.compact td:first-child,
+    table.compact td:first-child code,
+    table.compact td:nth-child(2) {
+      white-space: nowrap;
+      overflow-wrap: normal;
+    }
+
+    thead th {
+      background: var(--code-bg);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--tint-neutral);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .badge code {
+      background: none;
+      padding: 0;
+      font-size: inherit;
+      color: inherit;
+      border-radius: 0;
+    }
+
+    .badge.ok {
+      color: var(--ok);
+      background: var(--tint-ok);
+      border-color: var(--ok);
+    }
+
+    .badge.err {
+      color: var(--err);
+      background: var(--tint-err);
+      border-color: var(--err);
+    }
+
+    .badge.warn {
+      color: var(--warn);
+      background: var(--tint-warn);
+      border-color: var(--warn);
+    }
+
+    .badge.info {
+      color: var(--info);
+      background: var(--tint-info);
+      border-color: var(--info);
+    }
+
+    .badge.muted {
+      color: var(--muted);
+      background: var(--code-bg);
+      border-color: var(--border);
+    }
+
+    /* Figures & SVGs */
+    figure {
+      margin: 1.1rem 0 1.25rem;
+      padding: 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .svg-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+    }
+
+    .svg-wrap svg {
+      display: block;
+      width: 100%;
+      min-width: 760px;
+      height: auto;
+    }
+
+    figcaption {
+      margin-top: 0.65rem;
+      font-size: 0.86rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* SVG shared classes */
+    .svg-text {
+      font-family: var(--sans);
+      fill: var(--text);
+    }
+
+    .svg-muted {
+      font-family: var(--sans);
+      fill: var(--muted);
+    }
+
+    .svg-mono {
+      font-family: var(--mono);
+      fill: var(--text);
+    }
+
+    .svg-mono-muted {
+      font-family: var(--mono);
+      fill: var(--muted);
+    }
+
+    .svg-title {
+      font-family: var(--sans);
+      fill: var(--text);
+      font-weight: 700;
+    }
+
+    /* Case study cards */
+    .case-list {
+      display: grid;
+      gap: 0.85rem;
+      margin: 0.9rem 0;
+    }
+
+    .case-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1.05rem;
+      background: var(--bg);
+    }
+
+    .case-card h4 {
+      margin: 0 0 0.4rem;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+
+    .case-card p {
+      font-size: 0.92rem;
+    }
+
+    /* Lesson list */
+    .lesson-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.75rem 0 0;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .lesson-list li {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1.05rem;
+      background: var(--bg);
+      margin: 0;
+    }
+
+    .lesson-title {
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 2rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    footer strong {
+      color: var(--text);
+    }
+
+    .footer-nav {
+      margin-top: 0.55rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 1rem 0.75rem 2.5rem;
+      }
+
+      header.hero,
+      main section {
+        padding: 1.1rem 0.95rem;
+        border-radius: 11px;
+      }
+
+      nav.toc {
+        padding: 0.95rem 1rem;
+      }
+
+      nav.toc ol {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar-inner {
+        padding: 0.55rem 0.75rem;
+      }
+
+      figure {
+        padding: 0.55rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <nav class="doc-switch" aria-label="成套文件切換">
+        <a href="technical.html"><code>technical.html</code></a>
+        <span class="sep" aria-hidden="true">⇄</span>
+        <a href="ai-agents.html" aria-current="page"><code>ai-agents.html</code></a>
+      </nav>
+      <div class="topbar-meta">
+        <time datetime="2026-11-21">2026-11-21</time>
+        <a href="#toc">↑ 目錄</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <header class="hero">
+      <h1>多 AI Agent 協作開發實戰：安裝進度即時串流</h1>
+      <p class="hero-subtitle">一份給想重用這套工作法的實務紀錄：一位使用者、一位協調者，如何指揮三家不同模型的 AI worker 完成 FastAPI + SSE 專案與視覺改版。</p>
+      <div class="hero-meta">
+        <span><strong>專案規格：</strong><code>docs/SPEC.md</code> v1.1.4（合約 <code>1.1.2</code>）</span>
+        <span><strong>目前進度：</strong>Phase 0–6 已交付；Phase 7 完成撰寫（T7.1–T7.2）、交叉審閱（T7.3–T7.4）與本檔整合（T7.6），待協調者合併交付（T7.7）</span>
+      </div>
+    </header>
+
+    <nav id="toc" class="toc" aria-label="文件目錄">
+      <h2>目錄（約 20 分鐘可讀完）</h2>
+      <ol>
+        <li><a href="#s1">概觀：三家模型分立協作</a></li>
+        <li><a href="#s2">整體架構圖（主架構）</a></li>
+        <li><a href="#s3">角色與權限分工</a></li>
+        <li><a href="#s4">隔離與事後稽核機制</a></li>
+        <li><a href="#s5">一個任務的生命週期</a></li>
+        <li><a href="#s6">Phase 0–6 流程與關卡</a></li>
+        <li><a href="#s7">失敗怎麼分派與真實案例</a></li>
+        <li><a href="#s8">模型政策與推理強度</a></li>
+        <li><a href="#s9">E2E 證據規則（E7）</a></li>
+        <li><a href="#s10">實際數據與使用者決策</a></li>
+        <li><a href="#s11">實戰經驗與教訓</a></li>
+        <li><a href="#s12">這兩份文件是怎麼產生的（Phase 7）</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <!-- Section 1 -->
+      <section id="s1">
+        <h2><span class="sec-num">01</span>概觀：一位使用者、一位協調者，指揮三家模型</h2>
+        <p>
+          「安裝進度即時串流」（FastAPI + SSE）這個應用，不是由單一對話框一路寫到尾，而是由一套<strong>多 AI Agent 協作流程</strong>完成：
+          最上層只有<strong>一位人類（使用者）</strong>與<strong>一位協調者</strong>（使用者直接對話的 Claude Code session），底層再依職責分派給來自<strong>三家不同模型廠商</strong>的獨立 worker（<code>materials/CLAUDE.md</code>、<code>materials/ORCHESTRATION.md</code>）。
+        </p>
+
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="label">決策與管理</div>
+            <div class="value">使用者 ↔ 協調者</div>
+            <div class="note">使用者負責規格核准與關鍵決策（<code>D1</code>–<code>D12</code>、<code>E1</code>–<code>E11</code>）；協調者只管派工、稽核、守關卡，不動手寫交付物。</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">廠商一：Claude Code</div>
+            <div class="value">實作／規格／瀏覽器</div>
+            <div class="note">透過 <code>claude -p</code> 與 <code>claude -p --chrome</code> 執行實作、編輯規格合約、實機瀏覽器 E2E。</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">廠商二：Codex CLI</div>
+            <div class="value">獨立測試／審閱</div>
+            <div class="note">透過 <code>codex exec</code> 在未放入 <code>app/</code> 的工作區，純粹照 SPEC 與合約寫測試並參與審閱。</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">廠商三：<code>agy</code>（Gemini）</div>
+            <div class="value">合約／驗證／驗收</div>
+            <div class="note">透過 <code>agy -p</code> 負責合約比對、突變抽檢、非視覺 HTTP E2E、clean clone 驗收與迴歸檢查。</div>
+          </div>
+        </div>
+
+        <h3>為什麼要刻意湊齊三家不同的模型家族？</h3>
+        <p>
+          核心理由只有一個：<strong>獨立交叉驗證（independent cross-checking）</strong>。
+          同一個模型家族往往有相似的解讀習慣與盲點——如果讓同家族模型既寫程式又寫測試，兩邊可能對同一個邊界條件做出相同假設，導致測試全過卻偏離規格。
+          因此這套設計讓 <strong>Claude 寫實作</strong>、<strong>Codex（<code>GPT-6.2</code>）盲寫測試</strong>、<strong><code>agy</code>（<code>Gemini 4</code>）當裁判與驗證者</strong>；在 <code>materials/ORCHESTRATION.md:87</code> 甚至明文規定：為了保持三家模型不同，<code>agy</code> 也禁用 Claude 模型。
+        </p>
+
+        <div class="callout info">
+          <span class="callout-title">協調者的鐵律與歷史例外（<code>materials/CLAUDE.md:5-7</code>、<code>materials/PROGRESS.md:3-21,159-163</code>）</span>
+          規則定案後，協調者是純管理者：不親自編輯 <code>app/</code>、<code>tests/</code>、<code>docs/SPEC.md</code> 或 <code>pyproject.toml</code>，不自己跑 <code>pytest</code>／<code>uvicorn</code>／<code>curl</code> 驗證，<strong>絕不閱讀測試原始碼</strong>，也不替使用者核准關卡。每次新開 session，必須依 <code>PROGRESS.md</code> 的接手檢查清單確認背景 worker（<code>pgrep</code>）、最後一筆日誌與 <code>git log</code> 狀態後再接續。
+          <br>
+          <strong>專案紀錄中的三項歷史例外：</strong>① <code>T0.1</code>、<code>T1.1</code>、<code>T1.4</code> 是協調者在「只做管理」規則確立之前親自執行（偏差 <code>X1</code>）；② <code>T0.7</code>（撰寫 <code>AGENTS.md</code>、加嚴 <code>ruff</code>／<code>mypy</code> 與搬運骨架）是在使用者明確指示下由協調者完成（偏差 <code>X3</code>）；③ <code>T1.8</code>（以 SVG 為主軸重寫 <code>docs/SPEC.md</code> v1.0 與 <code>contracts/</code>）是由使用者直接指定的 <code>agy</code> session 完成，未經規格編輯 worker 的 brief／report 流程（決策 <code>D10</code>、偏差 <code>X5</code>，見 <code>materials/plans/spec_v1_plan.md:3-7,15-21</code>）。
+        </div>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="s2">
+        <h2><span class="sec-num">02</span>整體架構圖</h2>
+        <p>
+          整套系統運作在單一 macOS 本機環境中，核心設計是<strong>「一份共用的規格與合約（Single Source of Truth）＋ 五個分開的工作區目錄（搭配工具權限與事後稽核）＋ 結構化的 <code>briefs/</code>、<code>reports/</code>、<code>evidence/</code> 交換目錄」</strong>（<code>materials/ORCHESTRATION.md:18-55</code>、<code>materials/PROGRESS.md:165-172</code>）。
+        </p>
+
+        <figure>
+          <div class="svg-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 780" width="100%" role="img" aria-label="多 AI Agent 協作整體架構圖：使用者與協調者、主 repo 與合約檔案、briefs 派工與 workers 回傳 reports 及 E2E 產出 evidence 的完整資料流，以及五個獨立工作區">
+              <defs>
+                <marker id="m1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--muted)" />
+                </marker>
+                <marker id="m1-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--accent)" />
+                </marker>
+                <marker id="m1-arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--ok)" />
+                </marker>
+                <marker id="m1-arrow-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--warn)" />
+                </marker>
+              </defs>
+
+              <!-- Top Row: User & Coordinator -->
+              <rect x="16" y="18" width="154" height="84" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.8" />
+              <text x="93" y="46" text-anchor="middle" font-size="15" class="svg-title">使用者（人類）</text>
+              <text x="93" y="70" text-anchor="middle" font-size="13.5" class="svg-muted">核准 SPEC</text>
+              <text x="93" y="90" text-anchor="middle" font-size="13.5" class="svg-muted">裁決 D*、E*</text>
+
+              <line x1="176" y1="60" x2="254" y2="60" stroke="var(--accent)" stroke-width="2" marker-start="url(#m1-arrow-accent)" marker-end="url(#m1-arrow-accent)" />
+              <text x="215" y="47" text-anchor="middle" font-size="13.5" class="svg-muted">對話／關卡</text>
+
+              <rect x="260" y="14" width="320" height="92" rx="10" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="2" />
+              <text x="420" y="42" text-anchor="middle" font-size="15" class="svg-title">協調者（Claude Code Session）</text>
+              <text x="420" y="67" text-anchor="middle" font-size="13.5" class="svg-muted">只管理、派工、稽核、同步、commit</text>
+              <text x="420" y="89" text-anchor="middle" font-size="13.5" class="svg-muted">不寫交付物／不讀測試原始碼</text>
+
+              <!-- Coordinator to Main Repo -->
+              <line x1="580" y1="60" x2="618" y2="60" stroke="var(--muted)" stroke-width="1.8" marker-end="url(#m1-arrow)" />
+              <text x="599" y="47" text-anchor="middle" font-size="13.5" class="svg-muted">管理</text>
+
+              <!-- Main Repo & Contracts Box -->
+              <rect x="622" y="14" width="226" height="236" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="1.8" />
+              <text x="735" y="38" text-anchor="middle" font-size="15" class="svg-title">主 Repo</text>
+              <text x="735" y="58" text-anchor="middle" font-size="13.5" class="svg-mono-muted">~/Desktop/projects/SSE/</text>
+              <line x1="636" y1="68" x2="834" y2="68" stroke="var(--border)" stroke-width="1" />
+              <rect x="632" y="76" width="206" height="90" rx="7" fill="var(--tint-info)" stroke="var(--info)" stroke-width="1.4" />
+              <text x="735" y="97" text-anchor="middle" font-size="14" class="svg-title">唯一共用合約</text>
+              <text x="735" y="118" text-anchor="middle" font-size="13.5" class="svg-mono">docs/SPEC.md</text>
+              <text x="735" y="137" text-anchor="middle" font-size="13.5" class="svg-mono">contracts/openapi.yaml</text>
+              <text x="735" y="156" text-anchor="middle" font-size="13.5" class="svg-mono">contracts/domain.pyi</text>
+              <text x="735" y="185" text-anchor="middle" font-size="13.5" class="svg-muted">app/、frontend/、AGENTS.md</text>
+              <text x="735" y="205" text-anchor="middle" font-size="13.5" class="svg-muted">PROGRESS.md</text>
+              <text x="735" y="224" text-anchor="middle" font-size="13.5" class="svg-muted">ORCHESTRATION.md</text>
+              <text x="735" y="243" text-anchor="middle" font-size="13.5" class="svg-muted">（tests/ 於 Phase 5 併入）</text>
+
+              <!-- Orchestra exchange band -->
+              <rect x="16" y="148" width="588" height="92" rx="10" fill="var(--tint-neutral)" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="6,4" />
+              <text x="28" y="171" font-size="14" class="svg-title">主 Repo .orchestra/</text>
+
+              <rect x="28" y="186" width="178" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5" />
+              <text x="117" y="212" text-anchor="middle" font-size="13.5" class="svg-mono">.orchestra/briefs/</text>
+
+              <rect x="220" y="186" width="186" height="42" rx="6" fill="var(--surface)" stroke="var(--ok)" stroke-width="1.5" />
+              <text x="313" y="212" text-anchor="middle" font-size="13.5" class="svg-mono">.orchestra/reports/</text>
+
+              <rect x="420" y="186" width="172" height="42" rx="6" fill="var(--surface)" stroke="var(--warn)" stroke-width="1.5" />
+              <text x="506" y="212" text-anchor="middle" font-size="13.5" class="svg-mono">evidence/&lt;任務&gt;/</text>
+
+              <!-- Clean orthogonal links between Coordinator and Exchange Band (none touch title at x=28..165) -->
+              <path d="M 300 106 L 300 128 L 184 128 L 184 183" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m1-arrow-accent)" />
+              <text x="242" y="122" text-anchor="middle" font-size="13.5" class="svg-muted">寫任務說明</text>
+
+              <line x1="360" y1="186" x2="360" y2="109" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m1-arrow-ok)" />
+              <text x="428" y="136" text-anchor="middle" font-size="13.5" class="svg-muted">稽核＋讀回報</text>
+
+              <line x1="506" y1="186" x2="506" y2="109" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#m1-arrow-warn)" />
+              <text x="562" y="136" text-anchor="middle" font-size="13.5" class="svg-muted">抽查證據</text>
+
+              <!-- Workers container (shifted down to leave dedicated bus channels!) -->
+              <rect x="16" y="294" width="832" height="354" rx="12" fill="var(--surface)" stroke="var(--border)" stroke-width="1.6" />
+              <text x="46" y="320" font-size="14.5" class="svg-title">獨立工作區層（~/.local/share/sse-orchestra/）與五大 Worker 角色</text>
+
+              <!-- Dispatch bus (accent): briefs -> left channel (x=28, clear of title at x=46) -> horizontal bus (y=340) -> 5 workers -->
+              <path d="M 117 228 L 117 262 L 28 262 L 28 340 L 767 340" fill="none" stroke="var(--accent)" stroke-width="1.8" />
+              <text x="72" y="256" text-anchor="middle" font-size="13.5" class="svg-muted">分派任務</text>
+              <line x1="109" y1="340" x2="109" y2="360" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m1-arrow-accent)" />
+              <line x1="271" y1="340" x2="271" y2="360" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m1-arrow-accent)" />
+              <line x1="443" y1="340" x2="443" y2="360" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m1-arrow-accent)" />
+              <line x1="605" y1="340" x2="605" y2="360" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m1-arrow-accent)" />
+              <line x1="767" y1="340" x2="767" y2="360" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m1-arrow-accent)" />
+
+              <!-- Card 1: Spec Editor -->
+              <rect x="34" y="364" width="150" height="132" rx="9" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.5" />
+              <text x="109" y="388" text-anchor="middle" font-size="14" class="svg-title">Claude 規格編輯</text>
+              <text x="109" y="409" text-anchor="middle" font-size="13.5" class="svg-mono-muted">claude -p</text>
+              <text x="109" y="434" text-anchor="middle" font-size="13.5" class="svg-text">修 SPEC、合約</text>
+              <text x="109" y="454" text-anchor="middle" font-size="13.5" class="svg-text">與 AGENTS.md</text>
+              <text x="109" y="480" text-anchor="middle" font-size="13.5" class="svg-muted">禁 Bash 與網路</text>
+
+              <line x1="109" y1="496" x2="109" y2="522" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m1-arrow)" />
+              <rect x="34" y="526" width="150" height="106" rx="8" fill="var(--bg)" stroke="var(--border)" stroke-width="1.4" />
+              <text x="109" y="550" text-anchor="middle" font-size="14" class="svg-mono">spec-ws/</text>
+              <text x="109" y="574" text-anchor="middle" font-size="13.5" class="svg-muted">docs/SPEC.md</text>
+              <text x="109" y="595" text-anchor="middle" font-size="13.5" class="svg-muted">contracts/</text>
+              <text x="109" y="616" text-anchor="middle" font-size="13.5" class="svg-muted">AGENTS.md</text>
+
+              <!-- Card 2: Implementer -->
+              <rect x="196" y="364" width="150" height="132" rx="9" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.5" />
+              <text x="271" y="388" text-anchor="middle" font-size="14" class="svg-title">Claude 實作者</text>
+              <text x="271" y="409" text-anchor="middle" font-size="13.5" class="svg-mono-muted">claude -p</text>
+              <text x="271" y="434" text-anchor="middle" font-size="13.5" class="svg-text">實作 app/ 與</text>
+              <text x="271" y="454" text-anchor="middle" font-size="13.5" class="svg-text">frontend/、修 bug</text>
+              <text x="271" y="480" text-anchor="middle" font-size="13.5" class="svg-muted">禁讀 tests/</text>
+
+              <line x1="271" y1="496" x2="271" y2="522" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m1-arrow)" />
+              <rect x="196" y="526" width="150" height="106" rx="8" fill="var(--bg)" stroke="var(--border)" stroke-width="1.4" />
+              <text x="271" y="550" text-anchor="middle" font-size="14" class="svg-mono">impl-ws/</text>
+              <text x="271" y="574" text-anchor="middle" font-size="13.5" class="svg-muted">app/、frontend/</text>
+              <text x="271" y="595" text-anchor="middle" font-size="13.5" class="svg-muted">SPEC、contracts</text>
+              <text x="271" y="616" text-anchor="middle" font-size="13.5" class="svg-muted">無 tests/.orchestra</text>
+
+              <!-- Double-blind wall between impl-ws and tests-ws -->
+              <line x1="357" y1="360" x2="357" y2="636" stroke="var(--err)" stroke-width="2" stroke-dasharray="5,4" />
+              <rect x="323" y="499" width="68" height="24" rx="5" fill="var(--tint-err)" stroke="var(--err)" stroke-width="1.3" />
+              <text x="357" y="516" text-anchor="middle" font-size="13.5" class="svg-title" style="fill: var(--err);">雙盲隔離</text>
+
+              <!-- Card 3: Codex Test Author -->
+              <rect x="368" y="364" width="150" height="132" rx="9" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.5" />
+              <text x="443" y="388" text-anchor="middle" font-size="14" class="svg-title">Codex 測試作者</text>
+              <text x="443" y="409" text-anchor="middle" font-size="13.5" class="svg-mono-muted">codex exec</text>
+              <text x="443" y="434" text-anchor="middle" font-size="13.5" class="svg-text">規格審閱、照合約</text>
+              <text x="443" y="454" text-anchor="middle" font-size="13.5" class="svg-text">寫單元/E2E/效能</text>
+              <text x="443" y="480" text-anchor="middle" font-size="13.5" class="svg-muted">禁讀 app/、主 repo</text>
+
+              <line x1="443" y1="496" x2="443" y2="522" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m1-arrow)" />
+              <rect x="368" y="526" width="150" height="106" rx="8" fill="var(--bg)" stroke="var(--border)" stroke-width="1.4" />
+              <text x="443" y="550" text-anchor="middle" font-size="14" class="svg-mono">tests-ws/</text>
+              <text x="443" y="574" text-anchor="middle" font-size="13.5" class="svg-muted">SPEC、contracts</text>
+              <text x="443" y="595" text-anchor="middle" font-size="13.5" class="svg-muted">AGENTS、pyproject</text>
+              <text x="443" y="616" text-anchor="middle" font-size="13.5" class="svg-muted">tests/（無 app/）</text>
+
+              <!-- Card 4: agy Verifier -->
+              <rect x="530" y="364" width="150" height="132" rx="9" fill="var(--tint-info)" stroke="var(--info)" stroke-width="1.5" />
+              <text x="605" y="388" text-anchor="middle" font-size="14" class="svg-title">agy 驗證／驗收</text>
+              <text x="605" y="409" text-anchor="middle" font-size="13.5" class="svg-mono-muted">agy -p (Gemini)</text>
+              <text x="605" y="434" text-anchor="middle" font-size="13.5" class="svg-text">合約、突變抽檢</text>
+              <text x="605" y="454" text-anchor="middle" font-size="13.5" class="svg-text">HTTP E2E、驗收</text>
+              <text x="605" y="480" text-anchor="middle" font-size="13.5" class="svg-muted">全可看＋--sandbox</text>
+
+              <line x1="605" y1="496" x2="605" y2="522" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m1-arrow)" />
+              <rect x="530" y="526" width="150" height="106" rx="8" fill="var(--bg)" stroke="var(--border)" stroke-width="1.4" />
+              <text x="605" y="550" text-anchor="middle" font-size="14" class="svg-mono">verify-ws/</text>
+              <text x="605" y="574" text-anchor="middle" font-size="13.5" class="svg-muted">每次重組 clone</text>
+              <text x="605" y="595" text-anchor="middle" font-size="13.5" class="svg-muted">+ tests-ws/tests/</text>
+              <text x="605" y="616" text-anchor="middle" font-size="13.5" class="svg-muted">產出原始輸出檔</text>
+
+              <!-- Card 5: Claude Browser E2E -->
+              <rect x="692" y="364" width="150" height="132" rx="9" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.5" />
+              <text x="767" y="388" text-anchor="middle" font-size="14" class="svg-title">Claude 瀏覽器</text>
+              <text x="767" y="409" text-anchor="middle" font-size="13.5" class="svg-mono-muted">claude --chrome</text>
+              <text x="767" y="434" text-anchor="middle" font-size="13.5" class="svg-text">Claude in Chrome</text>
+              <text x="767" y="454" text-anchor="middle" font-size="13.5" class="svg-text">視覺與 R27 實測</text>
+              <text x="767" y="480" text-anchor="middle" font-size="13.5" class="svg-muted">限本機／禁讀測試</text>
+
+              <line x1="767" y1="496" x2="767" y2="522" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m1-arrow)" />
+              <rect x="692" y="526" width="150" height="106" rx="8" fill="var(--bg)" stroke="var(--border)" stroke-width="1.4" />
+              <text x="767" y="550" text-anchor="middle" font-size="14" class="svg-mono">browser-ws/</text>
+              <text x="767" y="574" text-anchor="middle" font-size="13.5" class="svg-muted">主 repo HEAD</text>
+              <text x="767" y="595" text-anchor="middle" font-size="13.5" class="svg-muted">去管理檔、無 tests</text>
+              <text x="767" y="616" text-anchor="middle" font-size="13.5" class="svg-muted">截圖與 GIF 證據</text>
+
+              <!-- Report Return Bus (green ok): all 5 workers -> bottom bus (y=668) -> right channel (x=858) -> y=278 -> reports/ (x=313) -->
+              <line x1="109" y1="632" x2="109" y2="668" stroke="var(--ok)" stroke-width="1.8" />
+              <line x1="271" y1="632" x2="271" y2="668" stroke="var(--ok)" stroke-width="1.8" />
+              <line x1="443" y1="632" x2="443" y2="668" stroke="var(--ok)" stroke-width="1.8" />
+              <line x1="590" y1="632" x2="590" y2="668" stroke="var(--ok)" stroke-width="1.8" />
+              <line x1="752" y1="632" x2="752" y2="668" stroke="var(--ok)" stroke-width="1.8" />
+              <path d="M 109 668 L 858 668 L 858 278 L 313 278 L 313 231" fill="none" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m1-arrow-ok)" />
+              <text x="235" y="273" text-anchor="middle" font-size="13.5" class="svg-title" style="fill: var(--ok);">各 worker 回報結果 →</text>
+
+              <!-- Evidence Return Bus (orange warn): E2E workers (verify-ws & browser-ws) -> bottom bus (y=694) -> far-right channel (x=870) -> y=260 -> evidence/ (x=506) -->
+              <line x1="622" y1="632" x2="622" y2="694" stroke="var(--warn)" stroke-width="1.8" stroke-dasharray="5,3" />
+              <line x1="784" y1="632" x2="784" y2="694" stroke="var(--warn)" stroke-width="1.8" stroke-dasharray="5,3" />
+              <path d="M 622 694 L 870 694 L 870 260 L 506 260 L 506 231" fill="none" stroke="var(--warn)" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#m1-arrow-warn)" />
+              <text x="530" y="689" text-anchor="end" font-size="13.5" class="svg-title" style="fill: var(--warn);">E2E 截圖／原始輸出 → evidence/</text>
+
+              <!-- Bottom legend / sync note (wrapped neatly on 2 lines) -->
+              <rect x="16" y="712" width="848" height="56" rx="8" fill="var(--tint-neutral)" stroke="var(--border)" stroke-width="1.2" />
+              <text x="440" y="736" text-anchor="middle" font-size="13.5" class="svg-muted">同步原則：合約由主 Repo 分發至 spec-ws／impl-ws／tests-ws／browser-ws；</text>
+              <text x="440" y="758" text-anchor="middle" font-size="13.5" class="svg-muted">每次驗證前由協調者重組主 Repo 與 tests-ws/tests/ 進 verify-ws（正式測試任務另同步 AGENTS.md、pyproject.toml）。</text>
+            </svg>
+          </div>
+          <figcaption>圖 1：多 AI Agent 協作整體架構（資料來源：<code>materials/ORCHESTRATION.md:18-37,109-138</code>、<code>materials/PROGRESS.md:80,165-172</code>）</figcaption>
+        </figure>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="s3">
+        <h2><span class="sec-num">03</span>角色與權限分工</h2>
+        <p>
+          這套團隊劃分了 6 種明確角色（1 位協調者＋5 類 worker）。每個角色的寫入範圍與讀取禁區都白紙黑字定義在 <code>materials/ORCHESTRATION.md:7-14</code> 與 <code>materials/PROGRESS.md:8-19</code>；正式派工時，<code>tests-ws</code> 除了規格與合約外，也會同步 <code>AGENTS.md</code>、<code>pyproject.toml</code> 與鎖定依賴（<code>materials/PROGRESS.md:80,171,195</code>）：
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>角色</th>
+                <th>擔任者</th>
+                <th>負責內容</th>
+                <th>可寫入</th>
+                <th>不可讀取</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>協調者（管理者）</strong></td>
+                <td>使用者直接對話的 Claude Code session</td>
+                <td>分派任務、追蹤進度、分配爭議、守關卡、維護 <code>PROGRESS.md</code>、搬運與稽核</td>
+                <td>只能寫管理文件（<code>PROGRESS.md</code>、<code>ORCHESTRATION.md</code>、<code>briefs/</code> 等）</td>
+                <td>測試原始碼（<code>tests-ws/tests/</code>、<code>verify-ws/tests/</code>）</td>
+              </tr>
+              <tr>
+                <td><strong>實作者</strong></td>
+                <td>Claude Code worker（<code>claude -p</code>）</td>
+                <td>依 SPEC 實作 <code>app/</code> 與 <code>frontend/</code>、修 bug</td>
+                <td><code>impl-ws</code>（Phase 6 另可寫 <code>evidence/T6.1/</code>）</td>
+                <td>測試原始碼</td>
+              </tr>
+              <tr>
+                <td><strong>瀏覽器 E2E</strong></td>
+                <td>Claude Code worker（<code>claude -p --chrome</code> + Claude in Chrome）</td>
+                <td>所有畫面上看得到的 E2E（頁面行為、斷線恢復、重啟、多分頁、視覺檢查），留截圖與 GIF</td>
+                <td>回報檔、<code>.orchestra/evidence/&lt;任務&gt;/</code></td>
+                <td>測試原始碼</td>
+              </tr>
+              <tr>
+                <td><strong>規格編輯</strong></td>
+                <td>Claude Code worker（<code>claude -p</code>）</td>
+                <td>依協調者與使用者決策修改 <code>docs/SPEC.md</code>、<code>contracts/</code>、<code>AGENTS.md</code></td>
+                <td><code>spec-ws</code></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><strong>測試作者</strong></td>
+                <td>Codex CLI（<code>codex exec</code>）</td>
+                <td>只根據 SPEC 與合約撰寫單元、整合、E2E、效能測試；前期也參與規格唯讀審閱</td>
+                <td><code>tests-ws</code></td>
+                <td><code>app/</code>、主 repo</td>
+              </tr>
+              <tr>
+                <td><strong>測試驗證、HTTP E2E、驗收</strong></td>
+                <td><code>agy</code>（Gemini，依模型政策）</td>
+                <td>合約比對、審查測試、故意改壞程式抽查（突變測試）、畫面上看不到的 E2E（<code>curl -N</code>、心跳、標頭、延遲）、最終驗收</td>
+                <td><code>verify-ws</code>、回報檔、<code>.orchestra/evidence/&lt;任務&gt;/</code></td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>為什麼實作與測試必須由不同廠商、互不見面地寫？</h3>
+        <ul>
+          <li><strong>防止測試退化成實作的鏡像：</strong><code>tests-ws</code> 未放入 <code>app/</code>，且規則禁止 Codex 讀取 <code>app/</code> 與主 repo，使其只能依賴 <code>docs/SPEC.md</code>（行為）、<code>contracts/openapi.yaml</code>（HTTP 形狀）與 <code>contracts/domain.pyi</code>（Python 公開符號），以黑箱角度檢驗規格（<code>materials/ORCHESTRATION.md:30-40</code>）。</li>
+          <li><strong>防止實作對測試過度擬合：</strong><code>impl-ws</code> 未放入 <code>tests/</code> 且規則禁止讀取測試；即使 Phase 3 測試失敗，協調者也只轉交 <code>agy</code> 寫出的「需求 ID＋預期行為＋實際行為」描述（例如 <code>T3.5</code> 修正 R10 第 9 項時，紀錄掃描與快照比對皆未發現存取外部路徑，見 <code>materials/PROGRESS.md:96</code>）。</li>
+          <li><strong>讓合約缺口自然浮現：</strong>在 Phase 2 雙盲並行開發時，雙方各自撞上規格沒說死的地方，立刻回報 <code>CONTRACT GAP</code> 與 <code>CONTRACT CONFLICT</code>——例如後端與測試同時指出 <code>script_for</code> 拿不到 <code>run_id</code> 但 R8 要求 <code>run_started</code> 帶 <code>run_id</code>，以及 R9 去空白規則與 OpenAPI <code>pattern</code> 衝突（<code>materials/reports/p2-impl-backend.md:80-93</code>、<code>materials/reports/p2-codex-tests.md:81-89</code>）。這套分工的設計目的，正是降低同一模型對模糊處做出一致假設而未被察覺的風險。</li>
+          <li><strong>避免協調者無意洩題：</strong>協調者依規則也不讀測試原始碼，只看 Codex 的「測試名稱 → R-id」對照表與 <code>agy</code> 的行為摘要，設計目的是避免在派工 brief 中無意透漏測試寫法（<code>materials/ORCHESTRATION.md:54</code>）。</li>
+        </ul>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="s4">
+        <h2><span class="sec-num">04</span>隔離與事後稽核機制</h2>
+        <p>
+          使用者在 Phase 0.5 決定採用<strong>「分開目錄＋工具權限＋事後稽核」</strong>，不使用容器（決策 <code>D3</code>，<code>materials/ORCHESTRATION.md:42-55</code>）。這是一個在開發速度與安全邊界之間的務實取捨：啟動負擔低，但必須坦承讀取無法從技術上阻擋，改由每次跑完的事後稽核彌補。
+        </p>
+
+        <figure>
+          <div class="svg-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 492" width="100%" role="img" aria-label="三層隔離防線與事後稽核補償流程圖：第一層分開目錄、第二層工具權限與已知讀取漏洞、第三層事後稽核四步驟與通過或作廢處置">
+              <defs>
+                <marker id="m2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--muted)" />
+                </marker>
+                <marker id="m2-arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--ok)" />
+                </marker>
+                <marker id="m2-arrow-err" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--err)" />
+                </marker>
+              </defs>
+
+              <!-- Layer 1 -->
+              <rect x="14" y="16" width="242" height="304" rx="10" fill="var(--tint-info)" stroke="var(--info)" stroke-width="1.6" />
+              <text x="135" y="42" text-anchor="middle" font-size="14.5" class="svg-title">第一層：分開目錄</text>
+              <line x1="28" y1="54" x2="242" y2="54" stroke="var(--info)" stroke-width="1" opacity="0.5" />
+              <text x="28" y="80" font-size="13" class="svg-text">• 各 worker 配專屬工作區</text>
+              <text x="28" y="106" font-size="13" class="svg-text">• Brief 不透露他區路徑</text>
+              <text x="28" y="132" font-size="13" class="svg-text">• impl-ws 排除 tests/ 與</text>
+              <text x="40" y="152" font-size="13" class="svg-muted">.orchestra/、管理文件</text>
+              <text x="28" y="178" font-size="13" class="svg-text">• tests-ws 未放入 app/</text>
+              <text x="28" y="204" font-size="13" class="svg-text">• verify-ws 重建單一</text>
+              <text x="40" y="224" font-size="13" class="svg-muted">baseline commit 防洩密</text>
+              <text x="28" y="250" font-size="13" class="svg-text">• docs/plans/ 不同步</text>
+              <text x="28" y="276" font-size="13" class="svg-text">• 規則禁止跨區讀取</text>
+
+              <line x1="256" y1="168" x2="282" y2="168" stroke="var(--muted)" stroke-width="1.8" marker-end="url(#m2-arrow)" />
+
+              <!-- Layer 2 -->
+              <rect x="286" y="16" width="262" height="304" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.6" />
+              <text x="417" y="42" text-anchor="middle" font-size="14.5" class="svg-title">第二層：工具權限</text>
+              <line x1="300" y1="54" x2="534" y2="54" stroke="var(--warn)" stroke-width="1" opacity="0.5" />
+              <text x="300" y="78" font-size="13" class="svg-text">• 規格編輯：acceptEdits，禁 Bash/網</text>
+              <text x="300" y="102" font-size="13" class="svg-text">• 實作者：D2 不設限（部分任務</text>
+              <text x="312" y="121" font-size="13" class="svg-muted">收窄 acceptEdits＋Bash(uv:*)）</text>
+              <text x="300" y="145" font-size="13" class="svg-text">• 瀏覽器：專用新分頁、限</text>
+              <text x="312" y="164" font-size="13" class="svg-muted">127.0.0.1 本機，結束關分頁</text>
+              <text x="300" y="188" font-size="13" class="svg-text">• Codex：-s workspace-write</text>
+              <text x="300" y="212" font-size="13" class="svg-text">• agy：實際預設模式＋--sandbox</text>
+
+              <!-- Known gap callout inside Layer 2 -->
+              <rect x="298" y="228" width="238" height="78" rx="7" fill="var(--tint-err)" stroke="var(--err)" stroke-width="1.4" />
+              <text x="417" y="250" text-anchor="middle" font-size="13.5" class="svg-title" style="fill: var(--err);">已知漏洞：無法封鎖讀取</text>
+              <text x="417" y="272" text-anchor="middle" font-size="13" class="svg-text">實作者與 Codex 技術上可讀</text>
+              <text x="417" y="292" text-anchor="middle" font-size="13" class="svg-text">其他目錄 → 必靠第三層稽核</text>
+
+              <line x1="548" y1="168" x2="574" y2="168" stroke="var(--muted)" stroke-width="1.8" marker-end="url(#m2-arrow)" />
+
+              <!-- Layer 3 -->
+              <rect x="578" y="16" width="248" height="304" rx="10" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.8" />
+              <text x="702" y="42" text-anchor="middle" font-size="14.5" class="svg-title">第三層：事後稽核（補償）</text>
+              <line x1="592" y1="54" x2="812" y2="54" stroke="var(--accent)" stroke-width="1" opacity="0.5" />
+              <text x="592" y="80" font-size="13" class="svg-text">1. 搜尋執行紀錄（stream / log）</text>
+              <text x="604" y="100" font-size="13" class="svg-mono-muted">grep -nE 'tests-ws|</text>
+              <text x="604" y="118" font-size="13" class="svg-mono-muted">  verify-ws|/tests/' &lt;log&gt;</text>
+              <text x="592" y="146" font-size="13" class="svg-text">2. 變更比對與快照校驗</text>
+              <text x="604" y="166" font-size="13" class="svg-mono-muted">git status / diff / shasum</text>
+              <text x="592" y="194" font-size="13" class="svg-text">3. 檢查無殘留與未越界寫入</text>
+              <text x="604" y="214" font-size="13" class="svg-muted">無 install.db*、無孤兒程序</text>
+              <text x="592" y="242" font-size="13" class="svg-text">4. 確認回報未夾帶測試碼</text>
+              <text x="604" y="262" font-size="13" class="svg-muted">E2E 任務另核對 E7 證據</text>
+              <text x="604" y="282" font-size="13" class="svg-muted">與截圖時間戳</text>
+
+              <!-- Decision split at bottom -->
+              <line x1="702" y1="320" x2="702" y2="346" stroke="var(--muted)" stroke-width="1.8" />
+              <line x1="214" y1="346" x2="702" y2="346" stroke="var(--muted)" stroke-width="1.8" />
+              <line x1="214" y1="346" x2="214" y2="368" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m2-arrow-ok)" />
+              <line x1="628" y1="346" x2="628" y2="368" stroke="var(--err)" stroke-width="1.8" marker-end="url(#m2-arrow-err)" />
+
+              <!-- Pass box -->
+              <rect x="14" y="372" width="400" height="104" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.6" />
+              <text x="214" y="398" text-anchor="middle" font-size="14.5" class="svg-title" style="fill: var(--ok);">稽核通過</text>
+              <text x="214" y="422" text-anchor="middle" font-size="13" class="svg-text">抽出結果存為 .orchestra/reports/&lt;task&gt;.md</text>
+              <text x="214" y="444" text-anchor="middle" font-size="13" class="svg-muted">刪 *.jsonl / *.log / *.err 與工具快取</text>
+              <text x="214" y="464" text-anchor="middle" font-size="13" class="svg-muted">確認無誤後搬回主 Repo</text>
+
+              <!-- Fail box -->
+              <rect x="430" y="372" width="396" height="104" rx="10" fill="var(--tint-err)" stroke="var(--err)" stroke-width="1.6" />
+              <text x="628" y="398" text-anchor="middle" font-size="14.5" class="svg-title" style="fill: var(--err);">稽核不通過（越界或夾帶）</text>
+              <text x="628" y="422" text-anchor="middle" font-size="13" class="svg-text">該次產出一律作廢並還原越界改動</text>
+              <text x="628" y="444" text-anchor="middle" font-size="13" class="svg-muted">保留原始執行紀錄當證據</text>
+              <text x="628" y="464" text-anchor="middle" font-size="13" class="svg-muted">記進 PROGRESS.md，處理完再刪</text>
+            </svg>
+          </div>
+          <figcaption>圖 2：三層隔離與事後稽核補償機制（資料來源：<code>materials/ORCHESTRATION.md:42-55,115,147-153</code>、<code>materials/PROGRESS.md:204</code>、<code>materials/briefs/p4-claude-browser.md:5-16</code>）</figcaption>
+        </figure>
+
+        <p>
+          實務上，事後稽核也確實需要人工判斷誤報。例如 <code>T2.1a</code> 跑完後，搜尋紀錄時曾命中 <code>.orchestra</code>，協調者進一步核對上下文，確認那只是實作者讀取工作區內的 <code>.gitignore</code> 內容，而非越界存取主 repo，這才放行並記明於 <code>materials/PROGRESS.md:196</code>。另外，在 <code>T2.6</code> 與 <code>T3.5</code> 中，協調者將實作者權限從 <code>--dangerously-skip-permissions</code> 收窄為 <code>acceptEdits</code> 搭配 <code>Bash(uv:*)</code>，雖在 <code>T3.5</code> 發現唯讀的 <code>sed</code>／<code>cat</code>／<code>ls</code> 未被擋下（皆在 <code>impl-ws</code> 內、無害），該次快照比對與紀錄掃描未發現越界存取或修改（<code>materials/PROGRESS.md:88,96</code>）。
+        </p>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="s5">
+        <h2><span class="sec-num">05</span>一個任務的生命週期</h2>
+        <p>
+          從派工到提交，worker 任務遵循一套可重複、可中斷接手的標準流水線（<code>materials/ORCHESTRATION.md:103-153</code>）。因為 macOS 沒有內建 GNU <code>timeout</code>，規則檔（決策 <code>D6</code>）以 <code>perl -e 'alarm 1800; exec @ARGV' --</code> 作為預設 30 分鐘逾時的政策範例；實務上各任務 brief 另依工作量載明不同時限（例如 <code>T6.4b</code> 寫 20 分鐘、<code>T4.4</code> 寫 40 分鐘、<code>T4.1</code>–<code>T4.3</code>／<code>T6.3</code>／<code>T6.4</code> 寫 45 分鐘），而管理紀錄未逐次記載外層實際傳入的 <code>alarm</code> 秒數（<code>materials/briefs/p4-claude-browser.md:18</code>、<code>p4-agy-e2e.md:20</code>、<code>p6-claude-browser.md:27</code>、<code>p6-claude-browser-recheck.md:21</code>）。
+        </p>
+
+        <figure>
+          <div class="svg-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 536" width="100%" role="img" aria-label="單一任務生命週期流程圖：寫 brief、背景啟動、等待完成、抽出回報、事後稽核（不通過則作廢留 log）、查驗 E2E 證據（缺證據則補跑）、清理原始檔與快取、搬檔更新進度表、以及於 Phase 結束或里程碑指定路徑 git commit">
+              <defs>
+                <marker id="m3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--accent)" />
+                </marker>
+                <marker id="m3-arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--ok)" />
+                </marker>
+                <marker id="m3-arrow-err" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--err)" />
+                </marker>
+                <marker id="m3-arrow-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--warn)" />
+                </marker>
+              </defs>
+
+              <!-- Row 1: Steps 1 -> 2 -> 3 -> 4 -->
+              <rect x="14" y="18" width="186" height="98" rx="10" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.6" />
+              <text x="107" y="44" text-anchor="middle" font-size="14" class="svg-title">1. 寫 Brief＋備區</text>
+              <text x="107" y="68" text-anchor="middle" font-size="13" class="svg-mono-muted">briefs/*.md</text>
+              <text x="107" y="92" text-anchor="middle" font-size="13" class="svg-muted">同步合約／快照基線</text>
+
+              <line x1="200" y1="67" x2="222" y2="67" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m3-arrow)" />
+
+              <rect x="226" y="18" width="204" height="98" rx="10" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.6" />
+              <text x="328" y="44" text-anchor="middle" font-size="14" class="svg-title">2. 背景啟動＋逾時</text>
+              <text x="328" y="68" text-anchor="middle" font-size="13" class="svg-mono">perl -e 'alarm 1800;…'</text>
+              <text x="328" y="92" text-anchor="middle" font-size="13" class="svg-muted">政策範例（brief 20–45 分）</text>
+
+              <line x1="430" y1="67" x2="452" y2="67" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m3-arrow)" />
+
+              <rect x="456" y="18" width="166" height="98" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="1.6" />
+              <text x="539" y="44" text-anchor="middle" font-size="14" class="svg-title">3. 等待完成</text>
+              <text x="539" y="68" text-anchor="middle" font-size="13" class="svg-muted">觀察退出狀態</text>
+              <text x="539" y="92" text-anchor="middle" font-size="13" class="svg-muted">撞上限可 --resume</text>
+
+              <line x1="622" y1="67" x2="644" y2="67" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m3-arrow)" />
+
+              <rect x="648" y="18" width="178" height="98" rx="10" fill="var(--tint-info)" stroke="var(--info)" stroke-width="1.6" />
+              <text x="737" y="44" text-anchor="middle" font-size="14" class="svg-title">4. 抽出最終回報</text>
+              <text x="737" y="68" text-anchor="middle" font-size="13" class="svg-mono-muted">reports/&lt;task&gt;.md</text>
+              <text x="737" y="92" text-anchor="middle" font-size="13" class="svg-muted">由 stream／log 抽取</text>
+
+              <!-- Turn down from 4 to 5 -->
+              <line x1="737" y1="116" x2="737" y2="156" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m3-arrow)" />
+
+              <!-- Row 2 (right to left): Steps 5 -> 6 -> 7 -> 8 -->
+              <rect x="640" y="160" width="186" height="104" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.6" />
+              <text x="733" y="186" text-anchor="middle" font-size="14" class="svg-title">5. 事後稽核</text>
+              <text x="733" y="210" text-anchor="middle" font-size="13" class="svg-text">掃描紀錄無越界路徑</text>
+              <text x="733" y="232" text-anchor="middle" font-size="13" class="svg-text">git status / shasum</text>
+              <text x="733" y="252" text-anchor="middle" font-size="13" class="svg-muted">核對未夾帶測試碼</text>
+
+              <!-- 5 -> 6 pass path -->
+              <line x1="640" y1="212" x2="610" y2="212" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m3-arrow-ok)" />
+              <text x="625" y="202" text-anchor="middle" font-size="13" class="svg-title" style="fill: var(--ok);">通過</text>
+
+              <rect x="422" y="160" width="184" height="104" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.6" />
+              <text x="514" y="186" text-anchor="middle" font-size="14" class="svg-title">6. 查驗 E2E 證據</text>
+              <text x="514" y="210" text-anchor="middle" font-size="13" class="svg-text">核對 INDEX 與檔數</text>
+              <text x="514" y="232" text-anchor="middle" font-size="13" class="svg-text">實開 ≥3 張截圖</text>
+              <text x="514" y="252" text-anchor="middle" font-size="13" class="svg-muted">（非 E2E 略過）</text>
+
+              <!-- 6 -> 7 pass path -->
+              <line x1="422" y1="212" x2="392" y2="212" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m3-arrow-ok)" />
+              <text x="407" y="202" text-anchor="middle" font-size="13" class="svg-title" style="fill: var(--ok);">齊全</text>
+
+              <rect x="212" y="160" width="176" height="104" rx="10" fill="var(--tint-neutral)" stroke="var(--border)" stroke-width="1.6" />
+              <text x="300" y="186" text-anchor="middle" font-size="14" class="svg-title">7. 清理暫存與快取</text>
+              <text x="300" y="210" text-anchor="middle" font-size="13" class="svg-text">刪 jsonl / log / err</text>
+              <text x="300" y="232" text-anchor="middle" font-size="13" class="svg-text">清快取（留 evidence）</text>
+              <text x="300" y="252" text-anchor="middle" font-size="13" class="svg-muted">無殘留程序與 DB</text>
+
+              <line x1="212" y1="212" x2="190" y2="212" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m3-arrow-ok)" />
+
+              <rect x="14" y="160" width="172" height="104" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.6" />
+              <text x="100" y="186" text-anchor="middle" font-size="14" class="svg-title">8. 搬檔＋更新進度</text>
+              <text x="100" y="210" text-anchor="middle" font-size="13" class="svg-text">搬回主 Repo／同步</text>
+              <text x="100" y="232" text-anchor="middle" font-size="13" class="svg-text">更新 PROGRESS.md</text>
+              <text x="100" y="252" text-anchor="middle" font-size="13" class="svg-muted">記真實時間與稽核</text>
+
+              <!-- Row 3: Separate exits for Pass (Step 9), Missing Evidence, and Audit Fail -->
+              <line x1="100" y1="264" x2="100" y2="314" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m3-arrow-ok)" />
+              <rect x="14" y="318" width="380" height="114" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.8" />
+              <text x="204" y="344" text-anchor="middle" font-size="14" class="svg-title">9. 指定路徑 git commit（不用 git add -A）</text>
+              <text x="204" y="369" text-anchor="middle" font-size="13" class="svg-mono">git add &lt;files&gt; &amp;&amp; git commit -m "…"</text>
+              <text x="204" y="394" text-anchor="middle" font-size="13" class="svg-muted">規則於各 Phase 結束提交；實戰亦依里程碑提交</text>
+              <text x="204" y="416" text-anchor="middle" font-size="13" class="svg-muted">（例如 T2.1a＋T2.1b 合併於同一筆 commit）</text>
+
+              <!-- 6 -> Missing evidence exit -->
+              <line x1="514" y1="264" x2="514" y2="314" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#m3-arrow-warn)" />
+              <text x="556" y="294" text-anchor="middle" font-size="13" class="svg-title" style="fill: var(--warn);">缺證據</text>
+              <rect x="412" y="318" width="198" height="114" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.6" />
+              <text x="511" y="346" text-anchor="middle" font-size="14" class="svg-title">視為沒做 → 補跑</text>
+              <text x="511" y="372" text-anchor="middle" font-size="13" class="svg-text">不進入清理與提交</text>
+              <text x="511" y="395" text-anchor="middle" font-size="13" class="svg-muted">補齊截圖／輸出後</text>
+              <text x="511" y="416" text-anchor="middle" font-size="13" class="svg-muted">再回到步驟 6 重驗</text>
+
+              <!-- 5 -> Audit fail exit -->
+              <line x1="733" y1="264" x2="733" y2="314" stroke="var(--err)" stroke-width="1.8" marker-end="url(#m3-arrow-err)" />
+              <text x="774" y="294" text-anchor="middle" font-size="13" class="svg-title" style="fill: var(--err);">不通過</text>
+              <rect x="628" y="318" width="198" height="114" rx="10" fill="var(--tint-err)" stroke="var(--err)" stroke-width="1.6" />
+              <text x="727" y="346" text-anchor="middle" font-size="14" class="svg-title" style="fill: var(--err);">作廢並留存紀錄</text>
+              <text x="727" y="372" text-anchor="middle" font-size="13" class="svg-text">還原越界改動、不提交</text>
+              <text x="727" y="395" text-anchor="middle" font-size="13" class="svg-muted">保留原始 log 當證據</text>
+              <text x="727" y="416" text-anchor="middle" font-size="13" class="svg-muted">並登記 PROGRESS.md</text>
+
+              <!-- Bottom cleanup policy summary -->
+              <rect x="14" y="452" width="812" height="68" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="5,4" />
+              <text x="30" y="478" font-size="13.5" class="svg-title">清理原則（ORCHESTRATION.md:147-153）</text>
+              <text x="30" y="502" font-size="13" class="svg-muted">永久保留：briefs/*.md、reports/*.md ｜ 僅留本機不 commit：.orchestra/evidence/ ｜ 僅通過稽核後刪除原始 log 與工具快取</text>
+            </svg>
+          </div>
+          <figcaption>圖 3：單一任務完整生命週期與異常分流（資料來源：<code>materials/ORCHESTRATION.md:103-153</code>、<code>materials/git-log.txt:31</code>）</figcaption>
+        </figure>
+
+        <h3>實際呼叫 Worker 的指令（規則範例見 <code>materials/ORCHESTRATION.md:109-119</code>）</h3>
+        <p>
+          以下 <code>T</code> 代表政策範例中的逾時包裝器 <code>perl -e 'alarm 1800; exec @ARGV' --</code>，<code>W</code> 為 <code>~/.local/share/sse-orchestra</code>。下方保留影響執行與稽核的完整旗標，並另外標註 <code>T2.5</code> 實戰中 <code>agy</code> 的實際啟動差異：
+        </p>
+<pre><code># Claude 實作者（規則範例；stream-json 供事後稽核）
+cd $W/impl-ws &amp;&amp; T claude -p "$(cat brief)" --model claude-opus-5-5 --effort high \
+  --dangerously-skip-permissions \
+  --append-system-prompt "You are a worker. Follow the brief only." \
+  --output-format stream-json --verbose &gt; log
+
+# Claude 規格編輯（規則範例；禁止 Bash 與網路）
+cd $W/spec-ws &amp;&amp; T claude -p "$(cat brief)" --model claude-opus-5-5 --effort high \
+  --permission-mode acceptEdits --allowedTools "Read,Edit,Write,Glob,Grep" \
+  --disallowedTools "Bash,WebFetch,WebSearch" --output-format stream-json --verbose &gt; log
+
+# Claude 瀏覽器 E2E（規則範例；限 127.0.0.1:&lt;port&gt; 新分頁）
+T claude -p "$(cat brief)" --chrome --model claude-sonnet-5-5 --effort high \
+  --dangerously-skip-permissions --output-format stream-json --verbose &gt; log
+
+# Codex 審閱（唯讀沙盒）
+T codex exec -m gpt-6.2-sol -c model_reasoning_effort=high \
+  -s read-only -C $W/tests-ws --skip-git-repo-check -o report - &lt; brief
+
+# Codex 寫測試（工作區可寫沙盒）
+T codex exec -m gpt-6.2-astra -c model_reasoning_effort=high \
+  -s workspace-write -C $W/tests-ws --skip-git-repo-check -o report - &lt; brief
+
+# agy 審閱（規則範例；唯讀計畫模式）
+T agy -p "$(cat brief)" --mode plan --model gemini-4-neon-high &gt; report
+
+# agy 驗證／E2E／驗收（規則範例 ORCHESTRATION.md:119）
+cd $W/verify-ws &amp;&amp; T agy -p "$(cat brief)" --dangerously-skip-permissions --model gemini-4-neon-high &gt; report
+# ↑ T2.5 實戰記錄（PROGRESS.md:87,204）：該帳號不支援 --mode auto，實際以預設模式＋--sandbox 執行：
+cd $W/verify-ws &amp;&amp; T agy -p "$(cat brief)" --sandbox --model gemini-4-neon-high &gt; report</code></pre>
+      </section>
+
+      <!-- Section 6 -->
+      <section id="s6">
+        <h2><span class="sec-num">06</span>Phase 0–6 流程與關卡</h2>
+        <p>
+          整個專案從空 repo 到最終 Preline 介面改版交付，共經歷 <strong>Phase 0 至 Phase 6</strong>（含中途補立的 0.5 環境搭建、0.6 Python 環境與 2.5 合約檢查）。每個關鍵轉折都設有硬關卡，確保未達標絕不往下流（<code>materials/ORCHESTRATION.md:57-68</code>、<code>materials/PROGRESS.md:44-57</code>）。
+        </p>
+
+        <figure>
+          <div class="svg-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 648" width="100%" role="img" aria-label="Phase 0 至 Phase 6 流程圖：顯示每個 Phase 的主要任務、同步與重疊步驟、六道關卡，以及 Phase 5 交付後於 20:40 確立 E7 證據規則再進入 Phase 6">
+              <defs>
+                <marker id="m4-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--accent)" />
+                </marker>
+              </defs>
+
+              <!-- Row 1: Phase 0 -> Phase 1 -> Gate 1 -->
+              <rect x="14" y="16" width="234" height="106" rx="10" fill="var(--tint-neutral)" stroke="var(--border)" stroke-width="1.6" />
+              <text x="131" y="40" text-anchor="middle" font-size="14" class="svg-title">Phase 0 / 0.5 / 0.6 準備</text>
+              <text x="131" y="63" text-anchor="middle" font-size="13" class="svg-text">git / uv / .orchestra / 模型政策</text>
+              <text x="131" y="84" text-anchor="middle" font-size="13" class="svg-text">Python 骨架＋AGENTS.md</text>
+              <text x="131" y="106" text-anchor="middle" font-size="13" class="svg-muted">關卡：環境與 lint/mypy 通過</text>
+
+              <line x1="248" y1="69" x2="270" y2="69" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="274" y="16" width="352" height="106" rx="10" fill="var(--tint-info)" stroke="var(--info)" stroke-width="1.6" />
+              <text x="450" y="40" text-anchor="middle" font-size="14" class="svg-title">Phase 1 規格與合約</text>
+              <text x="450" y="63" text-anchor="middle" font-size="13" class="svg-text">v0.1 → [同步] Codex ‖ agy 唯讀審閱 → v0.2</text>
+              <text x="450" y="84" text-anchor="middle" font-size="13" class="svg-text">轉向 SVG 重寫 v1.0＋contracts/（D9–D10）</text>
+              <text x="450" y="106" text-anchor="middle" font-size="13" class="svg-muted">D11 跳過 v1.0 審閱；D12 移至 docs/SPEC.md</text>
+
+              <line x1="626" y1="69" x2="648" y2="69" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="652" y="24" width="174" height="90" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="2" />
+              <text x="739" y="57" text-anchor="middle" font-size="14" class="svg-title">關卡 1：使用者核准</text>
+              <text x="739" y="84" text-anchor="middle" font-size="13" class="svg-muted">D1 核准 SPEC v1.0</text>
+
+              <!-- Down connector -->
+              <path d="M 739 114 L 739 140 L 184 140 L 184 158" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <!-- Row 2: Phase 2 (Parallel + Overlap) -> Phase 2.5 -> Gate 2 -->
+              <rect x="14" y="162" width="340" height="118" rx="10" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.6" />
+              <text x="184" y="186" text-anchor="middle" font-size="14" class="svg-title">Phase 2 開發（雙盲並行＋重疊）</text>
+              <rect x="26" y="198" width="150" height="70" rx="7" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.2" />
+              <text x="101" y="219" text-anchor="middle" font-size="13" class="svg-title">Claude（impl-ws）</text>
+              <text x="101" y="239" text-anchor="middle" font-size="13" class="svg-muted">T2.1a 後端 →</text>
+              <text x="101" y="258" text-anchor="middle" font-size="13" class="svg-muted">T2.1b 前端（重疊）</text>
+              <text x="184" y="238" text-anchor="middle" font-size="15" class="svg-title">‖</text>
+              <rect x="192" y="198" width="150" height="70" rx="7" fill="var(--surface)" stroke="var(--ok)" stroke-width="1.2" />
+              <text x="267" y="219" text-anchor="middle" font-size="13" class="svg-title">Codex（tests-ws）</text>
+              <text x="267" y="239" text-anchor="middle" font-size="13" class="svg-muted">T2.2 寫測試</text>
+              <text x="267" y="258" text-anchor="middle" font-size="13" class="svg-muted">（54 節點）</text>
+
+              <line x1="354" y1="221" x2="376" y2="221" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="380" y="162" width="256" height="118" rx="10" fill="var(--tint-info)" stroke="var(--info)" stroke-width="1.6" />
+              <text x="508" y="186" text-anchor="middle" font-size="14" class="svg-title">Phase 2.5 合約檢查</text>
+              <text x="508" y="211" text-anchor="middle" font-size="13" class="svg-text">v1.1/1.1.1 → Codex 對齊（74）</text>
+              <text x="508" y="234" text-anchor="middle" font-size="13" class="svg-text">agy：stubtest＋OpenAPI＋import</text>
+              <text x="508" y="258" text-anchor="middle" font-size="13" class="svg-muted">T2.5（9 偏差）→ T2.6–2.8 → T2.5r</text>
+
+              <line x1="636" y1="221" x2="658" y2="221" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="662" y="176" width="164" height="90" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="2" />
+              <text x="744" y="210" text-anchor="middle" font-size="14" class="svg-title">關卡 2：合約一致</text>
+              <text x="744" y="236" text-anchor="middle" font-size="13" class="svg-muted">T2.5r PASS（0 偏差）</text>
+
+              <!-- Down connector -->
+              <path d="M 744 266 L 744 294 L 146 294 L 146 312" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <!-- Row 3: Phase 3 -> Gate 3 -> Phase 4 -> Gate 4 -->
+              <rect x="14" y="316" width="260" height="116" rx="10" fill="var(--tint-info)" stroke="var(--info)" stroke-width="1.6" />
+              <text x="144" y="340" text-anchor="middle" font-size="14" class="svg-title">Phase 3 驗證測試</text>
+              <text x="144" y="364" text-anchor="middle" font-size="13" class="svg-text">agy：審查＋10 突變＋跑測試 ×3</text>
+              <text x="144" y="388" text-anchor="middle" font-size="13" class="svg-text">[同步] T3.5 修 R10 ‖ T3.6 補測</text>
+              <text x="144" y="412" text-anchor="middle" font-size="13" class="svg-muted">T3r2：75/75 ×3，7 突變全殺</text>
+
+              <line x1="274" y1="374" x2="294" y2="374" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="298" y="328" width="136" height="92" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="2" />
+              <text x="366" y="362" text-anchor="middle" font-size="14" class="svg-title">關卡 3：測試過</text>
+              <text x="366" y="388" text-anchor="middle" font-size="13" class="svg-muted">75/75 ×3 無 flaky</text>
+
+              <line x1="434" y1="374" x2="454" y2="374" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="458" y="316" width="212" height="116" rx="10" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.6" />
+              <text x="564" y="340" text-anchor="middle" font-size="14" class="svg-title">Phase 4 AI 跑 E2E</text>
+              <text x="564" y="364" text-anchor="middle" font-size="13" class="svg-text">agy：6 e2e＋探索＋perf</text>
+              <text x="564" y="388" text-anchor="middle" font-size="13" class="svg-text">Chrome：T4.4＋T4.4b</text>
+              <text x="564" y="412" text-anchor="middle" font-size="13" class="svg-muted">E4 → T4.5 v1.1.3</text>
+
+              <line x1="670" y1="374" x2="688" y2="374" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="692" y="324" width="134" height="100" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="2" />
+              <text x="759" y="352" text-anchor="middle" font-size="14" class="svg-title">關卡 4：E2E 過</text>
+              <text x="759" y="378" text-anchor="middle" font-size="13" class="svg-muted">當時未立 E7</text>
+              <text x="759" y="399" text-anchor="middle" font-size="13" class="svg-muted">僅留文字回報</text>
+
+              <!-- Down connector -->
+              <path d="M 759 424 L 759 452 L 116 452 L 116 470" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <!-- Row 4: Phase 5 -> E7 Milestone -> Phase 6 -> Gate 6 -->
+              <rect x="14" y="474" width="206" height="156" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.6" />
+              <text x="117" y="499" text-anchor="middle" font-size="14" class="svg-title">Phase 5 驗收與交付</text>
+              <text x="117" y="525" text-anchor="middle" font-size="13" class="svg-text">agy clean clone：</text>
+              <text x="117" y="547" text-anchor="middle" font-size="13" class="svg-text">uv sync＋AC12 全過</text>
+              <text x="117" y="570" text-anchor="middle" font-size="13" class="svg-text">T5.2 併 tests/；v1.1.4</text>
+              <text x="117" y="596" text-anchor="middle" font-size="13" class="svg-muted">關卡 5：ACCEPT</text>
+              <text x="117" y="616" text-anchor="middle" font-size="13" class="svg-muted">20:20 交付使用者</text>
+
+              <line x1="220" y1="552" x2="238" y2="552" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <!-- Explicit E7 Milestone between Phase 5 and Phase 6 -->
+              <rect x="242" y="492" width="124" height="120" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.8" stroke-dasharray="5,3" />
+              <text x="304" y="518" text-anchor="middle" font-size="14" class="svg-title">20:40 立 E7</text>
+              <text x="304" y="544" text-anchor="middle" font-size="13" class="svg-text">E2E 證據規則</text>
+              <line x1="256" y1="558" x2="352" y2="558" stroke="var(--warn)" stroke-width="1" opacity="0.5" />
+              <text x="304" y="580" text-anchor="middle" font-size="13" class="svg-muted">20:50 開新任務</text>
+              <text x="304" y="600" text-anchor="middle" font-size="13" class="svg-muted">決策 E8–E10</text>
+
+              <line x1="366" y1="552" x2="384" y2="552" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="388" y="474" width="276" height="156" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.6" />
+              <text x="526" y="499" text-anchor="middle" font-size="14" class="svg-title">Phase 6 Preline UI（不改 SPEC）</text>
+              <text x="526" y="525" text-anchor="middle" font-size="13" class="svg-text">T6.1 改版／T6.2 AGENTS（交錯）</text>
+              <text x="526" y="550" text-anchor="middle" font-size="13" class="svg-text">[同步] T6.3 迴歸 ‖ T6.4 瀏覽器</text>
+              <text x="526" y="572" text-anchor="middle" font-size="13" class="svg-muted">（埠號 18000–399／18500–599）</text>
+              <text x="526" y="596" text-anchor="middle" font-size="13" class="svg-text">T6.1-fix1（第 1 輪）→</text>
+              <text x="526" y="618" text-anchor="middle" font-size="13" class="svg-text">[同步] T6.3 重跑 ‖ T6.4b 雙 PASS</text>
+
+              <line x1="664" y1="552" x2="682" y2="552" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m4-arrow-accent)" />
+
+              <rect x="686" y="492" width="140" height="120" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="2" />
+              <text x="756" y="522" text-anchor="middle" font-size="14" class="svg-title">關卡 6：最終交付</text>
+              <text x="756" y="550" text-anchor="middle" font-size="13" class="svg-muted">迴歸全過</text>
+              <text x="756" y="572" text-anchor="middle" font-size="13" class="svg-muted">＋E7 截圖</text>
+              <text x="756" y="594" text-anchor="middle" font-size="13" class="svg-muted">與原始輸出齊全</text>
+            </svg>
+          </div>
+          <figcaption>圖 4：Phase 0–6 流程、同步／重疊步驟、E7 建立時點與關卡設計（資料來源：<code>materials/ORCHESTRATION.md:57-68</code>、<code>materials/PROGRESS.md:44-57,174-229</code>、<code>materials/git-log.txt:3-4</code>）</figcaption>
+        </figure>
+
+        <div class="callout ok">
+          <span class="callout-title">實際同步啟動與執行重疊整理</span>
+          <ul>
+            <li><strong>Phase 1（明文記載同步啟動）：</strong><code>T1.2</code>（Codex 審閱）‖ <code>T1.3</code>（<code>agy</code> 審閱）同時在背景啟動（<code>materials/PROGRESS.md:179</code>）。</li>
+            <li><strong>Phase 2（明文同步啟動＋可確認重疊）：</strong><code>T2.1a</code>（Claude 後端實作）‖ <code>T2.2</code>（Codex 撰寫測試）於 <code>23:35</code> 同時在背景啟動；<code>T2.1a</code> 於 <code>23:46</code> 完成後接續派出 <code>T2.1b</code>（<code>23:49</code> 完成），整個 <code>T2.1b</code> 落在 <code>T2.2</code>（<code>23:52</code> 完成）回報之前，兩者有明確執行重疊（<code>materials/PROGRESS.md:195-198</code>）。</li>
+            <li><strong>Phase 3（明文記載同步啟動）：</strong><code>T3.5</code>（Claude 修 R10#9）‖ <code>T3.6</code>（Codex 補涵蓋缺口與強化時序）同時在背景啟動（<code>materials/PROGRESS.md:210</code>）。</li>
+            <li><strong>Phase 6（兩組明文同步啟動＋一組執行區間交錯）：</strong>日誌明文記載並行啟動的有兩組——<code>T6.3</code>（<code>agy</code> 迴歸）‖ <code>T6.4</code>（瀏覽器 E2E）與修正後的 <code>T6.3 重跑</code> ‖ <code>T6.4b</code> 補驗（<code>materials/PROGRESS.md:226,228</code>）；至於 <code>T6.1</code>（Preline 改版）與 <code>T6.2</code>（更新 <code>AGENTS.md</code>），日誌僅記載同於 <code>20:50</code> 備妥任務說明，並於 <code>20:51</code> 與 <code>21:10</code> 先後完成，未明記是否同時啟動（<code>materials/PROGRESS.md:224-226</code>）。</li>
+            <li><strong>刻意錯開不並行：</strong>Phase 4 原本架構允許 <code>agy</code> 與瀏覽器並行，但實際排程刻意先跑完 <code>T4.1</code>–<code>T4.3</code> 再啟動 <code>T4.4</code>，避免瀏覽器負載干擾 <code>AC11</code> 效能量測（<code>materials/PROGRESS.md:213</code>）。</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Section 7 -->
+      <section id="s7">
+        <h2><span class="sec-num">07</span>失敗怎麼分派與真實案例</h2>
+        <p>
+          當 Phase 3、4 或 6 出現失敗，協調者<strong>不自己猜誰錯</strong>，而是依據獨立驗證方（<code>agy</code> 或瀏覽器 E2E）的分類結果進行路由；規格模糊則可由 <code>agy</code> 或協調者判定後提報使用者。同一個問題最多來回 <strong>3 輪</strong>，若第 3 輪重驗仍未通過就升級交給使用者裁決，避免 AI 之間陷入無窮互踢皮球（<code>materials/ORCHESTRATION.md:69-77</code>）。
+        </p>
+
+        <figure>
+          <div class="svg-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 492" width="100%" role="img" aria-label="失敗分派流程圖：驗證方或協調者分類失敗類型後，分別路由給 Claude 實作者、Codex 測試作者或經使用者交由規格編輯，接著重組並重驗：通過則結案，未通過且未用滿 3 輪則再派工，已用滿 3 輪則升級交由使用者裁決">
+              <defs>
+                <marker id="m5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--muted)" />
+                </marker>
+                <marker id="m5-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--accent)" />
+                </marker>
+                <marker id="m5-arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--ok)" />
+                </marker>
+                <marker id="m5-arrow-err" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--err)" />
+                </marker>
+              </defs>
+
+              <!-- Entry node -->
+              <rect x="14" y="152" width="166" height="114" rx="10" fill="var(--tint-err)" stroke="var(--err)" stroke-width="1.8" />
+              <text x="97" y="180" text-anchor="middle" font-size="14" class="svg-title">Phase 3 / 4 / 6 失敗</text>
+              <text x="97" y="204" text-anchor="middle" font-size="13" class="svg-muted">agy 或瀏覽器提出</text>
+              <text x="97" y="224" text-anchor="middle" font-size="13" class="svg-muted">分類與行為證據</text>
+              <text x="97" y="248" text-anchor="middle" font-size="13" class="svg-muted">（歧義協調者亦可判）</text>
+
+              <!-- Branch lines -->
+              <path d="M 180 186 L 200 186 L 200 68 L 214 68" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m5-arrow-accent)" />
+              <line x1="180" y1="209" x2="214" y2="209" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m5-arrow-accent)" />
+              <path d="M 180 232 L 200 232 L 200 350 L 214 350" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m5-arrow-accent)" />
+
+              <!-- Branch 1: IMPL BUG -->
+              <rect x="218" y="20" width="268" height="96" rx="10" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.6" />
+              <text x="352" y="46" text-anchor="middle" font-size="14" class="svg-title">IMPL BUG／視覺瑕疵</text>
+              <text x="352" y="72" text-anchor="middle" font-size="13" class="svg-text">→ Claude 實作 worker（impl-ws）</text>
+              <text x="352" y="96" text-anchor="middle" font-size="13" class="svg-muted">只給 R-id＋預期／實際行為</text>
+
+              <!-- Branch 2: TEST BUG -->
+              <rect x="218" y="161" width="268" height="96" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.6" />
+              <text x="352" y="187" text-anchor="middle" font-size="14" class="svg-title">TEST BUG／缺口／時序</text>
+              <text x="352" y="213" text-anchor="middle" font-size="13" class="svg-text">→ Codex 測試作者（tests-ws）</text>
+              <text x="352" y="237" text-anchor="middle" font-size="13" class="svg-muted">只依 SPEC 與缺口清單修正</text>
+
+              <!-- Branch 3: SPEC AMBIGUOUS -->
+              <rect x="218" y="302" width="268" height="96" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.6" />
+              <text x="352" y="328" text-anchor="middle" font-size="14" class="svg-title">SPEC AMBIGUOUS（agy／協調者）</text>
+              <text x="352" y="354" text-anchor="middle" font-size="13" class="svg-text">→ 使用者裁決 → Claude 規格編輯</text>
+              <text x="352" y="378" text-anchor="middle" font-size="13" class="svg-muted">更新 SPEC／合約並同步各工作區</text>
+
+              <!-- Merge into Re-verify Gate -->
+              <path d="M 486 68 L 504 68 L 504 209 L 518 209" fill="none" stroke="var(--muted)" stroke-width="1.6" marker-end="url(#m5-arrow)" />
+              <line x1="486" y1="209" x2="518" y2="209" stroke="var(--muted)" stroke-width="1.6" marker-end="url(#m5-arrow)" />
+              <path d="M 486 350 L 504 350 L 504 209" fill="none" stroke="var(--muted)" stroke-width="1.6" />
+
+              <!-- Re-verify & Round Check Gate -->
+              <rect x="522" y="154" width="144" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2" />
+              <text x="594" y="182" text-anchor="middle" font-size="14" class="svg-title">重組並重驗</text>
+              <text x="594" y="206" text-anchor="middle" font-size="13" class="svg-text">同問題輪次 +1</text>
+              <text x="594" y="228" text-anchor="middle" font-size="13" class="svg-muted">記於 PROGRESS</text>
+              <text x="594" y="250" text-anchor="middle" font-size="13" class="svg-muted">上限：3 輪</text>
+
+              <!-- Outcome 1: Pass -> Close / Proceed -->
+              <path d="M 594 154 L 594 68 L 678 68" fill="none" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m5-arrow-ok)" />
+              <text x="634" y="58" text-anchor="middle" font-size="13" class="svg-title" style="fill: var(--ok);">重驗通過</text>
+              <rect x="682" y="20" width="144" height="96" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.8" />
+              <text x="754" y="54" text-anchor="middle" font-size="14" class="svg-title" style="fill: var(--ok);">結案通過</text>
+              <text x="754" y="80" text-anchor="middle" font-size="13" class="svg-text">推進下一關卡</text>
+              <text x="754" y="102" text-anchor="middle" font-size="13" class="svg-muted">記錄收斂結果</text>
+
+              <!-- Outcome 2: Failed & Exhausted 3 rounds -> Escalate to User -->
+              <path d="M 666 209 L 754 209 L 754 298" fill="none" stroke="var(--err)" stroke-width="1.8" marker-end="url(#m5-arrow-err)" />
+              <text x="754" y="198" text-anchor="middle" font-size="13" class="svg-title" style="fill: var(--err);">未過且滿 3 輪</text>
+              <rect x="682" y="302" width="144" height="96" rx="10" fill="var(--tint-err)" stroke="var(--err)" stroke-width="1.8" />
+              <text x="754" y="334" text-anchor="middle" font-size="14" class="svg-title" style="fill: var(--err);">停止自動重試</text>
+              <text x="754" y="360" text-anchor="middle" font-size="13" class="svg-text">交由使用者</text>
+              <text x="754" y="382" text-anchor="middle" font-size="13" class="svg-text">直接裁決</text>
+
+              <!-- Outcome 3: Failed & Remaining rounds (< 3) -> Loop back along bottom -->
+              <path d="M 594 264 L 594 454 L 97 454 L 97 270" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#m5-arrow-accent)" />
+              <rect x="164" y="438" width="404" height="32" rx="6" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.2" />
+              <text x="366" y="459" text-anchor="middle" font-size="13" class="svg-title" style="fill: var(--accent);">未通過且仍有輪次（已用 &lt; 3 輪）：再派工（實作第 2 輪起 xhigh）</text>
+            </svg>
+          </div>
+          <figcaption>圖 5：失敗判定、3 輪上限與通過／升級出口流程（資料來源：<code>materials/ORCHESTRATION.md:69-77,96</code>、<code>materials/PROGRESS.md:122-128</code>）</figcaption>
+        </figure>
+
+        <h3>專案中的三個真實分派案例</h3>
+        <div class="case-list">
+          <div class="case-card">
+            <h4>案例一（Phase 3）：2 個 <code>IMPL BUG</code>＋測試缺口，雙線並行 1 輪收斂</h4>
+            <p>
+              <code>T3</code> 首次執行 <code>pytest</code> 回報 <code>71/73</code>（<code>T3: FAIL</code>），<code>agy</code> 判定 2 個失敗皆為 <code>IMPL BUG</code>（違反 R10 第 9 項：<code>apply_event</code> 未驗證 <code>run_started</code> 欄位型別與 <code>log.ts</code>），另在測試審查中列出 R14／R15／R19／R25／R26 涵蓋缺口與 7 個時序敏感節點（<code>materials/reports/p3-agy-verify.md:36-55,97-118</code>）。協調者同步派工：只給行為描述讓 Claude 實作者修 <code>app/domain.py</code>（<code>T3.5</code>），同時把缺口與時序風險比照 <code>TEST BUG</code> 交給 Codex（<code>T3.6</code>）。其中 R25（無執行中 task 的中斷復原）因無法透過公開介面固定中斷點，<code>T3.6</code> 記錄為不可做確定性測試而未增補；其餘缺口補齊後，第 2 輪重驗（<code>T3r2</code>）達成 <code>75/75 ×3</code> 全過且 7 項目標突變全殺（<code>materials/PROGRESS.md:92,96-98</code>）。
+            </p>
+          </div>
+          <div class="case-card">
+            <h4>案例二（Phase 4）：瀏覽器實測發現 SPEC 歧義 → 使用者裁決 <code>E4</code> → 規格編輯</h4>
+            <p>
+              <code>T4.4b</code> 實測「串流途中停掉伺服器、再用同一個資料庫重啟」（檢查 <code>A3</code>）時，頁面靠 <code>EventSource</code> 自動重連就補齊並結束，並未重跑整套同步流程（<code>materials/reports/p4-claude-browser-b.md:31-45</code>）。這與 R27 字面的「網路錯誤 → 3 秒後重跑同步流程」出現解釋空間。協調者判定為 <code>SPEC AMBIGUOUS</code> 提報使用者，使用者裁決 <code>E4</code>（算符合、補寫一句），再由 Claude 規格編輯（<code>T4.5</code>）升級 <code>docs/SPEC.md</code> 至 v1.1.3 並同步各工作區（<code>materials/PROGRESS.md:102-103,147,216-218</code>）。
+            </p>
+          </div>
+          <div class="case-card">
+            <h4>案例三（Phase 6）：視覺瑕疵 → <code>T6.1-fix1</code>（第 1 輪）→ 雙重並行重驗 <code>PASS</code></h4>
+            <p>
+              Preline 視覺改版後，<code>T6.4</code> 瀏覽器 E2E 回報 <code>T6.4: FAIL</code>（<code>0 deviations, 1 visual issue</code>）：展開無錯誤框的 task 卡片時，log 框上方留白 16 px、下方卻有 28 px（<code>materials/reports/p6-claude-browser.md:63-67</code>）。協調者打開截圖 <code>R3-02</code> 確認後，派 <code>T6.1-fix1</code>（第 1 輪）。實作者查出根因是 Tailwind v4 的 <code>space-y-3</code> 對隱藏的 <code>.error-box</code> 仍生效，只改 2 個 <code>class</code> 字串（<code>taskBody</code> 去掉 <code>space-y-3</code>、<code>errorBox</code> 改加 <code>mt-3</code>）。隨後並行重跑 <code>T6.3 重跑</code> 與 <code>T6.4b</code> 瀏覽器補驗：無錯誤框時淺色／深色上下留白皆量得 <code>17 / 17 px</code>（含 1 px 邊框，實質內距 <code>16 / 16 px</code>），顯示錯誤框時量得 <code>17 / 12 / 17 px</code>（log 至錯誤框 12 px 為刻意的 <code>mt-3</code>），兩邊同時 <code>PASS</code>（<code>materials/PROGRESS.md:112,227-229</code>、<code>materials/reports/p6-claude-browser-recheck.md:5-16</code>）。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 8 -->
+      <section id="s8">
+        <h2><span class="sec-num">08</span>模型政策與推理強度（<code>D5</code>）</h2>
+        <p>
+          模型選擇由使用者在 <code>D5</code> 訂出下限與禁用名單：協調者可依任務難度往上調，但<strong>不得低於下限，且推理強度一律不低於 <code>medium</code></strong>（<code>materials/ORCHESTRATION.md:79-101</code>）。以下所有模型名稱皆直接取自該檔。
+        </p>
+
+        <h3>各廠商模型下限與可用梯度</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Worker</th>
+                <th>最低下限</th>
+                <th>可用模型（由弱到強）</th>
+                <th>明確禁用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Claude（<code>claude -p</code>）</strong></td>
+                <td><code>Sonnet 5.5</code></td>
+                <td><code>claude-sonnet-5-5</code> → <code>claude-opus-5-5</code> → <code>claude-fable-5-2</code></td>
+                <td><code>Haiku</code></td>
+              </tr>
+              <tr>
+                <td><strong>Codex</strong></td>
+                <td><code>GPT-6.2 Sol</code></td>
+                <td><code>gpt-6.2-sol</code> → <code>gpt-6.2-astra</code></td>
+                <td><code>Luna</code>、<code>Terra</code>、<code>Reserve</code>、舊世代</td>
+              </tr>
+              <tr>
+                <td><strong><code>agy</code></strong></td>
+                <td><code>Gemini 4 Hydrogen</code></td>
+                <td><code>gemini-4-hydrogen-{medium,high,xhigh}</code> → <code>gemini-4-neon-{medium,high,xhigh}</code></td>
+                <td><code>Argon</code>、<code>3.8 Flash</code>、<code>gpt-oss</code>、所有 <code>-low</code>；且<strong>禁用 Claude 模型</strong>以維持三家分立</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>各類任務預設配置</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>任務類型</th>
+                <th>預設模型</th>
+                <th>推理強度</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>規格編輯、產出合約檔</td>
+                <td><code>claude-opus-5-5</code></td>
+                <td><code>high</code></td>
+              </tr>
+              <tr>
+                <td>實作，以及第一次修 bug</td>
+                <td><code>claude-opus-5-5</code></td>
+                <td><code>high</code>（第 2 輪以後調到 <code>xhigh</code>）</td>
+              </tr>
+              <tr>
+                <td>Codex 寫測試</td>
+                <td><code>gpt-6.2-astra</code></td>
+                <td><code>high</code></td>
+              </tr>
+              <tr>
+                <td>Codex 審閱</td>
+                <td><code>gpt-6.2-sol</code></td>
+                <td><code>high</code></td>
+              </tr>
+              <tr>
+                <td><code>agy</code> 審查測試、突變抽檢、E2E、驗收</td>
+                <td><code>gemini-4-neon-high</code></td>
+                <td><code>high</code></td>
+              </tr>
+              <tr>
+                <td><code>agy</code> 單純重跑測試</td>
+                <td><code>gemini-4-hydrogen-medium</code></td>
+                <td><code>medium</code></td>
+              </tr>
+              <tr>
+                <td>瀏覽器 E2E</td>
+                <td><code>claude-sonnet-5-5</code></td>
+                <td><code>high</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 9 -->
+      <section id="s9">
+        <h2><span class="sec-num">09</span>E2E 證據規則（<code>E7</code>）</h2>
+        <p>
+          為什麼需要這條規則？在 Phase 5 交付後，使用者希望<strong>有具體憑據證明 agent 真的跑了 E2E</strong>，而不是只憑一紙文字報告。因為先前的 Phase 4 沒有截圖規範，原始紀錄也已依清理規則刪除，只剩文字回報，於是使用者在 <code>2026-11-21 20:40</code> 定下決策 <code>E7</code>，更新 <code>materials/ORCHESTRATION.md:123-146</code>，並於隨後的 Phase 6 依各任務範圍套用（<code>materials/PROGRESS.md:145,223</code>）。
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>角色</th>
+                <th>負責範圍</th>
+                <th>通用規則要求留下的證據（<code>ORCHESTRATION.md:129-138</code>）</th>
+                <th>存放位置與保存原則</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>瀏覽器 E2E</strong><br>（Claude in Chrome）</td>
+                <td>所有畫面上看得到的互動、視覺、斷線恢復、多分頁</td>
+                <td>
+                  每項檢查至少截 2 張（操作前、結果後，含關鍵狀態轉折）；用 <code>computer</code> 的 <code>screenshot</code>（<code>save_to_disk: true</code>）存成 <code>&lt;檢查ID&gt;-&lt;序號&gt;-&lt;說明&gt;.png</code>；整段操作用 <code>gif_creator</code>（<code>download: true</code>）錄製 GIF；另附 <code>INDEX.md</code>（檢查 ID、截圖時間、畫面說明）並在回報逐項列出檔名。
+                </td>
+                <td rowspan="2">
+                  主 repo 的 <code>.orchestra/evidence/&lt;任務ID&gt;/</code>（brief 給絕對路徑指回主 repo）。已列進 <code>.gitignore</code> <strong>只留本機、不 commit</strong>，但清理時<strong>不刪</strong>。
+                </td>
+              </tr>
+              <tr>
+                <td><strong><code>agy</code></strong><br>（HTTP／迴歸 E2E）</td>
+                <td>畫面上看不到的協定與系統行為（<code>curl -N</code> 原始串流、心跳、標頭、延遲、品質關卡）</td>
+                <td>
+                  改存原始輸出文字檔（串流輸出、<code>uvicorn</code> access log、<code>pytest</code> 輸出等），<strong>每個檔案開頭寫明指令與開始時間</strong>；同樣附 <code>INDEX.md</code> 並在回報對應檔名。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          <strong>Phase 6 實作時的任務級差異：</strong>通用規則要求整段錄製 GIF 與每項 ≥ 2 張截圖，但具體 brief 依任務性質有微調——完整視覺 E2E 任務 <code>T6.4</code> 允許 GIF 錄整段或至少涵蓋 <code>V2</code>、<code>R2</code>、<code>R5</code>（實際錄製 44 幀覆蓋這三項，<code>materials/briefs/p6-claude-browser.md:34</code>）；而針對單一 CSS 修正的補驗任務 <code>T6.4b</code>，brief 要求以 <code>getBoundingClientRect</code> 量測、截圖與 <code>INDEX.md</code> 驗證（未要求錄製 GIF），實際交付 6 張 PNG 與 <code>INDEX.md</code>（<code>materials/briefs/p6-claude-browser-recheck.md:23-34</code>、<code>materials/reports/p6-claude-browser-recheck.md:25</code>）。
+        </p>
+
+        <h3>協調者怎麼稽核證據？（<code>materials/ORCHESTRATION.md:140-145</code>）</h3>
+        <ol>
+          <li><strong>檔案與數量核對：</strong>確認 <code>INDEX.md</code> 列出的每個檔案都真實存在，數量與檢查項目對得上；<strong>缺證據的檢查一律算沒做，必須重跑</strong>。例如 Phase 6 中，<code>T6.3</code> 留下 25 個輸出檔＋<code>INDEX.md</code> 共 26 檔（<code>materials/evidence-index/T6.3-INDEX.md</code>）；<code>T6.4</code> 證據夾共 52 檔，索引列出 <strong>50 個 PNG 檔名</strong>（其中 <code>R1-*</code>／<code>R2-*</code> 複製自對應 <code>V</code> 截圖以供不同檢查引用）、1 支 44 幀 GIF 與 <code>INDEX.md</code>（註：回報正文第 5 行誤寫為 49 張 PNG，與索引的 50 筆不一致，見 <code>materials/evidence-index/T6.4-INDEX.md:4-57</code>、<code>materials/reports/p6-claude-browser.md:5,82</code>）。</li>
+          <li><strong>實際打開截圖肉眼核對：</strong>協調者必須親自打開<strong>至少 3 張截圖</strong>（或所有失敗項目的截圖），確認畫面內容與回報敘述一致。在 Phase 6 中，協調者實際檢視了 <code>T6.1</code> 的 4 張、<code>T6.4</code> 的 <code>R3-02</code>、<code>T6.1-fix1</code> 的 <code>fix1-01</code>，以及 <code>T6.4b</code> 的 <code>F1</code>、<code>F2</code>、<code>F4-02</code>（<code>materials/PROGRESS.md:109,112,228</code>）。</li>
+          <li><strong>時間戳查驗：</strong><code>E7</code> 明定核對<strong>截圖時間</strong>是否落在該次 worker 的執行區間內（<code>materials/ORCHESTRATION.md:144</code>）；HTTP 原始輸出則須在各檔案開頭寫明指令與開始時間以供查驗（<code>materials/ORCHESTRATION.md:136</code>）。</li>
+          <li><strong>交付列明路徑：</strong>在交付報告列出每個 E2E 任務的證據資料夾，讓使用者可以隨時抽查。</li>
+        </ol>
+      </section>
+
+      <!-- Section 10 -->
+      <section id="s10">
+        <h2><span class="sec-num">10</span>實際數據與使用者決策紀錄</h2>
+        <p>
+          下表所有任務狀態、模型、耗時、worker 對話回合（turns）與費用，皆<strong>嚴格取自</strong> <code>materials/PROGRESS.md</code> 與 <code>materials/reports/*.md</code>；原始資料未記錄模型、耗時或費用的欄位一律標示為「未記錄」或 <code>—</code>，不以政策預設推估。
+        </p>
+
+        <div class="table-wrap">
+          <table class="compact">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Phase</th>
+                <th>任務摘要</th>
+                <th>負責與實際記錄模型</th>
+                <th>結果</th>
+                <th>紀錄耗時／worker 對話回合／費用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>T0.6</code></td>
+                <td>0.6</td>
+                <td>Python／FastAPI 環境與 <code>/health</code> 骨架</td>
+                <td>Claude 實作（<code>claude-sonnet-5-5</code> / <code>medium</code>）</td>
+                <td><span class="badge ok">完成</span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T1.2</code></td>
+                <td>1</td>
+                <td>SPEC v0.1 測試角度審閱</td>
+                <td>Codex（模型未記錄）</td>
+                <td><span class="badge warn"><code>needs-changes</code></span>（進度表記 23 條，所附回報可數 22 條）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T1.3</code></td>
+                <td>1</td>
+                <td>SPEC v0.1 SSE／E2E 審閱</td>
+                <td><code>agy</code>（模型未記錄）</td>
+                <td><span class="badge warn"><code>needs-changes</code></span>（15 條）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T1.6</code></td>
+                <td>1</td>
+                <td>SPEC v0.3 與舊合約</td>
+                <td>Claude 規格編輯（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge muted">作廢</span>（<code>D9</code> 轉向 SVG）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T1.8</code></td>
+                <td>1</td>
+                <td>依 SVG 重寫 SPEC v1.0＋合約</td>
+                <td><code>agy</code> session（使用者指定，模型未記錄）</td>
+                <td><span class="badge ok">完成</span>（R1–R29, AC1–AC12）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T2.1a</code></td>
+                <td>2</td>
+                <td>後端實作（R1–R25, R28–R29）</td>
+                <td>Claude 實作（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（2 <code>CONFLICT</code>, 3 <code>GAP</code>）</td>
+                <td>10 分／34 回合／$2.77</td>
+              </tr>
+              <tr>
+                <td><code>T2.1b</code></td>
+                <td>2</td>
+                <td>前端實作（R26–R27）</td>
+                <td>Claude 實作（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（5 前端 <code>GAP</code>）</td>
+                <td>6.5 分／25 回合／$1.62</td>
+              </tr>
+              <tr>
+                <td><code>T2.2</code></td>
+                <td>2</td>
+                <td>撰寫單元／整合／E2E／效能測試</td>
+                <td>Codex（<code>gpt-6.2-astra</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（54 節點）</td>
+                <td>約 28 分／—</td>
+              </tr>
+              <tr>
+                <td><code>T2.3</code></td>
+                <td>2</td>
+                <td>SPEC v1.0 → v1.1（A1–C5）</td>
+                <td>Claude 規格編輯（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（另報 4 缺陷）</td>
+                <td>約 3 分／—</td>
+              </tr>
+              <tr>
+                <td><code>T2.3b</code></td>
+                <td>2</td>
+                <td>SPEC v1.1 → v1.1.1（<code>docs/SPEC.md</code> 變更明細 D1–D4）</td>
+                <td>Claude 規格編輯（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T2.4</code></td>
+                <td>2</td>
+                <td>測試對齊 v1.1.1</td>
+                <td>Codex（<code>gpt-6.2-astra</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（74 節點，+20）</td>
+                <td>約 14 分／—</td>
+              </tr>
+              <tr>
+                <td><code>T2.5</code></td>
+                <td>2</td>
+                <td>合約檢查（<code>stubtest</code>／OpenAPI／import）</td>
+                <td><code>agy</code>（<code>gemini-4-neon-high</code>）</td>
+                <td><span class="badge err"><code>FAIL</code></span>（9 偏差：8 impl＋1 yaml）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T2.6</code></td>
+                <td>2</td>
+                <td>修 8 項 OpenAPI schema 偏差</td>
+                <td>Claude 實作（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（撞上限後 <code>--resume</code>）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T2.7</code></td>
+                <td>2</td>
+                <td>SPEC v1.1.1 → v1.1.2（<code>E1</code>–<code>E3</code>）</td>
+                <td>Claude 規格編輯（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（<code>--resume</code> 修括號）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T2.8</code></td>
+                <td>2</td>
+                <td>對齊 v1.1.2；首次驗證 <code>E3</code>，專案 Ruff、mypy 與 <code>stubtest</code> 通過</td>
+                <td>Claude 實作（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T2.5r</code></td>
+                <td>2</td>
+                <td>重跑合約檢查（v1.1.2）</td>
+                <td><code>agy</code>（<code>gemini-4-neon-high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（0 偏差）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T3</code>（<code>T3.1</code>–<code>T3.3</code>）</td>
+                <td>3</td>
+                <td>測試審查＋10 突變＋跑全套 ×3</td>
+                <td><code>agy</code>（模型未記錄）</td>
+                <td><span class="badge err"><code>FAIL</code></span>（71/73，突變 10/10）</td>
+                <td><code>pytest</code> 約 29 秒 ×3</td>
+              </tr>
+              <tr>
+                <td><code>T3.5</code></td>
+                <td>3</td>
+                <td>修 R10#9 <code>apply_event</code> 驗證</td>
+                <td>Claude 實作（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T3.6</code></td>
+                <td>3</td>
+                <td>補涵蓋缺口與強化時序穩健性</td>
+                <td>Codex（<code>gpt-6.2-astra</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（76 節點，預設 75）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T3r2</code></td>
+                <td>3</td>
+                <td><code>T3</code> 第 2 輪重驗＋7 目標突變</td>
+                <td><code>agy</code>（<code>gemini-4-neon-high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（75/75 ×3，突變 7/7）</td>
+                <td><code>pytest</code> 53 / 51 / 51 秒</td>
+              </tr>
+              <tr>
+                <td><code>T4.1</code>–<code>T4.3</code></td>
+                <td>4</td>
+                <td>真 <code>uvicorn</code> E2E＋探索 10 項＋<code>perf</code></td>
+                <td><code>agy</code>（模型未記錄）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（6 <code>e2e</code> ×3、<code>perf</code> ×3）</td>
+                <td><code>e2e</code> 約 16 秒 ×3；<code>perf</code> 約 1.5 秒 ×3</td>
+              </tr>
+              <tr>
+                <td><code>T4.4</code></td>
+                <td>4</td>
+                <td>真瀏覽器 E2E（R26／R27）</td>
+                <td>Claude 瀏覽器（<code>--chrome</code>，模型未記錄）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（2 項留補驗）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T4.4b</code></td>
+                <td>4</td>
+                <td>瀏覽器補驗 C4 錯誤路徑與 R26</td>
+                <td>Claude 瀏覽器（<code>claude-sonnet-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（<code>A3</code> 轉 <code>E4</code>）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T4.5</code></td>
+                <td>4</td>
+                <td>SPEC v1.1.2 → v1.1.3（<code>E4</code>）</td>
+                <td>Claude 規格編輯（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T5.1</code></td>
+                <td>5</td>
+                <td>clean clone <code>uv sync</code>＋AC12＋全測 ×3</td>
+                <td><code>agy</code>（<code>gemini-4-neon-high</code>）</td>
+                <td><span class="badge ok"><code>ACCEPT</code></span>（75 ×3、<code>perf</code> ×3）</td>
+                <td><code>pytest</code> 約 51 秒 ×3</td>
+              </tr>
+              <tr>
+                <td><code>T5.4</code></td>
+                <td>5</td>
+                <td>SPEC v1.1.3 → v1.1.4（<code>E5</code>／<code>E6</code>）</td>
+                <td>Claude 規格編輯（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T6.1</code></td>
+                <td>6</td>
+                <td>Preline UI 視覺改版（<code>E8</code>–<code>E10</code>）</td>
+                <td>Claude 實作（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（14 張截圖）</td>
+                <td>18 分／86 回合（<code>turns</code>）／$5.21</td>
+              </tr>
+              <tr>
+                <td><code>T6.2</code></td>
+                <td>6</td>
+                <td><code>AGENTS.md</code> 補前端建置說明</td>
+                <td>Claude 規格編輯（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T6.3</code></td>
+                <td>6</td>
+                <td>Phase 6 迴歸＋R26＋可重現建置</td>
+                <td><code>agy</code>（<code>gemini-4-neon-high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（26 證據檔）</td>
+                <td>10 分／—</td>
+              </tr>
+              <tr>
+                <td><code>T6.4</code></td>
+                <td>6</td>
+                <td>瀏覽器視覺 E2E＋R27 迴歸</td>
+                <td>Claude 瀏覽器（<code>claude-sonnet-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge err"><code>FAIL</code></span>（1 視覺瑕疵，52 檔）</td>
+                <td>12 分／$1.73</td>
+              </tr>
+              <tr>
+                <td><code>T6.1-fix1</code></td>
+                <td>6</td>
+                <td>修 log 框不對稱留白（第 1 輪）</td>
+                <td>Claude 實作（<code>claude-opus-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（改 2 <code>class</code>，+3 截圖）</td>
+                <td>4 分／$1.14</td>
+              </tr>
+              <tr>
+                <td><code>T6.3 重跑</code></td>
+                <td>6</td>
+                <td>修正後重跑迴歸驗證（證據 <code>T6.3b</code>）</td>
+                <td><code>agy</code>（模型未記錄）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（22 證據項）</td>
+                <td><code>pytest</code> 約 51 秒 ×3</td>
+              </tr>
+              <tr>
+                <td><code>T6.4b</code></td>
+                <td>6</td>
+                <td>修正後瀏覽器補驗間距與行為</td>
+                <td>Claude 瀏覽器（<code>claude-sonnet-5-5</code> / <code>high</code>）</td>
+                <td><span class="badge ok"><code>PASS</code></span>（0 問題，6 截圖）</td>
+                <td>7 分／$0.66</td>
+              </tr>
+              <tr>
+                <td><code>T7.1</code></td>
+                <td>7</td>
+                <td>撰寫 <code>docs/technical.html</code>（11 節、8 張 SVG、59 KB）</td>
+                <td>Codex（<code>gpt-6.2-astra</code> / <code>high</code>）</td>
+                <td><span class="badge ok">完成</span>（3 截圖＋<code>checks.txt</code>）</td>
+                <td>13 分／—</td>
+              </tr>
+              <tr>
+                <td><code>T7.2</code></td>
+                <td>7</td>
+                <td>撰寫 <code>docs/ai-agents.html</code>（12 節、6 張 SVG、123 KB）</td>
+                <td><code>agy</code>（<code>gemini-4-neon-high</code>）</td>
+                <td><span class="badge ok">完成</span>（9 截圖＋索引）</td>
+                <td>30 分內／—</td>
+              </tr>
+              <tr>
+                <td><code>T7.3</code></td>
+                <td>7</td>
+                <td>交互審查 <code>docs/technical.html</code></td>
+                <td><code>agy</code>（<code>gemini-4-neon-high</code>）</td>
+                <td><span class="badge ok">完成</span>（0 must, 4 should, 5 nit；3 截圖）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T7.4</code></td>
+                <td>7</td>
+                <td>交互審查 <code>docs/ai-agents.html</code></td>
+                <td>Codex（<code>gpt-6.2-sol</code> / <code>high</code>）</td>
+                <td><span class="badge ok">完成</span>（19 must, 5 should, 1 nit；18 圖＋量測）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T7.5</code></td>
+                <td>7</td>
+                <td>整合審查意見與一致化（<code>docs/technical.html</code>）</td>
+                <td>Codex（<code>gpt-6.2-astra</code> / <code>high</code>）</td>
+                <td><span class="badge info">平行整合中</span>（結果未收錄於本工作區）</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T7.6</code></td>
+                <td>7</td>
+                <td>整合審查意見與一致化（<code>docs/ai-agents.html</code>，本檔）</td>
+                <td><code>agy</code>（<code>gemini-4-neon-high</code>）</td>
+                <td><span class="badge info">本次整合產出</span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>T7.7</code></td>
+                <td>7</td>
+                <td>合併 <code>docs/*.html</code> 回主 repo、commit、交付</td>
+                <td>協調者</td>
+                <td><span class="badge muted">待執行</span></td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <em>備註（費用與編號說明）：</em>① 上述有明確記錄費用的 6 項 Claude worker 任務合計為 <strong>$13.13</strong>（<code>T2.1a</code> $2.77 + <code>T2.1b</code> $1.62 + <code>T6.1</code> $5.21 + <code>T6.4</code> $1.73 + <code>T6.1-fix1</code> $1.14 + <code>T6.4b</code> $0.66）；其餘 Claude、Codex 與 <code>agy</code> 任務在原始管理紀錄中未記金額，故不推估全專案總花費。② <code>T2.3b</code> 列中的「<code>D1</code>–<code>D4</code>」係指 <code>docs/SPEC.md:263-270</code> 的 v1.1.1 規格變更明細編號，與下方 <code>materials/PROGRESS.md:133-140</code> 使用者決策表的 <code>D1</code>–<code>D4</code> 為兩套獨立編號。
+        </p>
+
+        <h3>使用者關鍵決策一覽（<code>D1</code>–<code>D12</code>、<code>E1</code>–<code>E11</code>，摘自 <code>materials/PROGRESS.md:129-153</code>）</h3>
+        <div class="table-wrap">
+          <table class="compact">
+            <thead>
+              <tr>
+                <th>決策 ID</th>
+                <th>日期</th>
+                <th>使用者裁決內容（一句話摘要）</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>D1</code></td><td>2026-11-20</td><td>核准 <code>docs/SPEC.md</code> v1.0，放行 Phase 1 關卡。</td></tr>
+              <tr><td><code>D2</code></td><td>2026-11-20</td><td>Claude 實作者權限完全不設限（風險改由事後稽核承擔）。</td></tr>
+              <tr><td><code>D3</code></td><td>2026-11-20</td><td>隔離採「分開目錄＋工具權限＋事後稽核」，不使用容器。</td></tr>
+              <tr><td><code>D4</code></td><td>2026-11-20</td><td>合約同時包含 <code>contracts/openapi.yaml</code> 與 <code>contracts/domain.pyi</code>。</td></tr>
+              <tr><td><code>D5</code></td><td>2026-11-20</td><td>訂立三家模型下限與推理強度底線（<code>medium</code> 起跳）。</td></tr>
+              <tr><td><code>D6</code></td><td>2026-11-20</td><td>單次 worker 執行時間上限預設為 30 分鐘（<code>alarm 1800</code>）。</td></tr>
+              <tr><td><code>D7</code></td><td>2026-11-20</td><td>取消環境冒煙測試（<code>T0.5</code>），直接開始開發。</td></tr>
+              <tr><td><code>D8</code></td><td>2026-11-20</td><td>真瀏覽器 E2E 由 Claude Code worker 搭配 Claude in Chrome 負責。</td></tr>
+              <tr><td><code>D9</code></td><td>2026-11-20</td><td>專案主軸清空舊 Clock／聊天規格，全面改以 <code>install-progress-sequence.svg</code> 為準（Stage→Task→Log＋SQLite）。</td></tr>
+              <tr><td><code>D10</code></td><td>2026-11-20</td><td>失敗改由下拉選單觸發（1 成功＋6 失敗、不做卡住模擬），由指定 <code>agy</code> session 直接重寫 SPEC v1.0。</td></tr>
+              <tr><td><code>D11</code></td><td>2026-11-20</td><td>跳過 v1.0 的唯讀規格審閱（<code>T1.7</code>），直接推進至 Phase 2。</td></tr>
+              <tr><td><code>D12</code></td><td>2026-11-20</td><td>將規格書移至 <code>docs/SPEC.md</code>。</td></tr>
+              <tr><td><code>E1</code></td><td>2026-11-21</td><td><code>contracts/openapi.yaml</code> 的 <code>reset.when</code> 對齊 R18（已結束輪次且 <code>n ≥ L</code> 回 <code>204</code>，不送 <code>reset</code>）。</td></tr>
+              <tr><td><code>E2</code></td><td>2026-11-21</td><td>刪除 <code>AGENTS.md</code> §4 的 <code>/health</code> 裸 <code>dict</code> 例外，所有 JSON 端點一律用 Pydantic model 或明確回傳型別。</td></tr>
+              <tr><td><code>E3</code></td><td>2026-11-21</td><td><code>contracts/domain.pyi</code> 五個型別別名加 <code># noqa: UP040</code> 與理由、<code>JsonValue</code> 改單行，以通過全專案 Ruff（SPEC v1.1.2）。</td></tr>
+              <tr><td><code>E4</code></td><td>2026-11-21</td><td>串流中斷靠 <code>EventSource</code> 自動重連而不重跑同步流程算符合 R27，補寫進 SPEC v1.1.3。</td></tr>
+              <tr><td><code>E5</code></td><td>2026-11-21</td><td>將「重連成功後恢復顯示輪次狀態」補寫進 SPEC v1.1.4。</td></tr>
+              <tr><td><code>E6</code></td><td>2026-11-21</td><td>於 SPEC v1.1.4 明文註記 <code>GET /install</code> 的 <code>404</code> 不算錯誤。</td></tr>
+              <tr><td><code>E7</code></td><td>2026-11-21</td><td>確立 E2E 證據規則：瀏覽器留截圖＋GIF、<code>agy</code> 留原始輸出，本機存 <code>.orchestra/evidence/</code> 並由協調者實開抽查。</td></tr>
+              <tr><td><code>E8</code></td><td>2026-11-21</td><td>Preline 引入方式：本機以 Tailwind CLI 編譯並內嵌進 <code>index.html</code>，維持 R26 禁止 CDN 規範。</td></tr>
+              <tr><td><code>E9</code></td><td>2026-11-21</td><td>前端建置原始碼 <code>frontend/</code> 與產物 <code>app/static/index.html</code> 一併 commit，並註明於 <code>AGENTS.md</code>。</td></tr>
+              <tr><td><code>E10</code></td><td>2026-11-21</td><td>Phase 6 只做視覺優化（含淺色／深色），保留既有元素、<code>id</code>、可見文字、R27 行為，以及規格或腳本依賴的屬性（外觀 <code>class</code> 改由 Preline／Tailwind 取代）。</td></tr>
+              <tr><td><code>E11</code></td><td>2026-11-21</td><td>Phase 7 由 Codex 與 <code>agy</code> 平行撰寫技術文件（<code>docs/technical.html</code>）與 AI Agent 文件（<code>docs/ai-agents.html</code>）並交互驗證、各自整合（自含 HTML、inline SVG、無外部資源、淺深色）。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 11 -->
+      <section id="s11">
+        <h2><span class="sec-num">11</span>實戰經驗與教訓</h2>
+        <p>
+          這套流程並不是一開始就完美無瑕；許多最重要的防護措施，都是跑出問題後從日誌與回報裡長出來的。以下整理 9 條有實際紀錄支撐的教訓：
+        </p>
+
+        <ol class="lesson-list">
+          <li>
+            <span class="lesson-title">1. 日誌時間戳絕對不要用「估計值」，要以真實時鐘與 commit 為準</span>
+            協調者在 <code>2026-11-20 23:49</code> 之後一度憑感覺填寫日誌時間，結果日誌時間跑在真實系統時間前面，事後不得不回頭對照 <code>git commit</code> 時間修正（<code>materials/PROGRESS.md:203</code>），且在 <code>materials/git-log.txt:13,15</code> 還留下兩筆專門修時間的 commit（<code>PROGRESS: fix log time</code>）。
+          </li>
+          <li>
+            <span class="lesson-title">2. 原始執行紀錄在稽核通過後立刻刪——但先確保沒有第二個協調者同時在跑</span>
+            <code>stream-json</code> 與原始 log 非常龐大，稽核通過並抽出精簡回報後立刻刪除能保持目錄乾淨（<code>materials/ORCHESTRATION.md:150</code>）。但偏差紀錄 <code>X4</code> 踩過一個痛坑：<code>22:33</code> 時另一個協調者 session 同時在跑，提前 commit 刪掉了 <code>T0.6</code> 的原始 log（<code>c36be5f</code>），導致 <code>T0.6</code> 無法做越界稽核（<code>materials/PROGRESS.md:161</code>）。同時只能有一位協調者。
+          </li>
+          <li>
+            <span class="lesson-title">3. Worker 的 CLI 旗標必須以實際帳號環境驗證，不能只照文件寫</span>
+            <code>ORCHESTRATION.md:119</code> 原本寫 <code>agy</code> 使用 <code>--dangerously-skip-permissions</code>，但實戰 <code>T2.5</code> 時被 auto mode 擋下；改試 <code>--sandbox --mode auto</code> 又發現該帳號不支援 <code>--mode auto</code>，最後實際落地的是「預設模式＋<code>--sandbox</code>」（<code>materials/PROGRESS.md:87,204</code>）。
+          </li>
+          <li>
+            <span class="lesson-title">4. 並行跑 E2E 要切開連接埠區段，效能量測則應避開重負載並行</span>
+            Phase 6 同時跑 <code>T6.3</code>（<code>agy</code>）與 <code>T6.4</code>（瀏覽器）時，協調者明確將兩者的 <code>127.0.0.1</code> 埠號切為 <code>18000–18399</code> 與 <code>18500–18599</code>，避免撞埠或誤殺對方 <code>uvicorn</code>（<code>materials/PROGRESS.md:226</code>）。Phase 4 則刻意等 <code>agy</code> 跑完 <code>AC11</code> 效能測試再啟動瀏覽器 E2E，避免搶 CPU 失真（<code>materials/PROGRESS.md:213</code>）。
+          </li>
+          <li>
+            <span class="lesson-title">5. 協調者寫的 Brief 也會出錯，獨立驗證方能幫忙揪出來</span>
+            <code>T6.3</code> brief 的 D.2 要求用 <code>git diff --exit-code app/static/index.html</code> 證明重建產物與交付版一致，但在當次執行中 <code>verify-ws</code> 的 git 索引（與 <code>HEAD</code>）仍對應改版前的基準 commit，改版檔案屬未暫存變更，執行該指令必然回傳 exit <code>1</code>。首輪 <code>T6.3</code> 中 <code>agy</code> 指出此問題，改以建置前備份搭配 <code>cmp</code> 與 <code>shasum</code> 驗證（<code>materials/reports/p6-agy-regression.md:99-101</code>）；修正後的 <code>T6.3 重跑</code> 則改以建置前備份搭配 <code>git diff --no-index --exit-code</code> 與 <code>shasum -a 256</code> 驗證（<code>materials/reports/p6-agy-regression-r2.md:114-116</code>）。另外 <code>T2.7</code> brief 指定的 pragma 註解用了全形括號 <code>（B1）</code>，協調者事後察覺會觸發 Ruff <code>RUF003</code>，透過 <code>--resume</code> 同一 session 改成半形 <code>(B1)</code>（<code>materials/PROGRESS.md:89</code>）。
+          </li>
+          <li>
+            <span class="lesson-title">6. 沙盒無網路限制要靠「事前預同步＋事後清暫存」配合</span>
+            Codex 的 <code>-s workspace-write</code> 沙盒不能連網且預設 <code>uv</code> 快取不可寫。協調者因此在派工前先對 <code>tests-ws</code> 執行 <code>uv sync --frozen</code>，讓 Codex 用 <code>UV_NO_SYNC=1</code> 與暫存快取目錄跑 <code>uv run --offline</code> 離線檢查，跑完再清掉系統暫存區殘留的 <code>t36-uv.*</code>（<code>materials/PROGRESS.md:97,195,203</code>、<code>materials/reports/p2-codex-tests.md:93</code>）。
+          </li>
+          <li>
+            <span class="lesson-title">7. 撞到用量上限不必重來，善用 <code>--resume</code> 接續同一個 session</span>
+            <code>T2.6</code> 實作者修完 OpenAPI 偏差、跑到一半撞上用量上限，回報只剩上限提示；協調者直接用 <code>--resume</code> 接續同一個 Claude session 補完驗證與回報，省去重頭重建上下文的成本（<code>materials/PROGRESS.md:88</code>）。
+          </li>
+          <li>
+            <span class="lesson-title">8. 切忌 <code>git add -A</code>，而且每次驗證完都要檢查「有沒有偷生 <code>install.db</code>」</span>
+            偏差紀錄 <code>X2</code> 中，<code>git add -A</code> 曾把當時未確認用途的 <code>install-progress-sequence.svg</code> 一併收進 commit，事後規範改為只 <code>git add</code> 明確指定的路徑（<code>materials/PROGRESS.md:162</code>）。此外 <code>T2.6</code> 結束後主 repo 曾意外出現未追蹤的 <code>install.db</code>，之後每次 <code>agy</code> 跑完都把「主 repo 無新檔、工作區無 <code>install.db*</code>」列為固定稽核項（<code>materials/PROGRESS.md:206</code>）。
+          </li>
+          <li>
+            <span class="lesson-title">9. 真實環境總有驚喜：作業系統與瀏覽器限制會逼出更扎實的驗證手法</span>
+            實戰中遇到三類環境限制與觀測差異：① 在 <code>T4.2</code> 這次 macOS loopback 單輪測試中，伺服器端核心傳送緩衝區 <code>SO_SNDBUF = 128 KiB</code> 大於整輪 202 筆 SSE（<code>38,798</code> bytes，約 38 KiB），單輪真 TCP 無法穩定重現 R23 慢速訂閱者淘汰，驗證必須靠 ASGI 層（<code>AC10</code>）涵蓋（<code>materials/reports/p4-agy-e2e.md:279-292</code>）；② 在 Phase 6 瀏覽器檢查中，<code>T6.1</code> 每次截圖前先暫停該頁內的 Dark Reader 樣式、以暫時性頁內 CSSOM 覆寫模擬淺色並以 375 px 同源 iframe 突破 Chrome 500 px 最小視窗寬度（<code>materials/reports/p6-impl-preline.md:77-80</code>）；<code>T6.4</code> 同樣採 375 px 同源 iframe 與頁內 CSSOM 覆寫測試窄螢幕與淺色（<code>materials/reports/p6-claude-browser.md:7-12</code>）；到了 <code>T6.4b</code> 才進一步記錄因 Tailwind 將深色規則巢狀置於 <code>@layer</code> 內，必須遞迴覆寫所有 <code>prefers-color-scheme: dark</code> 規則才能避免殘留淡色徽章（<code>materials/reports/p6-claude-browser-recheck.md:15</code>）；③ <code>E7</code> 證據規則在 Phase 6 落地後，正是靠協調者實開截圖 <code>R3-02</code>，才在 1 輪內精準修掉肉眼才看得到的 16 px vs 28 px 留白瑕疵。
+          </li>
+        </ol>
+      </section>
+
+      <!-- Section 12 -->
+      <section id="s12">
+        <h2><span class="sec-num">12</span>這兩份文件是怎麼產生的（Phase 7）</h2>
+        <p>
+          延續整個專案「不同模型家族交叉檢驗」的精神，使用者在 <code>2026-11-21 21:45</code> 定下決策 <code>E11</code>：由 <strong>Codex</strong> 與 <strong><code>agy</code></strong> 平行撰寫兩份互相連結的單檔 HTML 文件，交換對照原始來源交叉審閱，最後各自整合修訂，再交由協調者合併交付（<code>materials/PROGRESS.md:114-120,153,230-231</code>）：
+        </p>
+        <ul>
+          <li><strong>階段 1（<code>T7.1</code> ‖ <code>T7.2</code> 並行撰寫 — 已完成）：</strong>Codex（<code>gpt-6.2-astra</code> / <code>high</code>，耗時 13 分）撰寫技術文件 <code>docs/technical.html</code>（11 節、8 張 SVG、59 KB，附 3 張 headless Chrome 截圖與 <code>checks.txt</code>）；<code>agy</code>（<code>gemini-4-neon-high</code>，30 分內完成）撰寫本篇協作文件 <code>docs/ai-agents.html</code>（12 節、6 張 SVG、123 KB，附 9 張 headless Chrome 截圖）。兩者皆於 <code>22:22</code> 通過稽核（<code>materials/PROGRESS.md:231</code>、<code>materials/evidence-index/T7.1-INDEX.md</code>、<code>T7.2-INDEX.md</code>）。</li>
+          <li><strong>階段 2（<code>T7.3</code> ‖ <code>T7.4</code> 交叉審閱 — 已完成）：</strong>兩家模型互換角色，各自對照原始檔案與無頭瀏覽器截圖逐項查核。<code>T7.3</code>（<code>agy</code>，<code>gemini-4-neon-high</code>）審閱 <code>docs/technical.html</code>，提出 <code>0 must-fix, 4 should-fix, 5 nit</code> 與 3 張截圖（<code>materials/reports/p7-agy-review-tech.md:1</code>）；<code>T7.4</code>（Codex，<code>gpt-6.2-sol</code> / <code>high</code>）審閱 <code>docs/ai-agents.html</code>，提出 <code>19 must-fix, 5 should-fix, 1 nit</code>、18 張截圖與版面字級量測（<code>materials/reports/p7-codex-review-agents.md:1</code>、<code>materials/evidence-index/T7.4-INDEX.md</code>）。</li>
+          <li><strong>階段 3（<code>T7.5</code> ‖ <code>T7.6</code> 整合 → <code>T7.7</code> 合併交付）：</strong>兩位作者各自整合對方的審查意見並對齊成套格式（<code>technical.html</code> ⇄ <code>ai-agents.html</code>）——<strong>你正在閱讀的這份 <code>docs/ai-agents.html</code> 就是 <code>T7.6</code> 的整合產出</strong>；<code>T7.5</code> 則由 Codex（<code>gpt-6.2-astra</code> / <code>high</code>）平行整合 <code>docs/technical.html</code>（其修訂統計未收錄於本工作區）。兩邊完成後，唯一剩下的步驟是 <code>T7.7</code>：由協調者將兩份 HTML 合併回主 repo、commit 並交付使用者。</li>
+        </ul>
+
+        <figure>
+          <div class="svg-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 356" width="100%" role="img" aria-label="Phase 7 文件產生流程圖：共同來源分派給 Codex 與 agy 平行完成 T7.1 與 T7.2，接著完成 T7.3 與 T7.4 交叉審閱，再進入 T7.5 與 T7.6 平行整合，最後待協調者於 T7.7 合併交付">
+              <defs>
+                <marker id="m6-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--accent)" />
+                </marker>
+                <marker id="m6-arrow-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--warn)" />
+                </marker>
+                <marker id="m6-arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="var(--ok)" />
+                </marker>
+              </defs>
+
+              <!-- Column 1: Sources -->
+              <rect x="14" y="84" width="150" height="190" rx="10" fill="var(--tint-neutral)" stroke="var(--border)" stroke-width="1.6" />
+              <text x="89" y="112" text-anchor="middle" font-size="14" class="svg-title">唯一事實來源</text>
+              <line x1="28" y1="124" x2="150" y2="124" stroke="var(--border)" stroke-width="1" />
+              <text x="89" y="150" text-anchor="middle" font-size="13" class="svg-mono">app/、SPEC.md</text>
+              <text x="89" y="174" text-anchor="middle" font-size="13" class="svg-mono">contracts/</text>
+              <text x="89" y="198" text-anchor="middle" font-size="13" class="svg-mono">materials/*</text>
+              <text x="89" y="226" text-anchor="middle" font-size="13" class="svg-muted">briefs／reports</text>
+              <text x="89" y="248" text-anchor="middle" font-size="13" class="svg-muted">PROGRESS／git-log</text>
+
+              <!-- Arrows to Stage 1 -->
+              <path d="M 164 140 L 194 102" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m6-arrow)" />
+              <path d="M 164 218 L 194 254" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m6-arrow)" />
+
+              <!-- Column 2: Stage 1 Parallel Write (Done) -->
+              <text x="290" y="28" text-anchor="middle" font-size="13" class="svg-title">階段 1：撰寫（已完成）</text>
+              <rect x="198" y="44" width="184" height="108" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.6" />
+              <text x="290" y="70" text-anchor="middle" font-size="14" class="svg-title">T7.1 Codex 撰寫</text>
+              <text x="290" y="96" text-anchor="middle" font-size="13" class="svg-mono">technical.html</text>
+              <text x="290" y="120" text-anchor="middle" font-size="13" class="svg-muted">gpt-6.2-astra（13 分）</text>
+              <text x="290" y="140" text-anchor="middle" font-size="13" class="svg-muted">11 節、8 圖、59 KB</text>
+
+              <text x="290" y="179" text-anchor="middle" font-size="15" class="svg-title">‖</text>
+
+              <rect x="198" y="196" width="184" height="108" rx="10" fill="var(--tint-info)" stroke="var(--info)" stroke-width="1.6" />
+              <text x="290" y="222" text-anchor="middle" font-size="14" class="svg-title">T7.2 agy 撰寫</text>
+              <text x="290" y="248" text-anchor="middle" font-size="13" class="svg-mono">ai-agents.html</text>
+              <text x="290" y="272" text-anchor="middle" font-size="13" class="svg-muted">gemini-4-neon-high</text>
+              <text x="290" y="292" text-anchor="middle" font-size="13" class="svg-muted">12 節、6 圖、123 KB</text>
+
+              <!-- Cross arrows to Stage 2 -->
+              <path d="M 382 100 L 424 246" fill="none" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#m6-arrow-warn)" />
+              <path d="M 382 248 L 424 102" fill="none" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#m6-arrow-warn)" />
+
+              <!-- Column 3: Stage 2 Cross Review (Done) -->
+              <text x="518" y="28" text-anchor="middle" font-size="13" class="svg-title">階段 2：互審（已完成）</text>
+              <rect x="428" y="44" width="180" height="108" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.6" />
+              <text x="518" y="70" text-anchor="middle" font-size="14" class="svg-title">T7.4 Codex 審閱</text>
+              <text x="518" y="96" text-anchor="middle" font-size="13" class="svg-mono">ai-agents.html</text>
+              <text x="518" y="120" text-anchor="middle" font-size="13" class="svg-muted">gpt-6.2-sol（high）</text>
+              <text x="518" y="140" text-anchor="middle" font-size="13" class="svg-muted">19 must / 5 should / 1 nit</text>
+
+              <rect x="428" y="196" width="180" height="108" rx="10" fill="var(--tint-warn)" stroke="var(--warn)" stroke-width="1.6" />
+              <text x="518" y="222" text-anchor="middle" font-size="14" class="svg-title">T7.3 agy 審閱</text>
+              <text x="518" y="248" text-anchor="middle" font-size="13" class="svg-mono">technical.html</text>
+              <text x="518" y="272" text-anchor="middle" font-size="13" class="svg-muted">gemini-4-neon-high</text>
+              <text x="518" y="292" text-anchor="middle" font-size="13" class="svg-muted">0 must / 4 should / 5 nit</text>
+
+              <!-- Arrows to Stage 3 -->
+              <path d="M 608 98 L 636 98" fill="none" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m6-arrow-ok)" />
+              <path d="M 608 250 L 622 250 L 622 140 L 636 140" fill="none" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m6-arrow-ok)" />
+
+              <!-- Column 4: Stage 3 Integrate & Pending T7.7 Merge -->
+              <text x="734" y="28" text-anchor="middle" font-size="13" class="svg-title">階段 3：整合與交付</text>
+              <rect x="640" y="44" width="186" height="126" rx="10" fill="var(--tint-accent)" stroke="var(--accent)" stroke-width="1.8" />
+              <text x="733" y="70" text-anchor="middle" font-size="14" class="svg-title">T7.5 ‖ T7.6 整合</text>
+              <text x="733" y="96" text-anchor="middle" font-size="13" class="svg-text">T7.5：technical.html</text>
+              <text x="733" y="120" text-anchor="middle" font-size="13" class="svg-text">T7.6：本檔整合產出</text>
+              <text x="733" y="148" text-anchor="middle" font-size="13" class="svg-muted">對齊格式＋雙向連結</text>
+
+              <line x1="733" y1="170" x2="733" y2="206" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#m6-arrow)" />
+
+              <rect x="640" y="210" width="186" height="94" rx="10" fill="var(--tint-ok)" stroke="var(--ok)" stroke-width="1.8" stroke-dasharray="5,3" />
+              <text x="733" y="238" text-anchor="middle" font-size="14" class="svg-title">T7.7 協調者（待執行）</text>
+              <text x="733" y="264" text-anchor="middle" font-size="13" class="svg-text">合併兩檔回主 Repo</text>
+              <text x="733" y="288" text-anchor="middle" font-size="13" class="svg-muted">git commit 並交付</text>
+            </svg>
+          </div>
+          <figcaption>圖 6：Phase 7 雙作者並行撰寫、交叉審閱、整合（<code>T7.5</code> ‖ <code>T7.6</code>）與待執行合併（<code>T7.7</code>）流程（資料來源：<code>materials/PROGRESS.md:114-120,153,230-231</code>、<code>materials/reports/p7-*.md</code>）</figcaption>
+        </figure>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        <strong>資料來源：</strong>
+        <code>materials/CLAUDE.md</code>、<code>materials/ORCHESTRATION.md</code>、<code>materials/PROGRESS.md</code>、<code>materials/git-log.txt</code>、<code>materials/plans/spec_v1_plan.md</code>、<code>materials/briefs/*.md</code>、<code>materials/reports/*.md</code>、<code>materials/evidence-index/*.md</code>、<code>docs/SPEC.md</code>、<code>contracts/openapi.yaml</code>、<code>contracts/domain.pyi</code>、<code>AGENTS.md</code>。
+      </p>
+      <div class="footer-nav">
+        <span>成套閱讀：<a href="technical.html"><code>technical.html</code>（技術文件）</a> ⇄ <strong><code>ai-agents.html</code>（本檔）</strong></span>
+        <a href="#toc">回到目錄 ↑</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **全部完成** ✅（Phase 6 介面優化已交付） |
+| 目前 Phase | **全部完成** ✅（Phase 7 文件已交付） |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.4**（合約 1.1.2）、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws、browser-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | 無（已交付）。使用者若要新功能或改規格，從 Phase 1 流程重新開始；改頁面照 `AGENTS.md` §5（改 `frontend/src/`、`npm run build`） |
+| 下一步 | T7.3 agy 審技術文件 ‖ T7.4 Codex 審 AI Agent 文件（22:22 起） → T7.5 ‖ T7.6 各自整合 → T7.7 合併交付 |
 
 ## Phase 總覽
 
@@ -54,6 +54,7 @@
 | 4 | AI 自己跑 E2E | 🔵 進行中 | E2E 全部通過 |
 | 5 | 驗收、交付 | ✅ 完成 | **交給使用者** |
 | 6 | 介面優化（Preline，E8–E10）：不改 SPEC，只改視覺 | ✅ 完成 | 迴歸全過＋視覺 E2E 證據齊全 → 交給使用者 |
+| 7 | 文件（E11）：技術文件＋AI Agent 文件，Codex ‖ agy 撰寫 → 交換審查 → 各自整合 | ✅ 完成 | 兩份 HTML 審查意見處理完、截圖確認 → 交給使用者 |
 
 狀態符號：⬜ 未開始 · 🔵 進行中 · 🟡 等待關卡／決策 · 🔁 退回重做 · ✅ 完成 · ❌ 失敗
 
@@ -110,6 +111,13 @@
 | T6.3 | 6 | 迴歸：品質關卡、75 測試 ×3、perf ×3、R26 無外部資源、JS 行為未變 | agy（gemini-4-neon-high） | ✅ | T6.1、T6.2 | `reports/p6-agy-regression.md`；`evidence/T6.3/` | **PASS**（10 分）：gate 5 項過、75 passed ×3、perf ×3、R26 grep 只有 SVG xmlns、6 個 id 各 1 次、script 4 hunk 全 PRESENTATIONAL、無 innerHTML、文字不變、`npm ci && build` 兩次與交付版 byte 相同。稽核：工作區只多快取（已刪），證據 26 檔已複製。worker 指出 brief D.2 的 `git diff --exit-code` 用法有誤（基準是改版前），改用 cmp／shasum 驗證 |
 | T6.4 | 6 | 真瀏覽器視覺 E2E＋R27 迴歸（淺色／深色、窄螢幕、各情境），每項截圖 | Claude 瀏覽器 worker（sonnet-5-5／high） | ✅ | T6.1 | `reports/p6-claude-browser.md`；`reports/p6-claude-browser-recheck.md`；`evidence/T6.4/`、`evidence/T6.4b/` | E7。**FAIL（0 deviations、1 visual issue）**（12 分、$1.73）：R1–R7 全 OK，V1–V7 OK；唯一問題是沒有錯誤框時 log 框上下留白不對稱（上 16／下 28 px），協調者看 R3-02 確認。稽核：只開 127.0.0.1:18500、無越界、證據 52 檔＝INDEX。→ T6.1-fix1（第 1 輪）修正後重驗：T6.4b **PASS**（7 分、$0.66），淺色／深色、有無錯誤框的 log 框上下間距都 17/17 px（含 1 px 邊框），執行中行為正常；協調者看過 F1、F2、F4-02。T6.3 重跑 **PASS**（證據 `evidence/T6.3b/`，報告 `reports/p6-agy-regression-r2.md`） |
 | T6.5 | 6 | 合併回主 repo、commit、交付報告 | 協調者 | ✅ | T6.3、T6.4 | commit | |
+| T7.1 | 7 | 撰寫 `docs/technical.html`（架構、模組、狀態機、SSE、失敗／重試流程、經驗分享，≥5 張 SVG 圖） | Codex（gpt-6.2-astra／high，workspace-write） | ✅ | `briefs/p7-codex-tech-doc.md`＋`p7-doc-style.md`；docs-tech-ws | `reports/p7-codex-tech-doc.md`；`evidence/T7.1/` | E11 |
+| T7.2 | 7 | 撰寫 `docs/ai-agents.html`（整體架構、隔離稽核、任務生命週期、Phase 流程、失敗分派、實際數據、教訓，≥5 張 SVG 圖） | agy（gemini-4-neon-high） | ✅ | `briefs/p7-agy-agents-doc.md`＋`p7-doc-style.md`；docs-agent-ws（管理文件放 `materials/`） | `reports/p7-agy-agents-doc.md`；`evidence/T7.2/` | E11 |
+| T7.3 | 7 | 交互審查 `technical.html`（對照 app／SPEC／contracts，含 headless Chrome 截圖） | agy（gemini-4-neon-high） | ✅ | T7.1 | `reports/p7-agy-review-tech.md`；`evidence/T7.3/` | `briefs/p7-review.md` |
+| T7.4 | 7 | 交互審查 `ai-agents.html`（對照 materials，含截圖） | Codex（gpt-6.2-sol／high） | ✅ | T7.2 | `reports/p7-codex-review-agents.md`；`evidence/T7.4/` | `briefs/p7-review.md` |
+| T7.5 | 7 | 整合審查意見＋兩份一致化（technical.html） | Codex（gpt-6.2-astra／high） | ✅ | T7.3 | `reports/p7-codex-integrate.md`；`evidence/T7.5/` | `briefs/p7-integrate.md` |
+| T7.6 | 7 | 整合審查意見＋兩份一致化（ai-agents.html） | agy（gemini-4-neon-high） | ✅ | T7.4 | `reports/p7-agy-integrate.md`；`evidence/T7.6/` | `briefs/p7-integrate.md` |
+| T7.7 | 7 | 合併 `docs/*.html` 回主 repo、commit、交付 | 協調者 | ✅ | T7.5、T7.6 | commit | |
 
 ## 重試計數（每個問題最多 3 輪，超過就交給使用者）
 
@@ -142,6 +150,7 @@
 | E8 | Preline 怎麼引入（R26 禁止 CDN）→ **本機用 Tailwind CLI 建置，CSS（必要時連同 JS）內嵌進 `index.html`，R26 不改** | ✅ 2026-11-21 |
 | E9 | 前端建置原始碼 → **commit 進 repo（`frontend/`：package.json、Tailwind 輸入、建置腳本），`AGENTS.md` 註明；建置產物 `index.html` 也 commit** | ✅ 2026-11-21 |
 | E10 | 優化範圍 → **只做視覺**：保留現有元素、id、行為與文字（R27 不變），用 Preline 元件重新設計外觀，含淺色／深色 | ✅ 2026-11-21 |
+| E11 | 文件（使用者指定，2026-11-21 21:45）→ **由 Codex 與 agy 平行撰寫並交互驗證**：技術文件（架構、模組、失敗／重試流程、SSE 應用，含架構圖與流程圖，可寫成經驗分享）與 AI Agent 運作文件（含架構圖）**各一份 HTML**；耗 token 的撰寫、審查、整合都分派出去，任務分配由協調者決定。協調者決定：`docs/technical.html`（Codex 寫、agy 審）、`docs/ai-agents.html`（agy 寫、Codex 審）；自含 HTML、inline SVG、無外部資源、淺深色 | ✅ 2026-11-21 使用者 |
 
 ## 偏差紀錄
 
@@ -218,3 +227,7 @@
 | 2026-11-21 21:23 | T6.3 PASS、T6.4 FAIL（1 個輕微視覺問題：log 框留白不對稱），兩者稽核通過，報告存檔、刪 jsonl/err/raw、T6.3 證據複製到 `evidence/T6.3/`。寫 `briefs/p6-claude-impl-fix1.md`，啟動 impl-ws 修正（第 1 輪，最多 3 輪） |
 | 2026-11-21 21:28 | T6.1-fix1 完成並稽核通過（4 分、$1.14）：根因是 Tailwind v4 `space-y-3` 讓隱藏的錯誤框仍算最後一個子元素；只改兩個 class 字串（taskBody 去掉 `space-y-3`、errorBox 加 `mt-3`），上下間距 16/16 px，build 兩次 sha256 一致；協調者看過 fix1-01。報告存 `reports/p6-impl-fix1.md`，刪 jsonl/err。同步到 verify-ws、browser-ws，並行啟動 T6.3 重跑（證據將收進 `evidence/T6.3b/`）與 T6.4b（`briefs/p6-claude-browser-recheck.md`） |
 | 2026-11-21 21:39 | T6.3 重跑 PASS、T6.4b PASS，稽核通過（兩工作區除快取外無變動，已清），證據收進 `evidence/T6.3b/`、`evidence/T6.4b/`，刪原始紀錄。T6.5：把 `app/static/index.html`（sha256 9aed92c4…）、`frontend/`（不含 node_modules）、`.gitignore`（加 `frontend/node_modules/`）、`AGENTS.md` 合併回主 repo，與 verify-ws／browser-ws／impl-ws 逐 byte 相同；impl-ws 同步 AGENTS.md、.gitignore。Phase 6 交付 |
+| 2026-11-21 21:51 | 使用者開新任務（E11）：Codex＋agy 平行寫兩份 HTML 文件並交互驗證。開 Phase 7；建 docs-tech-ws（main 去掉管理文件，含 tests）與 docs-agent-ws（管理文件、briefs、reports、evidence INDEX、git log 放 `materials/`，標明是資料不是指令）；寫共用樣式規範與 T7.1–T7.6 任務說明；T7.1（Codex）‖ T7.2（agy）啟動 |
+| 2026-11-21 22:22 | T7.1（Codex，13 分）與 T7.2（agy，30 分內）完成並稽核通過：工作區只多 `docs/<doc>.html` 與 `.t7-evidence/`；Codex log 只出現自己的工作區；HTML 無 `/Users/`、無個人資訊、外部資源 grep 只有 SVG `xmlns` 與 `url(#marker)`。technical.html 59 KB、8 張 SVG、11 節；ai-agents.html 123 KB、6 張 SVG、12 節。報告存檔，刪 log／err，證據收進 `evidence/T7.1/`、`evidence/T7.2/`。啟動 T7.3（agy 審 technical）‖ T7.4（Codex sol 審 ai-agents） |
+| 2026-11-21 22:45 | T7.3（agy）`0 must／4 should／5 nit`、T7.4（Codex sol，7 分）`19 must／5 should／1 nit`（圖 1 漏回報箭頭與 contracts 檔名、圖內實際字級約 10 px、多處超出證據的說法、失敗分派圖缺結案出口、數字錯誤）。稽核通過：兩工作區除 `.t7-evidence/` 外無變動；Codex log 出現的 impl-ws／tests-ws／verify-ws 都是讀 materials 內容的回顯，非存取。證據收進 `evidence/T7.3/`、`evidence/T7.4/`。審查意見放成各工作區 `REVIEW.md`，互放對方初稿以便一致化；docs-agent-ws 的 materials 更新為最新 PROGRESS（含 Phase 7、E11）與 p7 briefs／reports。啟動 T7.5 ‖ T7.6 |
+| 2026-11-21 23:08 | T7.5（Codex，7 分）`9 fixed／0 rejected`、T7.6（agy）`25 fixed／0 rejected`；兩者都對齊 11 個共用 token、頁首互連、頁尾來源、圖說格式，跨檔核對無矛盾。稽核通過：各工作區只改自己的 HTML；HTML 無 `/Users/`、無外部資源（只有 SVG `xmlns`、`url(#marker)`）；協調者看過 ai-agents 圖 1、圖 5（暗）與 technical 圖 1 下半、圖 4 截圖。T7.7：`docs/technical.html`（62 KB、8 SVG）、`docs/ai-agents.html`（147 KB、6 SVG）合併回主 repo；證據收進 `evidence/T7.5/`、`evidence/T7.6/`；清掉工作區的 REVIEW.md、互放副本與 `.t7-evidence/`。Phase 7 交付 |
