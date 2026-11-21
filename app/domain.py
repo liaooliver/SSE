@@ -415,21 +415,63 @@ def _validate_log(data: Mapping[str, JsonValue]) -> None:
     line_no = data.get("line_no")
     if not isinstance(line_no, int) or isinstance(line_no, bool) or line_no < 1:
         raise ValueError("log line_no must be a positive integer")
-    if data.get("level") not in ("info", "error"):
-        raise ValueError("log level must be 'info' or 'error'")
-    _str_field(data, "text")
+
+
+_FieldKind = Literal["str", "int", "level", "result"]
+
+_STAGE_FIELDS: Final[Mapping[str, _FieldKind]] = {"stage_id": "str"}
+_TASK_FIELDS: Final[Mapping[str, _FieldKind]] = {"stage_id": "str", "task_id": "str"}
+
+_DATA_SCHEMA: Final[Mapping[EventType, Mapping[str, _FieldKind]]] = MappingProxyType(
+    {
+        "run_started": {"run_id": "int", "scenario": "str"},
+        "stage_started": _STAGE_FIELDS,
+        "stage_succeeded": _STAGE_FIELDS,
+        "stage_failed": _STAGE_FIELDS,
+        "task_started": _TASK_FIELDS,
+        "task_succeeded": _TASK_FIELDS,
+        "log": {**_TASK_FIELDS, "line_no": "int", "level": "level", "text": "str", "ts": "str"},
+        "task_failed": {**_TASK_FIELDS, "error_code": "str", "message": "str", "hint": "str"},
+        "run_finished": {"result": "result"},
+    }
+)
+"""R8: required ``data`` fields and their types for every event type."""
+
+
+def _field_ok(value: JsonValue, kind: _FieldKind) -> bool:
+    if kind == "str":
+        return isinstance(value, str)
+    if kind == "int":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if kind == "level":
+        return value in ("info", "error")
+    return value in ("succeeded", "failed")
+
+
+def _validate_data(event: Event) -> None:
+    """R10 item 9: every R8 field must be present with the right type; extra fields are ignored."""
+    schema = _DATA_SCHEMA.get(event.type)
+    if schema is None:
+        raise ValueError(f"unknown event type {event.type!r}")
+    for key, kind in schema.items():
+        if key not in event.data:
+            raise ValueError(f"{event.type} data is missing field {key!r}")
+        if not _field_ok(event.data[key], kind):
+            raise ValueError(f"{event.type} data field {key!r} must be {kind}")
 
 
 def apply_event(state: Snapshot, event: Event) -> Snapshot:
     """R10: return the new snapshot after applying one event; ``state`` is not modified.
 
     Raises ValueError if ``event.run_id != state.run_id``, ``event.seq != state.last_seq + 1``,
-    or the transition is not allowed by the state machine.
+    a ``data`` field required by R8 is missing or has the wrong type, or the transition is not
+    allowed by the state machine. Extra ``data`` fields are ignored.
     """
     if event.run_id != state.run_id:
         raise ValueError(f"event run_id {event.run_id} != snapshot run_id {state.run_id}")
     if event.seq != state.last_seq + 1:
         raise ValueError(f"event seq {event.seq} != last_seq + 1 ({state.last_seq + 1})")
+    _validate_data(event)
     if event.type == "run_started":
         if state.last_seq != 0:
             raise ValueError("run_started must be the first event")
@@ -439,12 +481,8 @@ def apply_event(state: Snapshot, event: Event) -> Snapshot:
     if state.status != "running":
         raise ValueError(f"run is already {state.status!r}")
     if event.type == "run_finished":
-        result = event.data.get("result")
-        if result == "succeeded":
-            return replace(state, status="succeeded", last_seq=event.seq)
-        if result == "failed":
-            return replace(state, status="failed", last_seq=event.seq)
-        raise ValueError("run_finished result must be 'succeeded' or 'failed'")
+        final: RunStatus = "succeeded" if event.data["result"] == "succeeded" else "failed"
+        return replace(state, status=final, last_seq=event.seq)
     if event.type in ("stage_started", "stage_succeeded", "stage_failed"):
         stages = _apply_stage_event(state, event)
     else:
