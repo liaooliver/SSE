@@ -36,10 +36,10 @@
 
 | 項目 | 值 |
 |---|---|
-| 目前 Phase | **全部完成** ✅（Phase 7 文件已交付） |
+| 目前 Phase | **Phase 8 進行中**（Cloudflare Durable Object 移植，F1）；Phase 0–7 已完成 ✅ |
 | 規格版本 | 主 repo 是 `docs/SPEC.md` **v1.1.4**（合約 1.1.2）、`contracts/domain.pyi`、`contracts/openapi.yaml`（impl-ws、tests-ws、browser-ws 同步）；v1.0 決策紀錄在 `docs/plans/spec_v1_plan.md`。v0.2／v0.3 全部作廢 |
 | 阻塞中 | 無 |
-| 下一步 | T7.3 agy 審技術文件 ‖ T7.4 Codex 審 AI Agent 文件（22:22 起） → T7.5 ‖ T7.6 各自整合 → T7.7 合併交付 |
+| 下一步 | T8.3 實作 ‖ T8.4 測試（進行中）→ T8.5 合約檢查＋驗證（agy，可選 Claude 模型）→ 修失敗 → 真瀏覽器 E2E（Claude in Chrome 打本機 wrangler dev，截圖）→ 回報使用者 |
 
 ## Phase 總覽
 
@@ -55,6 +55,7 @@
 | 5 | 驗收、交付 | ✅ 完成 | **交給使用者** |
 | 6 | 介面優化（Preline，E8–E10）：不改 SPEC，只改視覺 | ✅ 完成 | 迴歸全過＋視覺 E2E 證據齊全 → 交給使用者 |
 | 7 | 文件（E11）：技術文件＋AI Agent 文件，Codex ‖ agy 撰寫 → 交換審查 → 各自整合 | ✅ 完成 | 兩份 HTML 審查意見處理完、截圖確認 → 交給使用者 |
+| 8 | Cloudflare 移植（F1）：Durable Object 版 `worker/`，`app/` 並存不動 | 🔵 進行中 | 本機 `wrangler dev` 下行為與 SPEC 一致＋證據齊全 → 回報使用者（部署另議） |
 
 狀態符號：⬜ 未開始 · 🔵 進行中 · 🟡 等待關卡／決策 · 🔁 退回重做 · ✅ 完成 · ❌ 失敗
 
@@ -118,6 +119,10 @@
 | T7.5 | 7 | 整合審查意見＋兩份一致化（technical.html） | Codex（gpt-6.2-astra／high） | ✅ | T7.3 | `reports/p7-codex-integrate.md`；`evidence/T7.5/` | `briefs/p7-integrate.md` |
 | T7.6 | 7 | 整合審查意見＋兩份一致化（ai-agents.html） | agy（gemini-4-neon-high） | ✅ | T7.4 | `reports/p7-agy-integrate.md`；`evidence/T7.6/` | `briefs/p7-integrate.md` |
 | T7.7 | 7 | 合併 `docs/*.html` 回主 repo、commit、交付 | 協調者 | ✅ | T7.5、T7.6 | commit | |
+| T8.1 | 8 | 可行性 PoC：Python Worker 能否用 Durable Object（SQLite、Alarm、SSE 串流、斷線偵測、Static Assets）；不行就用 TypeScript 驗證同樣 5 項；本機 `wrangler dev` | Claude 實作（opus-5-5／high，可上網查 Cloudflare 文件） | ✅ | `briefs/p8-claude-poc.md`；do-ws | `reports/p8-claude-poc.md` | F1。稽核通過（33 turns、12 分、$1.71）：29 個 Bash 無 login／deploy／--remote、無外部路徑、網路只連 developers.cloudflare.com、無殘留程序。**Python 與 TS 都可行**（P1–P4、P6、P7）；P5 斷線偵測兩者皆「有限制」（只在斷線後第 2 次寫入才偵測，15 s 心跳約 18 s、1 s 心跳約 1–1.7 s）。TS 冷啟動 23 ms vs Python 2.1–2.5 s，Python 為 beta 且工具鏈較脆 → **F3 採 TypeScript** |
+| T8.2 | 8 | 寫 `docs/SPEC-cloudflare.md`（逐條處置 R1–R29／AC1–AC12）、`contracts/domain.d.ts`（domain.pyi 的 TS 版，含可單測的訂閱者佇列純邏輯）、`AGENTS.md` 加 TypeScript 節 | Claude 規格編輯（opus-5-5／high） | ✅（第一次寫完 SPEC-cloudflare 後遇網路中斷，用 `--resume` 補完 domain.d.ts 與 AGENTS §9，稽核通過；再 resume 寫入 G1–G6 決定，T8.2b） | `briefs/p8-claude-spec-cf.md`；spec-ws（含 `materials/poc-report.md`） | `reports/p8-claude-spec-cf.md` | SPEC.md、openapi.yaml、domain.pyi 不可改 |
+| T8.3 | 8 | 實作 `worker/`（TypeScript Worker＋DO；R23 spike 先行；乾淨 checkout 下 `npm ci && wrangler dev` 可用；AGENTS §9.1 品質關卡） | Claude 實作者（opus-5-5／high） | 🔵 | `briefs/p8-claude-impl-worker.md`；impl-ws（含 `materials/`） | `reports/p8-claude-impl-worker.md` | 沒有測試可用；埠 18800–18899 |
+| T8.4 | 8 | 寫 `worker/tests/`（unit＋e2e＋perf，只走 HTTP 打真的 `wrangler dev` 與 domain 單元） | Codex（gpt-6.2-astra／high，workspace-write） | 🔵 | `briefs/p8-codex-tests-worker.md`；tests-ws（含預裝工具鏈 `worker/node_modules`，不交付） | `reports/p8-codex-tests-worker.md` | 離線只能型別檢查／prettier／收集 |
 
 ## 重試計數（每個問題最多 3 輪，超過就交給使用者）
 
@@ -151,6 +156,12 @@
 | E9 | 前端建置原始碼 → **commit 進 repo（`frontend/`：package.json、Tailwind 輸入、建置腳本），`AGENTS.md` 註明；建置產物 `index.html` 也 commit** | ✅ 2026-11-21 |
 | E10 | 優化範圍 → **只做視覺**：保留現有元素、id、行為與文字（R27 不變），用 Preline 元件重新設計外觀，含淺色／深色 | ✅ 2026-11-21 |
 | E11 | 文件（使用者指定，2026-11-21 21:45）→ **由 Codex 與 agy 平行撰寫並交互驗證**：技術文件（架構、模組、失敗／重試流程、SSE 應用，含架構圖與流程圖，可寫成經驗分享）與 AI Agent 運作文件（含架構圖）**各一份 HTML**；耗 token 的撰寫、審查、整合都分派出去，任務分配由協調者決定。協調者決定：`docs/technical.html`（Codex 寫、agy 審）、`docs/ai-agents.html`（agy 寫、Codex 審）；自含 HTML、inline SVG、無外部資源、淺深色 | ✅ 2026-11-21 使用者 |
+
+| F1 | 要部署到 Cloudflare，但 FastAPI 版跑不了（行程內 Broker／Runtime、本機 SQLite 檔、背景 task） → **移植成 Durable Object 版（SQLite 儲存＋Alarm＋Static Assets）**；完成後再回報；`app/` 不動、新程式放 `worker/` | ✅ 2026-11-23 使用者 |
+
+| F3 | 移植語言 → **TypeScript**（PoC 兩者都可行；Python Workers 為 beta、冷啟動 2 s、FFI 手寫轉換多；TS 型別檢查與測試較成熟）。基準仍是 `docs/SPEC.md` v1.1.4＋新的 `docs/SPEC-cloudflare.md` 差異規格；測試只走 HTTP（真的 `wrangler dev`）加 `domain` 單元測試 | ✅ 2026-11-23 協調者（使用者授權「完成移植」） |
+| G1–G6 | T8.2 回報的 CF-CONFLICT-1（`/stats` 路由）與 CF-GAP-1…5 → 協調者裁定（使用者授權完成移植）：`/stats` 也轉給 DO；超過 2^53−1 的整數視為不合法；`npm ci` 後要能直接 `wrangler dev`（必要時根層 `postinstall` 跑 `npm rebuild esbuild workerd`）；關機時限只量測不當關卡；允許 `@types/node`（精確釘選）；R23 背壓先做 spike 再決定實作。詳見 `briefs/p8-claude-spec-cf-decisions.md` | ✅ 2026-11-23 協調者，交回報時告知使用者 |
+| F2 | agy 的模型 → **額度快滿時也可以選 Claude 模型**（原本禁用，改成例外；協調者判斷、日誌記一筆；下限仍是 Sonnet 5.5／medium） | ✅ 2026-11-23 使用者 |
 
 ## 偏差紀錄
 
@@ -230,4 +241,8 @@
 | 2026-11-21 21:51 | 使用者開新任務（E11）：Codex＋agy 平行寫兩份 HTML 文件並交互驗證。開 Phase 7；建 docs-tech-ws（main 去掉管理文件，含 tests）與 docs-agent-ws（管理文件、briefs、reports、evidence INDEX、git log 放 `materials/`，標明是資料不是指令）；寫共用樣式規範與 T7.1–T7.6 任務說明；T7.1（Codex）‖ T7.2（agy）啟動 |
 | 2026-11-21 22:22 | T7.1（Codex，13 分）與 T7.2（agy，30 分內）完成並稽核通過：工作區只多 `docs/<doc>.html` 與 `.t7-evidence/`；Codex log 只出現自己的工作區；HTML 無 `/Users/`、無個人資訊、外部資源 grep 只有 SVG `xmlns` 與 `url(#marker)`。technical.html 59 KB、8 張 SVG、11 節；ai-agents.html 123 KB、6 張 SVG、12 節。報告存檔，刪 log／err，證據收進 `evidence/T7.1/`、`evidence/T7.2/`。啟動 T7.3（agy 審 technical）‖ T7.4（Codex sol 審 ai-agents） |
 | 2026-11-21 22:45 | T7.3（agy）`0 must／4 should／5 nit`、T7.4（Codex sol，7 分）`19 must／5 should／1 nit`（圖 1 漏回報箭頭與 contracts 檔名、圖內實際字級約 10 px、多處超出證據的說法、失敗分派圖缺結案出口、數字錯誤）。稽核通過：兩工作區除 `.t7-evidence/` 外無變動；Codex log 出現的 impl-ws／tests-ws／verify-ws 都是讀 materials 內容的回顯，非存取。證據收進 `evidence/T7.3/`、`evidence/T7.4/`。審查意見放成各工作區 `REVIEW.md`，互放對方初稿以便一致化；docs-agent-ws 的 materials 更新為最新 PROGRESS（含 Phase 7、E11）與 p7 briefs／reports。啟動 T7.5 ‖ T7.6 |
+| 2026-11-23 | 使用者新任務（F1）：原本要把專案部署到 Cloudflare，協調者指出 FastAPI 版靠行程內狀態、本機 SQLite 檔、背景 asyncio task，Workers 上跑不了；使用者決定**移植成 Durable Object 版**，要求「依協調者職責，完成移植後再回報」。協調者決定：新實作放在 `worker/`，**`app/` 與其 75 個測試不動**（並存、可隨時回退）；先做 T8.1 可行性 PoC（Python DO 能不能用）決定語言；部署需要使用者自己 `wrangler login`，本次只到本機 `wrangler dev` 可跑為止，不碰 Cloudflare 帳號 |
+| 2026-11-23 | T8.1 完成並稽核通過，報告存 `reports/p8-claude-poc.md`，刪 jsonl/err。決定 F3（TypeScript）。寫 `briefs/p8-claude-spec-cf.md`，spec-ws 加 `materials/poc-report.md`，背景派 T8.2（基準 sha 見下） |
+| 2026-11-23 | T8.2 第一次執行寫完 `SPEC-cloudflare.md` 後撞網路中斷（`ENOTFOUND`），`--resume` 補完；稽核通過（只用 Read/Grep/Write/Edit；SPEC.md／openapi／domain.pyi sha 不變；log 無越界）。worker 回報 1 CONFLICT、5 GAP，協調者裁定 G1–G6，寫 `briefs/p8-claude-spec-cf-decisions.md`，再 resume 派 T8.2b |
+| 2026-11-23 | T8.2／T8.2b 稽核通過，規格三檔搬回主 repo 並同步 impl-ws、tests-ws（覆蓋前確認主 repo AGENTS.md 與基準相同）。工具鏈：`typescript-eslint` 8.73.0 要求 typescript < 6.1，故釘 typescript 6.0.3（7.0.2 會 ERESOLVE）；由協調者在 tests-ws 預裝並把 package.json／lock 複製到 impl-ws `materials/toolchain/`（環境準備，比照 uv sync）。寫 `briefs/p8-claude-impl-worker.md`、`p8-codex-tests-worker.md`，背景並行派 T8.3、T8.4 |
 | 2026-11-21 23:08 | T7.5（Codex，7 分）`9 fixed／0 rejected`、T7.6（agy）`25 fixed／0 rejected`；兩者都對齊 11 個共用 token、頁首互連、頁尾來源、圖說格式，跨檔核對無矛盾。稽核通過：各工作區只改自己的 HTML；HTML 無 `/Users/`、無外部資源（只有 SVG `xmlns`、`url(#marker)`）；協調者看過 ai-agents 圖 1、圖 5（暗）與 technical 圖 1 下半、圖 4 截圖。T7.7：`docs/technical.html`（62 KB、8 SVG）、`docs/ai-agents.html`（147 KB、6 SVG）合併回主 repo；證據收進 `evidence/T7.5/`、`evidence/T7.6/`；清掉工作區的 REVIEW.md、互放副本與 `.t7-evidence/`。Phase 7 交付 |

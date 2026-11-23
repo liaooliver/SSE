@@ -84,7 +84,7 @@
 |---|---|---|---|
 | Claude（`claude -p`） | Sonnet 5.5 | `claude-sonnet-5-5` → `claude-opus-5-5` → `claude-fable-5-2` | Haiku |
 | Codex | GPT-6.2 Sol | `gpt-6.2-sol` → `gpt-6.2-astra` | Luna、Terra、Reserve、舊世代 |
-| agy | Gemini 4 Hydrogen | `gemini-4-hydrogen-{medium,high,xhigh}` → `gemini-4-neon-{medium,high,xhigh}` | Argon、3.8 Flash、gpt-oss、所有 `-low`；為了保持三家模型不同，agy 也不用 Claude 模型 |
+| agy | Gemini 4 Hydrogen | `gemini-4-hydrogen-{medium,high,xhigh}` → `gemini-4-neon-{medium,high,xhigh}` | Argon、3.8 Flash、gpt-oss、所有 `-low`；平時為了保持三家模型不同，agy 不用 Claude 模型。**例外（使用者 F2，2026-11-23）**：Gemini 或其他家額度快滿時，agy 可以改選 Claude 模型，由協調者判斷並在 `PROGRESS.md` 日誌記一筆；強度仍不低於 Sonnet 5.5／medium |
 
 強弱的依據：Gemini 4 是 Neon > Hydrogen > Argon（[Respan](https://www.respan.ai/articles/gemini-model-comparison)、[Valyu](https://www.valyu.ai/blogs/gemini-4-neon-vs-carbon-vs-hydrogen-vs-argon)）；GPT-6.2 是 Astra > Sol（[OpenAI](https://openai.com/index/introducing-gpt-6-2-astra-sol)；Codex 本機的 `~/.codex/models_cache.json`）。
 
