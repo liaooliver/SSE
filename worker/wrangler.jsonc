@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sse-install-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "durable_objects": {
+    "bindings": [{ "name": "INSTALL", "class_name": "InstallDO" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["InstallDO"] }],
+  "assets": {
+    "directory": "./public",
+    "run_worker_first": ["/install", "/install/*", "/health", "/stats"],
+  },
+}
